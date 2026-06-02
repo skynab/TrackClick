@@ -10,16 +10,16 @@ int main(int argc, char* argv[])
 #endif
 
     QApplication app(argc, argv);
-    app.setApplicationName("Point-N-Click");
+    app.setApplicationName("TrackClick");
     app.setApplicationVersion("1.0.0");
-    app.setOrganizationName("PointNClick");
-    app.setOrganizationDomain("polital.com");
+    app.setOrganizationName("TrackClick");
+    app.setOrganizationDomain("trackclick.app");
 
     // Don't quit when last window is hidden (keep tray alive)
     app.setQuitOnLastWindowClosed(false);
 
     if (!QSystemTrayIcon::isSystemTrayAvailable()) {
-        QMessageBox::warning(nullptr, "Point-N-Click",
+        QMessageBox::warning(nullptr, "TrackClick",
             "No system tray detected. The application will still run,\n"
             "but you won't be able to hide it to the tray.");
     }

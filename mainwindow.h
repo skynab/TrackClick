@@ -45,7 +45,7 @@ private:
     void setClickType(ClickType t);
     void saveWindowSettings();
     void loadWindowSettings();
-    ClickButton* makeButton(const QString& label, const QString& tooltip, ClickType type);
+    ClickButton* makeButton(const QString& label, const QString& tooltip, ClickType type, const QString& iconName);
 
     // ── UI elements ───────────────────────────────────────────
     QWidget*      m_titleBar   = nullptr;

@@ -1,0 +1,21 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+    <qresource prefix="/icons">
+        <file alias="app.svg">icons/app.svg</file>
+        <file alias="auto.svg">icons/auto.svg</file>
+        <file alias="close.svg">icons/close.svg</file>
+        <file alias="settings.svg">icons/settings.svg</file>
+        <file alias="left_click.svg">icons/left_click.svg</file>
+        <file alias="left_double.svg">icons/left_double.svg</file>
+        <file alias="left_drag.svg">icons/left_drag.svg</file>
+        <file alias="right_click.svg">icons/right_click.svg</file>
+        <file alias="right_double.svg">icons/right_double.svg</file>
+        <file alias="right_drag.svg">icons/right_drag.svg</file>
+        <file alias="middle_click.svg">icons/middle_click.svg</file>
+        <file alias="middle_double.svg">icons/middle_double.svg</file>
+        <file alias="scroll_up.svg">icons/scroll_up.svg</file>
+        <file alias="scroll_down.svg">icons/scroll_down.svg</file>
+        <file alias="scroll_left.svg">icons/scroll_left.svg</file>
+        <file alias="scroll_right.svg">icons/scroll_right.svg</file>
+    </qresource>
+</RCC>

@@ -75,7 +75,7 @@ QPushButton[flat=true]:hover { background: #4D4D4D; }
 SettingsDialog::SettingsDialog(const AppSettings& current, QWidget* parent)
     : QDialog(parent), m_settings(current)
 {
-    setWindowTitle("Point-N-Click — Settings");
+    setWindowTitle("TrackClick — Settings");
     setModal(true);
     setStyleSheet(STYLE);
     buildUi();

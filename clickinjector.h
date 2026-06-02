@@ -1,7 +1,7 @@
 #pragma once
 #include <QPoint>
 
-// All click types supported by Point-N-Click
+// All click types supported by TrackClick
 enum class ClickType {
     None,
     LeftClick,

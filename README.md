@@ -1,6 +1,6 @@
-# TrackClick (Point-N-Click)
+# TrackClick
 
-A cross-platform virtual mouse / dwell-clicker for Windows, macOS, and Linux. Inspired by Polital Enterprises' Point-N-Click, rebuilt in C++17 + Qt6.
+A cross-platform virtual mouse / dwell-clicker for Windows, macOS, and Linux, built in C++17 + Qt6.
 
 ## Features
 
@@ -32,8 +32,8 @@ cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --parallel
 
 # Run
-./build/PointNClick              # Linux/macOS
-.\build\Release\PointNClick.exe  # Windows
+./build/TrackClick              # Linux/macOS
+.\build\Release\TrackClick.exe  # Windows
 ```
 
 To specify a custom Qt installation:

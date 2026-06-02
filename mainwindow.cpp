@@ -11,6 +11,8 @@
 #include <QAction>
 #include <QMessageBox>
 #include <QFont>
+#include <QIcon>
+#include <QSize>
 
 // ─────────────────────────────────────────────────────────────
 //  Palette constants
@@ -112,7 +114,7 @@ void ClickButton::updateStyle()
 // ─────────────────────────────────────────────────────────────
 MainWindow::MainWindow(QWidget* parent)
     : QWidget(parent)
-    , m_persist("PointNClickQt", "PointNClick")
+    , m_persist("TrackClick", "TrackClick")
 {
     // Load persisted settings
     m_settings.dwellMs       = m_persist.value("dwell/ms",        1000).toInt();
@@ -143,7 +145,7 @@ MainWindow::MainWindow(QWidget* parent)
     setWindowFlags(flags);
     setAttribute(Qt::WA_TranslucentBackground, false);
     setStyleSheet(BASE_STYLE);
-    setWindowTitle("Point-N-Click");
+    setWindowTitle("TrackClick");
     setWindowOpacity(m_settings.windowOpacity);
 
     m_dwell = new DwellManager(this);
@@ -179,11 +181,13 @@ void MainWindow::buildUi()
     tbLayout->setContentsMargins(8, 0, 4, 0);
     tbLayout->setSpacing(4);
 
-    m_titleLabel = new QLabel("⬤  Point-N-Click");
+    m_titleLabel = new QLabel("⬤  TrackClick");
     tbLayout->addWidget(m_titleLabel, 1);
 
     // Auto button
     m_autoBtn = new QPushButton("AUTO");
+    m_autoBtn->setIcon(QIcon(":/icons/auto.svg"));
+    m_autoBtn->setIconSize(QSize(14, 14));
     m_autoBtn->setCheckable(true);
     m_autoBtn->setFixedSize(48, 22);
     m_autoBtn->setToolTip("Toggle AutoMouse dwell-clicking");
@@ -196,7 +200,9 @@ void MainWindow::buildUi()
     tbLayout->addWidget(m_autoBtn);
 
     // Settings button
-    m_settingsBtn = new QPushButton("⚙");
+    m_settingsBtn = new QPushButton;
+    m_settingsBtn->setIcon(QIcon(":/icons/settings.svg"));
+    m_settingsBtn->setIconSize(QSize(16, 16));
     m_settingsBtn->setFixedSize(26, 22);
     m_settingsBtn->setToolTip("Settings");
     m_settingsBtn->setStyleSheet(
@@ -208,7 +214,9 @@ void MainWindow::buildUi()
     tbLayout->addWidget(m_settingsBtn);
 
     // Close/hide button
-    m_exitBtn = new QPushButton("✕");
+    m_exitBtn = new QPushButton;
+    m_exitBtn->setIcon(QIcon(":/icons/close.svg"));
+    m_exitBtn->setIconSize(QSize(14, 14));
     m_exitBtn->setFixedSize(26, 22);
     m_exitBtn->setToolTip("Hide to tray (right-click tray icon to quit)");
     m_exitBtn->setStyleSheet(
@@ -278,27 +286,27 @@ void MainWindow::rebuildButtons()
         connect(btn, &ClickButton::clickTypePressed, this, &MainWindow::onClickButtonPressed);
     };
 
-    auto addIf = [&](bool show, const QString& lbl, const QString& tip, ClickType t){
+    auto addIf = [&](bool show, const QString& lbl, const QString& tip, ClickType t, const QString& icon){
         if (show) {
-            auto* b = makeButton(lbl, tip, t);
+            auto* b = makeButton(lbl, tip, t, icon);
             add(b);
         }
     };
 
-    addIf(m_settings.showLeftClick,   "L Click\n🖱",    "Left Click",         ClickType::LeftClick);
-    addIf(m_settings.showLeftDouble,  "L Dbl\n🖱🖱",   "Left Double-Click",  ClickType::LeftDoubleClick);
-    addIf(m_settings.showLeftDrag,    "L Drag\n↔",     "Left Drag (hold)",   ClickType::LeftDown);
-    addIf(m_settings.showRightClick,  "R Click\n🖱",   "Right Click",        ClickType::RightClick);
-    addIf(m_settings.showRightDouble, "R Dbl\n🖱🖱",  "Right Double-Click", ClickType::RightDoubleClick);
-    addIf(m_settings.showRightDrag,   "R Drag\n↔",    "Right Drag (hold)",  ClickType::RightDown);
-    addIf(m_settings.showMiddleClick, "M Click\n⚬",   "Middle Click",       ClickType::MiddleClick);
-    addIf(m_settings.showMiddleDouble,"M Dbl\n⚬⚬",   "Middle Double-Click",ClickType::MiddleDoubleClick);
-    addIf(m_settings.showScrollUp,    "Scroll\n▲",    "Scroll Up",          ClickType::ScrollUp);
-    addIf(m_settings.showScrollDown,  "Scroll\n▼",    "Scroll Down",        ClickType::ScrollDown);
+    addIf(m_settings.showLeftClick,   "L Click",  "Left Click",         ClickType::LeftClick,        "left_click");
+    addIf(m_settings.showLeftDouble,  "L Dbl",    "Left Double-Click",  ClickType::LeftDoubleClick,  "left_double");
+    addIf(m_settings.showLeftDrag,    "L Drag",   "Left Drag (hold)",   ClickType::LeftDown,         "left_drag");
+    addIf(m_settings.showRightClick,  "R Click",  "Right Click",        ClickType::RightClick,       "right_click");
+    addIf(m_settings.showRightDouble, "R Dbl",    "Right Double-Click", ClickType::RightDoubleClick, "right_double");
+    addIf(m_settings.showRightDrag,   "R Drag",   "Right Drag (hold)",  ClickType::RightDown,        "right_drag");
+    addIf(m_settings.showMiddleClick, "M Click",  "Middle Click",       ClickType::MiddleClick,      "middle_click");
+    addIf(m_settings.showMiddleDouble,"M Dbl",    "Middle Double-Click",ClickType::MiddleDoubleClick,"middle_double");
+    addIf(m_settings.showScrollUp,    "Scroll ▲", "Scroll Up",          ClickType::ScrollUp,         "scroll_up");
+    addIf(m_settings.showScrollDown,  "Scroll ▼", "Scroll Down",        ClickType::ScrollDown,       "scroll_down");
 
     if (m_settings.showScrollHoriz) {
-        addIf(true, "Scroll\n◄", "Scroll Left",  ClickType::ScrollLeft);
-        addIf(true, "Scroll\n►", "Scroll Right", ClickType::ScrollRight);
+        addIf(true, "Scroll ◄", "Scroll Left",  ClickType::ScrollLeft,  "scroll_left");
+        addIf(true, "Scroll ►", "Scroll Right", ClickType::ScrollRight, "scroll_right");
     }
 
     // Fill to next row boundary if needed
@@ -369,10 +377,12 @@ void MainWindow::rebuildButtons()
     adjustSize();
 }
 
-ClickButton* MainWindow::makeButton(const QString& label, const QString& tooltip, ClickType type)
+ClickButton* MainWindow::makeButton(const QString& label, const QString& tooltip, ClickType type, const QString& iconName)
 {
     auto* btn = new ClickButton(label, type, m_btnArea);
     btn->setToolTip(tooltip);
+    btn->setIcon(QIcon(":/icons/" + iconName + ".svg"));
+    btn->setIconSize(QSize(18, 18));
     return btn;
 }
 
@@ -380,20 +390,8 @@ void MainWindow::buildTray()
 {
     if (!QSystemTrayIcon::isSystemTrayAvailable()) return;
 
-    // Build a simple colored icon programmatically
-    QPixmap pix(22, 22);
-    pix.fill(Qt::transparent);
-    QPainter p(&pix);
-    p.setRenderHint(QPainter::Antialiasing);
-    p.setBrush(QColor("#FFA600"));
-    p.setPen(Qt::NoPen);
-    p.drawEllipse(2, 2, 18, 18);
-    p.setBrush(QColor("#2D2D2D"));
-    p.drawEllipse(6, 6, 10, 10);
-    p.end();
-
-    m_tray = new QSystemTrayIcon(QIcon(pix), this);
-    m_tray->setToolTip("Point-N-Click Virtual Mouse");
+    m_tray = new QSystemTrayIcon(QIcon(":/icons/app.svg"), this);
+    m_tray->setToolTip("TrackClick Virtual Mouse");
 
     m_trayMenu = new QMenu(this);
     m_trayMenu->setStyleSheet(
@@ -402,7 +400,7 @@ void MainWindow::buildTray()
     );
     auto* showAct = m_trayMenu->addAction("Show / Hide");
     m_trayMenu->addSeparator();
-    auto* quitAct = m_trayMenu->addAction("Quit Point-N-Click");
+    auto* quitAct = m_trayMenu->addAction("Quit TrackClick");
 
     connect(showAct, &QAction::triggered, this, [this](){
         setVisible(!isVisible());
@@ -521,11 +519,11 @@ void MainWindow::onAutoToggled(bool on)
     if (on) {
         m_dwell->arm(m_selectedType, m_modifiers);
         m_autoBtn->setText("AUTO ●");
-        m_titleLabel->setText("⬤  Point-N-Click  [AUTO]");
+        m_titleLabel->setText("⬤  TrackClick  [AUTO]");
     } else {
         m_dwell->disarm();
         m_autoBtn->setText("AUTO");
-        m_titleLabel->setText("⬤  Point-N-Click");
+        m_titleLabel->setText("⬤  TrackClick");
         m_dwellBar->setValue(0);
     }
     adjustSize();
@@ -597,7 +595,7 @@ void MainWindow::onExitClicked()
 {
     hide();
     if (m_tray) {
-        m_tray->showMessage("Point-N-Click",
+        m_tray->showMessage("TrackClick",
             "Running in the system tray. Right-click the tray icon to quit.",
             QSystemTrayIcon::Information, 2000);
     }

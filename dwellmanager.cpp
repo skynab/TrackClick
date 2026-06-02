@@ -1,0 +1,90 @@
+#include "dwellmanager.h"
+#include <QCursor>
+#include <QDateTime>
+#include <cmath>
+
+DwellManager::DwellManager(QObject* parent)
+    : QObject(parent)
+{
+    m_pollTimer.setInterval(50);   // 20 Hz
+    connect(&m_pollTimer, &QTimer::timeout, this, &DwellManager::onPoll);
+    m_pollTimer.start();
+}
+
+void DwellManager::arm(ClickType type, int modifiers)
+{
+    m_clickType  = type;
+    m_modifiers  = modifiers;
+    m_armed      = true;
+    m_waiting    = false;
+    m_hovering   = false;
+    m_anchorPos  = QCursor::pos();
+    m_lastPos    = m_anchorPos;
+    m_hoverStartMs = QDateTime::currentMSecsSinceEpoch();
+}
+
+void DwellManager::disarm()
+{
+    m_armed    = false;
+    m_waiting  = false;
+    m_hovering = false;
+    emit dwellProgress(0.0f);
+}
+
+void DwellManager::onPoll()
+{
+    if (!m_armed) return;
+
+    QPoint cur = QCursor::pos();
+
+    auto dist = [](QPoint a, QPoint b) -> double {
+        double dx = a.x() - b.x();
+        double dy = a.y() - b.y();
+        return std::sqrt(dx*dx + dy*dy);
+    };
+
+    if (m_waiting) {
+        // Wait until cursor moves far enough away from fire-point before re-arming.
+        if (dist(cur, m_anchorPos) > m_sensitivityPx * 2) {
+            m_waiting    = false;
+            m_hovering   = false;
+            m_anchorPos  = cur;
+            m_lastPos    = cur;
+            m_hoverStartMs = QDateTime::currentMSecsSinceEpoch();
+        }
+        return;
+    }
+
+    if (dist(cur, m_anchorPos) > m_sensitivityPx) {
+        // Cursor moved — reset hover countdown
+        m_anchorPos    = cur;
+        m_lastPos      = cur;
+        m_hovering     = false;
+        m_hoverStartMs = QDateTime::currentMSecsSinceEpoch();
+        emit dwellProgress(0.0f);
+        return;
+    }
+
+    // Cursor is still within sensitivity radius
+    if (!m_hovering) {
+        m_hovering     = true;
+        m_hoverStartMs = QDateTime::currentMSecsSinceEpoch();
+    }
+
+    qint64 elapsed = QDateTime::currentMSecsSinceEpoch() - m_hoverStartMs;
+    float  frac    = static_cast<float>(elapsed) / static_cast<float>(m_dwellMs);
+    frac = qBound(0.0f, frac, 1.0f);
+    emit dwellProgress(frac);
+
+    if (elapsed >= m_dwellMs) {
+        emit dwellAboutToFire(cur, m_clickType);
+        ClickInjector::performClick(m_clickType, cur, m_modifiers);
+        emit dwellFired(cur, m_clickType);
+
+        // After firing, wait for cursor to move away before allowing next dwell
+        m_anchorPos = cur;
+        m_waiting   = true;
+        m_hovering  = false;
+        emit dwellProgress(0.0f);
+    }
+}

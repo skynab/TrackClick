@@ -35,7 +35,9 @@ QCheckBox::indicator {
     border-radius: 2px;
     background: #2D2D2D;
 }
-QCheckBox::indicator:checked { background: #FFA600; }
+QCheckBox::indicator:checked {
+    image: url(:/icons/checkmark.svg);
+}
 QSpinBox, QDoubleSpinBox, QComboBox {
     background: #1A1A1A;
     color: #FFA600;
@@ -170,6 +172,8 @@ void SettingsDialog::buildUi()
     m_chkIconsOnly     = new QCheckBox(tr("Icons only (hide button labels)"));
 
     m_cmbLayout = new QComboBox;
+    m_cmbLayout->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+    m_cmbLayout->setMinimumWidth(160);
     m_cmbLayout->addItem(tr("Rectangle (grid)"));
     m_cmbLayout->addItem(tr("Horizontal (one row)"));
     m_cmbLayout->addItem(tr("Vertical (one column)"));
@@ -178,6 +182,7 @@ void SettingsDialog::buildUi()
     // Language names are shown in their native script — intentionally not tr()
     m_cmbLanguage = new QComboBox;
     m_cmbLanguage->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+    m_cmbLanguage->setMinimumWidth(130);
     m_cmbLanguage->addItem("English",  "en");
     m_cmbLanguage->addItem("Français", "fr");
     m_cmbLanguage->addItem("Español",  "es");

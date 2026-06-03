@@ -5,6 +5,7 @@
         <file alias="auto.svg">icons/auto.svg</file>
         <file alias="close.svg">icons/close.svg</file>
         <file alias="settings.svg">icons/settings.svg</file>
+        <file alias="checkmark.svg">icons/checkmark.svg</file>
         <file alias="left_click.svg">icons/left_click.svg</file>
         <file alias="left_double.svg">icons/left_double.svg</file>
         <file alias="left_drag.svg">icons/left_drag.svg</file>

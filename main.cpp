@@ -1,7 +1,9 @@
 #include <QApplication>
 #include <QMessageBox>
+#include <QSettings>
 #include <QSystemTrayIcon>
 #include "mainwindow.h"
+#include "translations/tsparser.h"
 
 int main(int argc, char* argv[])
 {
@@ -15,13 +17,23 @@ int main(int argc, char* argv[])
     app.setOrganizationName("TrackClick");
     app.setOrganizationDomain("trackclick.app");
 
+    // Install translator for the saved language before any UI is created
+    {
+        QSettings s("TrackClick", "TrackClick");
+        const QString lang = s.value("language", "en").toString();
+        if (QTranslator* t = loadBestTranslator(lang, &app))
+            app.installTranslator(t);
+    }
+
     // Don't quit when last window is hidden (keep tray alive)
     app.setQuitOnLastWindowClosed(false);
 
     if (!QSystemTrayIcon::isSystemTrayAvailable()) {
-        QMessageBox::warning(nullptr, "TrackClick",
-            "No system tray detected. The application will still run,\n"
-            "but you won't be able to hide it to the tray.");
+        QMessageBox::warning(nullptr,
+            QCoreApplication::translate("main", "TrackClick"),
+            QCoreApplication::translate("main",
+                "No system tray detected. The application will still run,\n"
+                "but you won't be able to hide it to the tray."));
     }
 
     MainWindow w;

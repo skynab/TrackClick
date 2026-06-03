@@ -1,12 +1,15 @@
 #pragma once
 #include <QMainWindow>
 #include <QPushButton>
+#include <QToolButton>
 #include <QLabel>
 #include <QSystemTrayIcon>
 #include <QMenu>
 #include <QTimer>
 #include <QProgressBar>
+#include <QAction>
 #include <QSettings>
+#include <QTranslator>
 #include "clickinjector.h"
 #include "dwellmanager.h"
 #include "settingsdialog.h"
@@ -45,6 +48,8 @@ private:
     void setClickType(ClickType t);
     void saveWindowSettings();
     void loadWindowSettings();
+    void retranslateUi();
+    void installLanguage(const QString& lang);
     ClickButton* makeButton(const QString& label, const QString& tooltip, ClickType type, const QString& iconName);
 
     // ── UI elements ───────────────────────────────────────────
@@ -73,16 +78,19 @@ private:
     QPoint      m_dragOffset;            // for window dragging
 
     // ── Sub-objects ───────────────────────────────────────────
-    DwellManager*     m_dwell   = nullptr;
-    QSystemTrayIcon*  m_tray    = nullptr;
-    QMenu*            m_trayMenu= nullptr;
+    DwellManager*     m_dwell      = nullptr;
+    QSystemTrayIcon*  m_tray       = nullptr;
+    QMenu*            m_trayMenu   = nullptr;
+    QAction*          m_showAct    = nullptr;
+    QAction*          m_quitAct    = nullptr;
+    QTranslator*      m_translator = nullptr;
 
     AppSettings   m_settings;
     QSettings     m_persist;
 };
 
 // ─── A styled click-type button ────────────────────────────────────────────
-class ClickButton : public QPushButton
+class ClickButton : public QToolButton
 {
     Q_OBJECT
 public:

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE TS>
+<TS version="2.1" language="zh_CN">
+<context>
+    <name>MainWindow</name>
+    <message><source>TrackClick</source><translation>TrackClick</translation></message>
+    <message><source>⬤  TrackClick</source><translation>⬤  TrackClick</translation></message>
+    <message><source>⬤  TrackClick  [AUTO]</source><translation>⬤  TrackClick  [自动]</translation></message>
+    <message><source>AUTO</source><translation>自动</translation></message>
+    <message><source>AUTO ●</source><translation>自动 ●</translation></message>
+    <message><source>Toggle AutoMouse dwell-clicking</source><translation>切换自动鼠标悬停点击</translation></message>
+    <message><source>Settings</source><translation>设置</translation></message>
+    <message><source>Hide to tray (right-click tray icon to quit)</source><translation>最小化到托盘（右键单击托盘图标退出）</translation></message>
+    <message><source>TrackClick Virtual Mouse</source><translation>TrackClick 虚拟鼠标</translation></message>
+    <message><source>Show / Hide</source><translation>显示 / 隐藏</translation></message>
+    <message><source>Quit TrackClick</source><translation>退出 TrackClick</translation></message>
+    <message><source>L Click</source><translation>左键</translation></message>
+    <message><source>L Dbl</source><translation>左双击</translation></message>
+    <message><source>L Drag</source><translation>左拖拽</translation></message>
+    <message><source>R Click</source><translation>右键</translation></message>
+    <message><source>R Dbl</source><translation>右双击</translation></message>
+    <message><source>R Drag</source><translation>右拖拽</translation></message>
+    <message><source>M Click</source><translation>中键</translation></message>
+    <message><source>M Dbl</source><translation>中双击</translation></message>
+    <message><source>Scroll ▲</source><translation>滚动 ▲</translation></message>
+    <message><source>Scroll ▼</source><translation>滚动 ▼</translation></message>
+    <message><source>Scroll ◄</source><translation>滚动 ◄</translation></message>
+    <message><source>Scroll ►</source><translation>滚动 ►</translation></message>
+    <message><source>Left Click</source><translation>左键单击</translation></message>
+    <message><source>Left Double-Click</source><translation>左键双击</translation></message>
+    <message><source>Left Drag (hold)</source><translation>左键拖拽（按住）</translation></message>
+    <message><source>Right Click</source><translation>右键单击</translation></message>
+    <message><source>Right Double-Click</source><translation>右键双击</translation></message>
+    <message><source>Right Drag (hold)</source><translation>右键拖拽（按住）</translation></message>
+    <message><source>Middle Click</source><translation>中键单击</translation></message>
+    <message><source>Middle Double-Click</source><translation>中键双击</translation></message>
+    <message><source>Scroll Up</source><translation>向上滚动</translation></message>
+    <message><source>Scroll Down</source><translation>向下滚动</translation></message>
+    <message><source>Scroll Left</source><translation>向左滚动</translation></message>
+    <message><source>Scroll Right</source><translation>向右滚动</translation></message>
+    <message><source>Hold Ctrl modifier for next click</source><translation>按住 Ctrl 键进行下一次点击</translation></message>
+    <message><source>Hold Alt modifier for next click</source><translation>按住 Alt 键进行下一次点击</translation></message>
+    <message><source>Hold Shift modifier for next click</source><translation>按住 Shift 键进行下一次点击</translation></message>
+    <message><source>Ready — hover to dwell-click</source><translation>就绪 — 悬停以点击</translation></message>
+    <message><source>Selected: </source><translation>已选择：</translation></message>
+    <message><source>Running in the system tray. Right-click the tray icon to quit.</source><translation>正在系统托盘中运行。右键单击托盘图标退出。</translation></message>
+</context>
+<context>
+    <name>SettingsDialog</name>
+    <message><source>TrackClick — Settings</source><translation>TrackClick — 设置</translation></message>
+    <message><source>AutoMouse / Dwell Clicking</source><translation>自动鼠标 / 悬停点击</translation></message>
+    <message><source>Dwell time:</source><translation>悬停时间：</translation></message>
+    <message><source>Sensitivity:</source><translation>灵敏度：</translation></message>
+    <message><source>Visible Buttons</source><translation>可见按钮</translation></message>
+    <message><source>Left Click</source><translation>左键单击</translation></message>
+    <message><source>Left Double</source><translation>左键双击</translation></message>
+    <message><source>Left Drag</source><translation>左键拖拽</translation></message>
+    <message><source>Right Click</source><translation>右键单击</translation></message>
+    <message><source>Right Double</source><translation>右键双击</translation></message>
+    <message><source>Right Drag</source><translation>右键拖拽</translation></message>
+    <message><source>Middle Click</source><translation>中键单击</translation></message>
+    <message><source>Middle Double</source><translation>中键双击</translation></message>
+    <message><source>Scroll Up</source><translation>向上滚动</translation></message>
+    <message><source>Scroll Down</source><translation>向下滚动</translation></message>
+    <message><source>Scroll Left/Right</source><translation>左/右滚动</translation></message>
+    <message><source>Ctrl modifier</source><translation>Ctrl 修饰键</translation></message>
+    <message><source>Alt modifier</source><translation>Alt 修饰键</translation></message>
+    <message><source>Shift modifier</source><translation>Shift 修饰键</translation></message>
+    <message><source>Exit button</source><translation>退出按钮</translation></message>
+    <message><source>Window</source><translation>窗口</translation></message>
+    <message><source>Opacity:</source><translation>不透明度：</translation></message>
+    <message><source>Always on top</source><translation>总在最前</translation></message>
+    <message><source>Start minimized to tray</source><translation>启动时最小化到托盘</translation></message>
+    <message><source>Audio feedback on click</source><translation>点击时音频反馈</translation></message>
+    <message><source>Icons only (hide button labels)</source><translation>仅图标（隐藏按钮标签）</translation></message>
+    <message><source>Button layout:</source><translation>按钮布局：</translation></message>
+    <message><source>Rectangle (grid)</source><translation>矩形（网格）</translation></message>
+    <message><source>Horizontal (one row)</source><translation>水平（单行）</translation></message>
+    <message><source>Vertical (one column)</source><translation>垂直（单列）</translation></message>
+    <message><source>Language:</source><translation>语言：</translation></message>
+</context>
+</TS>

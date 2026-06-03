@@ -8,6 +8,7 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
+find_package(Qt6 OPTIONAL_COMPONENTS LinguistTools QUIET)
 
 set(SOURCES
     main.cpp
@@ -15,6 +16,7 @@ set(SOURCES
     dwellmanager.cpp
     clickinjector.cpp
     settingsdialog.cpp
+    translations/tsparser.cpp
     resources.qrc
 )
 
@@ -50,3 +52,35 @@ elseif(UNIX)
 endif()
 
 install(TARGETS TrackClick DESTINATION bin)
+
+# ── Translations ──────────────────────────────────────────────────────────────
+set(TS_FILES
+    translations/trackclick_fr.ts
+    translations/trackclick_es.ts
+    translations/trackclick_zh_CN.ts
+    translations/trackclick_ja.ts
+    translations/trackclick_ko.ts
+)
+
+# .ts files are embedded in resources.qrc and parsed at runtime by TsTranslator
+# — no lrelease required for the build.
+# If LinguistTools ARE available, also compile .qm files for faster startup.
+if(Qt6LinguistTools_FOUND)
+    qt_add_lrelease(TrackClick
+        TS_FILES ${TS_FILES}
+        QM_FILES_OUTPUT_VARIABLE QM_FILES
+    )
+    add_custom_command(TARGET TrackClick POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory
+            "$<TARGET_FILE_DIR:TrackClick>/translations"
+        VERBATIM
+    )
+    foreach(QM_FILE IN LISTS QM_FILES)
+        add_custom_command(TARGET TrackClick POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${QM_FILE}" "$<TARGET_FILE_DIR:TrackClick>/translations/"
+            VERBATIM
+        )
+    endforeach()
+    install(FILES ${QM_FILES} DESTINATION bin/translations)
+endif()

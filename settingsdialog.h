@@ -1,4 +1,5 @@
 #pragma once
+#include <QComboBox>
 #include <QDialog>
 #include <QCheckBox>
 #include <QSpinBox>
@@ -7,6 +8,8 @@
 #include <QGroupBox>
 #include <QSlider>
 #include <QLabel>
+
+enum class ButtonLayout { Rectangle, Horizontal, Vertical };
 
 struct AppSettings {
     // Dwell / AutoMouse
@@ -38,6 +41,13 @@ struct AppSettings {
 
     // Audio feedback
     bool audioFeedback   = false;
+
+    // Button appearance
+    bool iconsOnly           = false;
+    ButtonLayout buttonLayout = ButtonLayout::Rectangle;
+
+    // Language (ISO code: "en", "fr", "es", "zh_CN", "ja", "ko")
+    QString language         = "en";
 };
 
 class SettingsDialog : public QDialog
@@ -81,6 +91,9 @@ private:
     QCheckBox*   m_chkAlwaysOnTop;
     QCheckBox*   m_chkStartMinimized;
     QCheckBox*   m_chkAudio;
+    QCheckBox*   m_chkIconsOnly;
+    QComboBox*   m_cmbLayout;
+    QComboBox*   m_cmbLanguage;
 
     QDialogButtonBox* m_buttons;
 };

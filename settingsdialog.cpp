@@ -36,12 +36,20 @@ QCheckBox::indicator {
     background: #2D2D2D;
 }
 QCheckBox::indicator:checked { background: #FFA600; }
-QSpinBox, QDoubleSpinBox {
+QSpinBox, QDoubleSpinBox, QComboBox {
     background: #1A1A1A;
     color: #FFA600;
     border: 1px solid #555;
     border-radius: 3px;
     padding: 2px 4px;
+}
+QComboBox::drop-down { border: none; width: 18px; }
+QComboBox QAbstractItemView {
+    background: #2D2D2D;
+    color: #FFA600;
+    border: 1px solid #FFA600;
+    selection-background-color: #FFA600;
+    selection-color: #1A1A1A;
 }
 QSlider::groove:horizontal {
     height: 4px;
@@ -75,7 +83,7 @@ QPushButton[flat=true]:hover { background: #4D4D4D; }
 SettingsDialog::SettingsDialog(const AppSettings& current, QWidget* parent)
     : QDialog(parent), m_settings(current)
 {
-    setWindowTitle("TrackClick — Settings");
+    setWindowTitle(tr("TrackClick — Settings"));
     setModal(true);
     setStyleSheet(STYLE);
     buildUi();
@@ -95,36 +103,36 @@ void SettingsDialog::buildUi()
     root->setContentsMargins(14, 14, 14, 14);
 
     // ── Dwell / AutoMouse ─────────────────────────────────────
-    auto* grpDwell = new QGroupBox("AutoMouse / Dwell Clicking");
+    auto* grpDwell = new QGroupBox(tr("AutoMouse / Dwell Clicking"));
     auto* fl       = new QFormLayout(grpDwell);
     fl->setSpacing(6);
 
     m_dwellMs   = new QSpinBox; m_dwellMs->setRange(100, 10000); m_dwellMs->setSuffix(" ms");
     m_sensitivPx= new QSpinBox; m_sensitivPx->setRange(1, 50);   m_sensitivPx->setSuffix(" px");
-    fl->addRow("Dwell time:",    m_dwellMs);
-    fl->addRow("Sensitivity:",   m_sensitivPx);
+    fl->addRow(tr("Dwell time:"),    m_dwellMs);
+    fl->addRow(tr("Sensitivity:"),   m_sensitivPx);
     root->addWidget(grpDwell);
 
     // ── Button Visibility ─────────────────────────────────────
-    auto* grpBtns = new QGroupBox("Visible Buttons");
+    auto* grpBtns = new QGroupBox(tr("Visible Buttons"));
     auto* grid    = new QGridLayout(grpBtns);
     grid->setSpacing(6);
 
-    m_chkLeftClick   = new QCheckBox("Left Click");
-    m_chkLeftDouble  = new QCheckBox("Left Double");
-    m_chkLeftDrag    = new QCheckBox("Left Drag");
-    m_chkRightClick  = new QCheckBox("Right Click");
-    m_chkRightDouble = new QCheckBox("Right Double");
-    m_chkRightDrag   = new QCheckBox("Right Drag");
-    m_chkMiddleClick = new QCheckBox("Middle Click");
-    m_chkMiddleDouble= new QCheckBox("Middle Double");
-    m_chkScrollUp    = new QCheckBox("Scroll Up");
-    m_chkScrollDown  = new QCheckBox("Scroll Down");
-    m_chkScrollHoriz = new QCheckBox("Scroll Left/Right");
-    m_chkModCtrl     = new QCheckBox("Ctrl modifier");
-    m_chkModAlt      = new QCheckBox("Alt modifier");
-    m_chkModShift    = new QCheckBox("Shift modifier");
-    m_chkExitButton  = new QCheckBox("Exit button");
+    m_chkLeftClick   = new QCheckBox(tr("Left Click"));
+    m_chkLeftDouble  = new QCheckBox(tr("Left Double"));
+    m_chkLeftDrag    = new QCheckBox(tr("Left Drag"));
+    m_chkRightClick  = new QCheckBox(tr("Right Click"));
+    m_chkRightDouble = new QCheckBox(tr("Right Double"));
+    m_chkRightDrag   = new QCheckBox(tr("Right Drag"));
+    m_chkMiddleClick = new QCheckBox(tr("Middle Click"));
+    m_chkMiddleDouble= new QCheckBox(tr("Middle Double"));
+    m_chkScrollUp    = new QCheckBox(tr("Scroll Up"));
+    m_chkScrollDown  = new QCheckBox(tr("Scroll Down"));
+    m_chkScrollHoriz = new QCheckBox(tr("Scroll Left/Right"));
+    m_chkModCtrl     = new QCheckBox(tr("Ctrl modifier"));
+    m_chkModAlt      = new QCheckBox(tr("Alt modifier"));
+    m_chkModShift    = new QCheckBox(tr("Shift modifier"));
+    m_chkExitButton  = new QCheckBox(tr("Exit button"));
 
     int row = 0, col = 0;
     auto addChk = [&](QCheckBox* c){
@@ -141,7 +149,7 @@ void SettingsDialog::buildUi()
     root->addWidget(grpBtns);
 
     // ── Window ────────────────────────────────────────────────
-    auto* grpWin = new QGroupBox("Window");
+    auto* grpWin = new QGroupBox(tr("Window"));
     auto* wfl    = new QFormLayout(grpWin);
     wfl->setSpacing(6);
 
@@ -156,14 +164,32 @@ void SettingsDialog::buildUi()
         m_opacityLabel->setText(QString::number(v) + "%");
     });
 
-    m_chkAlwaysOnTop   = new QCheckBox("Always on top");
-    m_chkStartMinimized= new QCheckBox("Start minimized to tray");
-    m_chkAudio         = new QCheckBox("Audio feedback on click");
+    m_chkAlwaysOnTop   = new QCheckBox(tr("Always on top"));
+    m_chkStartMinimized= new QCheckBox(tr("Start minimized to tray"));
+    m_chkAudio         = new QCheckBox(tr("Audio feedback on click"));
+    m_chkIconsOnly     = new QCheckBox(tr("Icons only (hide button labels)"));
 
-    wfl->addRow("Opacity:", opRow);
+    m_cmbLayout = new QComboBox;
+    m_cmbLayout->addItem(tr("Rectangle (grid)"));
+    m_cmbLayout->addItem(tr("Horizontal (one row)"));
+    m_cmbLayout->addItem(tr("Vertical (one column)"));
+
+    // Language names are shown in their native script — intentionally not tr()
+    m_cmbLanguage = new QComboBox;
+    m_cmbLanguage->addItem("English",  "en");
+    m_cmbLanguage->addItem("Français", "fr");
+    m_cmbLanguage->addItem("Español",  "es");
+    m_cmbLanguage->addItem("中文简体",  "zh_CN");
+    m_cmbLanguage->addItem("日本語",    "ja");
+    m_cmbLanguage->addItem("한국어",    "ko");
+
+    wfl->addRow(tr("Opacity:"), opRow);
     wfl->addRow(m_chkAlwaysOnTop);
     wfl->addRow(m_chkStartMinimized);
     wfl->addRow(m_chkAudio);
+    wfl->addRow(m_chkIconsOnly);
+    wfl->addRow(tr("Button layout:"), m_cmbLayout);
+    wfl->addRow(tr("Language:"),      m_cmbLanguage);
     root->addWidget(grpWin);
 
     // ── Buttons ───────────────────────────────────────────────
@@ -196,6 +222,14 @@ void SettingsDialog::loadFrom(const AppSettings& s)
     m_chkAlwaysOnTop->setChecked(s.alwaysOnTop);
     m_chkStartMinimized->setChecked(s.startMinimized);
     m_chkAudio->setChecked(s.audioFeedback);
+    m_chkIconsOnly->setChecked(s.iconsOnly);
+    m_cmbLayout->setCurrentIndex(static_cast<int>(s.buttonLayout));
+    for (int i = 0; i < m_cmbLanguage->count(); ++i) {
+        if (m_cmbLanguage->itemData(i).toString() == s.language) {
+            m_cmbLanguage->setCurrentIndex(i);
+            break;
+        }
+    }
 }
 
 AppSettings SettingsDialog::readUi() const
@@ -224,5 +258,8 @@ AppSettings SettingsDialog::readUi() const
     s.alwaysOnTop     = m_chkAlwaysOnTop->isChecked();
     s.startMinimized  = m_chkStartMinimized->isChecked();
     s.audioFeedback   = m_chkAudio->isChecked();
+    s.iconsOnly       = m_chkIconsOnly->isChecked();
+    s.buttonLayout    = static_cast<ButtonLayout>(m_cmbLayout->currentIndex());
+    s.language        = m_cmbLanguage->currentData().toString();
     return s;
 }

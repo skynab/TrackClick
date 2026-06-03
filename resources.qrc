@@ -18,4 +18,11 @@
         <file alias="scroll_left.svg">icons/scroll_left.svg</file>
         <file alias="scroll_right.svg">icons/scroll_right.svg</file>
     </qresource>
+    <qresource prefix="/translations">
+        <file alias="trackclick_fr.ts">translations/trackclick_fr.ts</file>
+        <file alias="trackclick_es.ts">translations/trackclick_es.ts</file>
+        <file alias="trackclick_zh_CN.ts">translations/trackclick_zh_CN.ts</file>
+        <file alias="trackclick_ja.ts">translations/trackclick_ja.ts</file>
+        <file alias="trackclick_ko.ts">translations/trackclick_ko.ts</file>
+    </qresource>
 </RCC>

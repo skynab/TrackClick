@@ -11,8 +11,10 @@
 #include <QAction>
 #include <QMessageBox>
 #include <QFont>
+#include <QToolButton>
 #include <QIcon>
 #include <QSize>
+#include "translations/tsparser.h"
 
 // ─────────────────────────────────────────────────────────────
 //  Palette constants
@@ -56,13 +58,15 @@ QToolTip {
 //  ClickButton
 // ─────────────────────────────────────────────────────────────
 ClickButton::ClickButton(const QString& label, ClickType type, QWidget* parent)
-    : QPushButton(label, parent), m_type(type)
+    : QToolButton(parent), m_type(type)
 {
+    setText(label);
+    setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
     setMinimumSize(64, 44);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     setCheckable(false);
     updateStyle();
-    connect(this, &QPushButton::clicked, this, [this](){
+    connect(this, &QToolButton::clicked, this, [this](){
         emit clickTypePressed(m_type);
     });
 }
@@ -77,7 +81,7 @@ void ClickButton::updateStyle()
 {
     if (m_selected) {
         setStyleSheet(
-            "QPushButton {"
+            "QToolButton {"
             "  background: #FFA600;"
             "  color: #1A1A1A;"
             "  border: 2px solid #FFB833;"
@@ -86,12 +90,12 @@ void ClickButton::updateStyle()
             "  font-size: 11px;"
             "  padding: 4px 2px;"
             "}"
-            "QPushButton:hover { background: #FFB833; }"
-            "QPushButton:pressed { background: #CC8400; }"
+            "QToolButton:hover { background: #FFB833; }"
+            "QToolButton:pressed { background: #CC8400; }"
         );
     } else {
         setStyleSheet(
-            "QPushButton {"
+            "QToolButton {"
             "  background: #3A3A3A;"
             "  color: #DDDDDD;"
             "  border: 1px solid #555555;"
@@ -99,12 +103,12 @@ void ClickButton::updateStyle()
             "  font-size: 11px;"
             "  padding: 4px 2px;"
             "}"
-            "QPushButton:hover {"
+            "QToolButton:hover {"
             "  background: #4A4A4A;"
             "  border: 1px solid #FFA600;"
             "  color: #FFA600;"
             "}"
-            "QPushButton:pressed { background: #2A2A2A; }"
+            "QToolButton:pressed { background: #2A2A2A; }"
         );
     }
 }
@@ -138,6 +142,9 @@ MainWindow::MainWindow(QWidget* parent)
     m_settings.showExitButton  = m_persist.value("show/exit",        true).toBool();
     m_settings.startMinimized  = m_persist.value("window/startMin",  false).toBool();
     m_settings.audioFeedback   = m_persist.value("audio/enabled",    false).toBool();
+    m_settings.iconsOnly       = m_persist.value("show/iconsOnly",   false).toBool();
+    m_settings.buttonLayout    = static_cast<ButtonLayout>(m_persist.value("show/buttonLayout", 0).toInt());
+    m_settings.language        = m_persist.value("language",          "en").toString();
 
     // Window flags: frameless, stays on top
     Qt::WindowFlags flags = Qt::Window | Qt::FramelessWindowHint | Qt::Tool;
@@ -145,7 +152,7 @@ MainWindow::MainWindow(QWidget* parent)
     setWindowFlags(flags);
     setAttribute(Qt::WA_TranslucentBackground, false);
     setStyleSheet(BASE_STYLE);
-    setWindowTitle("TrackClick");
+    setWindowTitle(tr("TrackClick"));
     setWindowOpacity(m_settings.windowOpacity);
 
     m_dwell = new DwellManager(this);
@@ -181,7 +188,7 @@ void MainWindow::buildUi()
     tbLayout->setContentsMargins(8, 0, 4, 0);
     tbLayout->setSpacing(4);
 
-    m_titleLabel = new QLabel("⬤  TrackClick");
+    m_titleLabel = new QLabel(tr("⬤  TrackClick"));
     tbLayout->addWidget(m_titleLabel, 1);
 
     // Auto button
@@ -190,7 +197,7 @@ void MainWindow::buildUi()
     m_autoBtn->setIconSize(QSize(14, 14));
     m_autoBtn->setCheckable(true);
     m_autoBtn->setFixedSize(48, 22);
-    m_autoBtn->setToolTip("Toggle AutoMouse dwell-clicking");
+    m_autoBtn->setToolTip(tr("Toggle AutoMouse dwell-clicking"));
     m_autoBtn->setStyleSheet(
         "QPushButton { background:#3A3A3A; color:#AAA; border:1px solid #555; border-radius:3px; font-size:10px; font-weight:bold; }"
         "QPushButton:checked { background:#FFA600; color:#1A1A1A; border:1px solid #FFB833; }"
@@ -204,7 +211,7 @@ void MainWindow::buildUi()
     m_settingsBtn->setIcon(QIcon(":/icons/settings.svg"));
     m_settingsBtn->setIconSize(QSize(16, 16));
     m_settingsBtn->setFixedSize(26, 22);
-    m_settingsBtn->setToolTip("Settings");
+    m_settingsBtn->setToolTip(tr("Settings"));
     m_settingsBtn->setStyleSheet(
         "QPushButton { background:#3A3A3A; color:#CCC; border:1px solid #555; border-radius:3px; font-size:14px; }"
         "QPushButton:hover { background:#4A4A4A; color:#FFA600; border:1px solid #FFA600; }"
@@ -218,7 +225,7 @@ void MainWindow::buildUi()
     m_exitBtn->setIcon(QIcon(":/icons/close.svg"));
     m_exitBtn->setIconSize(QSize(14, 14));
     m_exitBtn->setFixedSize(26, 22);
-    m_exitBtn->setToolTip("Hide to tray (right-click tray icon to quit)");
+    m_exitBtn->setToolTip(tr("Hide to tray (right-click tray icon to quit)"));
     m_exitBtn->setStyleSheet(
         "QPushButton { background:#3A3A3A; color:#CCC; border:1px solid #555; border-radius:3px; font-size:12px; }"
         "QPushButton:hover { background:#CC3333; color:#FFF; border:1px solid #CC3333; }"
@@ -276,7 +283,9 @@ void MainWindow::rebuildButtons()
     grid->setContentsMargins(4, 4, 4, 4);
 
     int row = 0, col = 0;
-    const int COLS = 3;
+    const int COLS = (m_settings.buttonLayout == ButtonLayout::Vertical)  ? 1
+                   : (m_settings.buttonLayout == ButtonLayout::Horizontal) ? 99
+                   :                                                          3;
 
     auto add = [&](ClickButton* btn){
         m_clickButtons.append(btn);
@@ -293,32 +302,32 @@ void MainWindow::rebuildButtons()
         }
     };
 
-    addIf(m_settings.showLeftClick,   "L Click",  "Left Click",         ClickType::LeftClick,        "left_click");
-    addIf(m_settings.showLeftDouble,  "L Dbl",    "Left Double-Click",  ClickType::LeftDoubleClick,  "left_double");
-    addIf(m_settings.showLeftDrag,    "L Drag",   "Left Drag (hold)",   ClickType::LeftDown,         "left_drag");
-    addIf(m_settings.showRightClick,  "R Click",  "Right Click",        ClickType::RightClick,       "right_click");
-    addIf(m_settings.showRightDouble, "R Dbl",    "Right Double-Click", ClickType::RightDoubleClick, "right_double");
-    addIf(m_settings.showRightDrag,   "R Drag",   "Right Drag (hold)",  ClickType::RightDown,        "right_drag");
-    addIf(m_settings.showMiddleClick, "M Click",  "Middle Click",       ClickType::MiddleClick,      "middle_click");
-    addIf(m_settings.showMiddleDouble,"M Dbl",    "Middle Double-Click",ClickType::MiddleDoubleClick,"middle_double");
-    addIf(m_settings.showScrollUp,    "Scroll ▲", "Scroll Up",          ClickType::ScrollUp,         "scroll_up");
-    addIf(m_settings.showScrollDown,  "Scroll ▼", "Scroll Down",        ClickType::ScrollDown,       "scroll_down");
+    addIf(m_settings.showLeftClick,   tr("L Click"),  tr("Left Click"),         ClickType::LeftClick,        "left_click");
+    addIf(m_settings.showLeftDouble,  tr("L Dbl"),    tr("Left Double-Click"),  ClickType::LeftDoubleClick,  "left_double");
+    addIf(m_settings.showLeftDrag,    tr("L Drag"),   tr("Left Drag (hold)"),   ClickType::LeftDown,         "left_drag");
+    addIf(m_settings.showRightClick,  tr("R Click"),  tr("Right Click"),        ClickType::RightClick,       "right_click");
+    addIf(m_settings.showRightDouble, tr("R Dbl"),    tr("Right Double-Click"), ClickType::RightDoubleClick, "right_double");
+    addIf(m_settings.showRightDrag,   tr("R Drag"),   tr("Right Drag (hold)"),  ClickType::RightDown,        "right_drag");
+    addIf(m_settings.showMiddleClick, tr("M Click"),  tr("Middle Click"),       ClickType::MiddleClick,      "middle_click");
+    addIf(m_settings.showMiddleDouble,tr("M Dbl"),    tr("Middle Double-Click"),ClickType::MiddleDoubleClick,"middle_double");
+    addIf(m_settings.showScrollUp,    tr("Scroll ▲"), tr("Scroll Up"),          ClickType::ScrollUp,         "scroll_up");
+    addIf(m_settings.showScrollDown,  tr("Scroll ▼"), tr("Scroll Down"),        ClickType::ScrollDown,       "scroll_down");
 
     if (m_settings.showScrollHoriz) {
-        addIf(true, "Scroll ◄", "Scroll Left",  ClickType::ScrollLeft,  "scroll_left");
-        addIf(true, "Scroll ►", "Scroll Right", ClickType::ScrollRight, "scroll_right");
+        addIf(true, tr("Scroll ◄"), tr("Scroll Left"),  ClickType::ScrollLeft,  "scroll_left");
+        addIf(true, tr("Scroll ►"), tr("Scroll Right"), ClickType::ScrollRight, "scroll_right");
     }
 
-    // Fill to next row boundary if needed
-    if (col > 0) {
-        while (col < COLS) {
+    // Advance to next row for the modifier buttons.
+    // Rectangle: pad the incomplete last row with spacers first.
+    if (m_settings.buttonLayout == ButtonLayout::Rectangle) {
+        while (col > 0 && col < COLS) {
             auto* spacer = new QWidget;
             spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-            grid->addWidget(spacer, row, col);
-            col++;
+            grid->addWidget(spacer, row, col++);
         }
-        row++;
     }
+    if (col > 0) { row++; col = 0; }
 
     // ── Modifier row ──────────────────────────────────────────
     auto modStyle = [](bool on) -> QString {
@@ -331,42 +340,50 @@ void MainWindow::rebuildButtons()
               "QPushButton:hover { background:#4A4A4A; border:1px solid #FFA600; color:#FFA600; }";
     };
 
-    col = 0;
+    // Place a modifier button using the same column-wrap logic as click buttons.
+    auto addMod = [&](QPushButton* btn) {
+        grid->addWidget(btn, row, col++);
+        if (col >= COLS) { col = 0; row++; }
+    };
+
+    const QSize modSize = (m_settings.buttonLayout == ButtonLayout::Vertical)
+                          ? QSize(44, 24) : QSize(64, 28);
+
     if (m_settings.showModCtrl) {
         m_ctrlBtn = new QPushButton("Ctrl");
         m_ctrlBtn->setCheckable(true);
-        m_ctrlBtn->setMinimumSize(64, 28);
-        m_ctrlBtn->setToolTip("Hold Ctrl modifier for next click");
+        m_ctrlBtn->setMinimumSize(modSize);
+        m_ctrlBtn->setToolTip(tr("Hold Ctrl modifier for next click"));
         m_ctrlBtn->setStyleSheet(modStyle(false));
         connect(m_ctrlBtn, &QPushButton::toggled, this, [this, modStyle](bool on){
             if (on) m_modifiers |= ModCtrl; else m_modifiers &= ~ModCtrl;
             m_ctrlBtn->setStyleSheet(modStyle(on));
         });
-        grid->addWidget(m_ctrlBtn, row, col++);
+        addMod(m_ctrlBtn);
     }
     if (m_settings.showModAlt) {
         m_altBtn = new QPushButton("Alt");
         m_altBtn->setCheckable(true);
-        m_altBtn->setMinimumSize(64, 28);
-        m_altBtn->setToolTip("Hold Alt modifier for next click");
+        m_altBtn->setMinimumSize(modSize);
+        m_altBtn->setToolTip(tr("Hold Alt modifier for next click"));
         m_altBtn->setStyleSheet(modStyle(false));
         connect(m_altBtn, &QPushButton::toggled, this, [this, modStyle](bool on){
             if (on) m_modifiers |= ModAlt; else m_modifiers &= ~ModAlt;
             m_altBtn->setStyleSheet(modStyle(on));
         });
-        grid->addWidget(m_altBtn, row, col++);
+        addMod(m_altBtn);
     }
     if (m_settings.showModShift) {
         m_shiftBtn = new QPushButton("Shift");
         m_shiftBtn->setCheckable(true);
-        m_shiftBtn->setMinimumSize(64, 28);
-        m_shiftBtn->setToolTip("Hold Shift modifier for next click");
+        m_shiftBtn->setMinimumSize(modSize);
+        m_shiftBtn->setToolTip(tr("Hold Shift modifier for next click"));
         m_shiftBtn->setStyleSheet(modStyle(false));
         connect(m_shiftBtn, &QPushButton::toggled, this, [this, modStyle](bool on){
             if (on) m_modifiers |= ModShift; else m_modifiers &= ~ModShift;
             m_shiftBtn->setStyleSheet(modStyle(on));
         });
-        grid->addWidget(m_shiftBtn, row, col++);
+        addMod(m_shiftBtn);
     }
 
     // Update selection highlight
@@ -381,8 +398,15 @@ ClickButton* MainWindow::makeButton(const QString& label, const QString& tooltip
 {
     auto* btn = new ClickButton(label, type, m_btnArea);
     btn->setToolTip(tooltip);
+    btn->setToolButtonStyle(m_settings.iconsOnly ? Qt::ToolButtonIconOnly
+                                                  : Qt::ToolButtonTextUnderIcon);
     btn->setIcon(QIcon(":/icons/" + iconName + ".svg"));
-    btn->setIconSize(QSize(18, 18));
+    if (m_settings.buttonLayout == ButtonLayout::Vertical) {
+        btn->setMinimumSize(44, 36);
+        btn->setIconSize(QSize(18, 18));
+    } else {
+        btn->setIconSize(QSize(24, 24));
+    }
     return btn;
 }
 
@@ -391,22 +415,22 @@ void MainWindow::buildTray()
     if (!QSystemTrayIcon::isSystemTrayAvailable()) return;
 
     m_tray = new QSystemTrayIcon(QIcon(":/icons/app.svg"), this);
-    m_tray->setToolTip("TrackClick Virtual Mouse");
+    m_tray->setToolTip(tr("TrackClick Virtual Mouse"));
 
     m_trayMenu = new QMenu(this);
     m_trayMenu->setStyleSheet(
         "QMenu { background:#2D2D2D; color:#FFF; border:1px solid #FFA600; }"
         "QMenu::item:selected { background:#FFA600; color:#1A1A1A; }"
     );
-    auto* showAct = m_trayMenu->addAction("Show / Hide");
+    m_showAct = m_trayMenu->addAction(tr("Show / Hide"));
     m_trayMenu->addSeparator();
-    auto* quitAct = m_trayMenu->addAction("Quit TrackClick");
+    m_quitAct = m_trayMenu->addAction(tr("Quit TrackClick"));
 
-    connect(showAct, &QAction::triggered, this, [this](){
+    connect(m_showAct, &QAction::triggered, this, [this](){
         setVisible(!isVisible());
         if (isVisible()) raise();
     });
-    connect(quitAct, &QAction::triggered, qApp, &QApplication::quit);
+    connect(m_quitAct, &QAction::triggered, qApp, &QApplication::quit);
     connect(m_tray, &QSystemTrayIcon::activated, this, &MainWindow::onTrayActivated);
 
     m_tray->setContextMenu(m_trayMenu);
@@ -492,22 +516,22 @@ void MainWindow::setClickType(ClickType t)
         b->setSelected(b->clickType() == t);
     }
 
-    // Update status
-    static const QHash<ClickType,QString> names{
-        {ClickType::LeftClick,        "Left Click"},
-        {ClickType::LeftDoubleClick,  "Left Double-Click"},
-        {ClickType::LeftDown,         "Left Drag (hold)"},
-        {ClickType::RightClick,       "Right Click"},
-        {ClickType::RightDoubleClick, "Right Double-Click"},
-        {ClickType::RightDown,        "Right Drag (hold)"},
-        {ClickType::MiddleClick,      "Middle Click"},
-        {ClickType::MiddleDoubleClick,"Middle Double-Click"},
-        {ClickType::ScrollUp,         "Scroll Up"},
-        {ClickType::ScrollDown,       "Scroll Down"},
-        {ClickType::ScrollLeft,       "Scroll Left"},
-        {ClickType::ScrollRight,      "Scroll Right"},
+    // Update status — not static so tr() reflects the active language
+    const QHash<ClickType,QString> names{
+        {ClickType::LeftClick,        tr("Left Click")},
+        {ClickType::LeftDoubleClick,  tr("Left Double-Click")},
+        {ClickType::LeftDown,         tr("Left Drag (hold)")},
+        {ClickType::RightClick,       tr("Right Click")},
+        {ClickType::RightDoubleClick, tr("Right Double-Click")},
+        {ClickType::RightDown,        tr("Right Drag (hold)")},
+        {ClickType::MiddleClick,      tr("Middle Click")},
+        {ClickType::MiddleDoubleClick,tr("Middle Double-Click")},
+        {ClickType::ScrollUp,         tr("Scroll Up")},
+        {ClickType::ScrollDown,       tr("Scroll Down")},
+        {ClickType::ScrollLeft,       tr("Scroll Left")},
+        {ClickType::ScrollRight,      tr("Scroll Right")},
     };
-    m_statusLabel->setText("Selected: " + names.value(t, "?"));
+    m_statusLabel->setText(tr("Selected: ") + names.value(t, "?"));
 }
 
 void MainWindow::onAutoToggled(bool on)
@@ -518,12 +542,12 @@ void MainWindow::onAutoToggled(bool on)
 
     if (on) {
         m_dwell->arm(m_selectedType, m_modifiers);
-        m_autoBtn->setText("AUTO ●");
-        m_titleLabel->setText("⬤  TrackClick  [AUTO]");
+        m_autoBtn->setText(tr("AUTO ●"));
+        m_titleLabel->setText(tr("⬤  TrackClick  [AUTO]"));
     } else {
         m_dwell->disarm();
-        m_autoBtn->setText("AUTO");
-        m_titleLabel->setText("⬤  TrackClick");
+        m_autoBtn->setText(tr("AUTO"));
+        m_titleLabel->setText(tr("⬤  TrackClick"));
         m_dwellBar->setValue(0);
     }
     adjustSize();
@@ -554,6 +578,7 @@ void MainWindow::onSettingsClicked()
 
 void MainWindow::applySettings(const AppSettings& s)
 {
+    const QString oldLanguage = m_settings.language;
     m_settings = s;
 
     m_dwell->setDwellMs(s.dwellMs);
@@ -565,7 +590,11 @@ void MainWindow::applySettings(const AppSettings& s)
     setWindowFlags(flags);
     show();
 
-    rebuildButtons();
+    if (s.language != oldLanguage) {
+        installLanguage(s.language);  // also calls retranslateUi → rebuildButtons
+    } else {
+        rebuildButtons();
+    }
 
     // Persist
     m_persist.setValue("dwell/ms",           s.dwellMs);
@@ -589,14 +618,17 @@ void MainWindow::applySettings(const AppSettings& s)
     m_persist.setValue("show/modAlt",        s.showModAlt);
     m_persist.setValue("show/modShift",      s.showModShift);
     m_persist.setValue("show/exit",          s.showExitButton);
+    m_persist.setValue("show/iconsOnly",     s.iconsOnly);
+    m_persist.setValue("show/buttonLayout",  static_cast<int>(s.buttonLayout));
+    m_persist.setValue("language",           s.language);
 }
 
 void MainWindow::onExitClicked()
 {
     hide();
     if (m_tray) {
-        m_tray->showMessage("TrackClick",
-            "Running in the system tray. Right-click the tray icon to quit.",
+        m_tray->showMessage(tr("TrackClick"),
+            tr("Running in the system tray. Right-click the tray icon to quit."),
             QSystemTrayIcon::Information, 2000);
     }
 }
@@ -624,4 +656,42 @@ void MainWindow::loadWindowSettings()
         QRect screen = QGuiApplication::primaryScreen()->availableGeometry();
         move(screen.right() - width() - 20, screen.top() + 40);
     }
+}
+
+// ─── Translation ──────────────────────────────────────────────────────────────
+void MainWindow::installLanguage(const QString& lang)
+{
+    if (m_translator) {
+        qApp->removeTranslator(m_translator);
+        delete m_translator;
+        m_translator = nullptr;
+    }
+
+    if (lang != "en") {
+        m_translator = loadBestTranslator(lang, this);
+        if (m_translator)
+            qApp->installTranslator(m_translator);
+    }
+
+    retranslateUi();
+}
+
+void MainWindow::retranslateUi()
+{
+    setWindowTitle(tr("TrackClick"));
+    if (m_titleLabel)
+        m_titleLabel->setText(m_autoEnabled ? tr("⬤  TrackClick  [AUTO]")
+                                            : tr("⬤  TrackClick"));
+    if (m_autoBtn) {
+        m_autoBtn->setText(m_autoEnabled ? tr("AUTO ●") : tr("AUTO"));
+        m_autoBtn->setToolTip(tr("Toggle AutoMouse dwell-clicking"));
+    }
+    if (m_settingsBtn) m_settingsBtn->setToolTip(tr("Settings"));
+    if (m_exitBtn)     m_exitBtn->setToolTip(tr("Hide to tray (right-click tray icon to quit)"));
+    if (m_tray)        m_tray->setToolTip(tr("TrackClick Virtual Mouse"));
+    if (m_showAct)     m_showAct->setText(tr("Show / Hide"));
+    if (m_quitAct)     m_quitAct->setText(tr("Quit TrackClick"));
+
+    rebuildButtons();          // recreates click/modifier buttons with active language
+    setClickType(m_selectedType); // refreshes the status label
 }

@@ -317,13 +317,13 @@ void MainWindow::rebuildButtons()
 
     auto* grid = new QGridLayout(m_btnArea);
     grid->setSpacing(4);
-    // Vertical modes use tight horizontal margins so two-col ≈ current one-col width
-    // and one-col ≈ half that.
+    // Vertical modes: total horizontal margin (1+1+1+1 = 4 px) equals the column
+    // spacing (4 px), so VerticalOne = exactly half the width of VerticalTwo.
     const bool isVerticalMode = (m_settings.buttonLayout == ButtonLayout::Vertical ||
                                   m_settings.buttonLayout == ButtonLayout::VerticalTwo);
     if (isVerticalMode) {
-        m_btnArea->setContentsMargins(2, 4, 2, 4);
-        grid->setContentsMargins(2, 4, 2, 4);
+        m_btnArea->setContentsMargins(1, 4, 1, 4);
+        grid->setContentsMargins(1, 4, 1, 4);
     } else {
         m_btnArea->setContentsMargins(6, 6, 6, 6);
         grid->setContentsMargins(4, 4, 4, 4);
@@ -394,9 +394,7 @@ void MainWindow::rebuildButtons()
         if (col >= COLS) { col = 0; row++; }
     };
 
-    const QSize modSize = (m_settings.buttonLayout == ButtonLayout::Vertical)   ? QSize(0,  22)
-                        : (m_settings.buttonLayout == ButtonLayout::VerticalTwo) ? QSize(18, 22)
-                        :                                                           QSize(32, 28);
+    const QSize modSize = isVerticalMode ? QSize(0, 22) : QSize(32, 28);
 
     if (m_settings.showModCtrl) {
         m_ctrlBtn = new QPushButton("Ctrl");
@@ -454,7 +452,7 @@ ClickButton* MainWindow::makeButton(const QString& label, const QString& tooltip
         btn->setMinimumSize(0, 36);
         btn->setIconSize(QSize(16, 16));
     } else if (m_settings.buttonLayout == ButtonLayout::VerticalTwo) {
-        btn->setMinimumSize(18, 36);
+        btn->setMinimumSize(0, 36);
         btn->setIconSize(QSize(16, 16));
     } else {
         btn->setIconSize(QSize(24, 24));

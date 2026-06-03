@@ -110,7 +110,7 @@ void SettingsDialog::buildUi()
     fl->setSpacing(6);
 
     m_dwellMs   = new QSpinBox; m_dwellMs->setRange(100, 10000); m_dwellMs->setSuffix(" ms");
-    m_sensitivPx= new QSpinBox; m_sensitivPx->setRange(1, 50);   m_sensitivPx->setSuffix(" px");
+    m_sensitivPx= new QSpinBox; m_sensitivPx->setRange(1, 100);   m_sensitivPx->setSuffix(" px");
     fl->addRow(tr("Dwell time:"),    m_dwellMs);
     fl->addRow(tr("Sensitivity:"),   m_sensitivPx);
     root->addWidget(grpDwell);

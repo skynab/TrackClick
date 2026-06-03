@@ -75,6 +75,22 @@ void ClickButton::setSelected(bool sel)
 {
     m_selected = sel;
     updateStyle();
+    updateIcon();
+}
+
+void ClickButton::setButtonIcon(const QString& iconName)
+{
+    m_iconName = iconName;
+    updateIcon();
+}
+
+void ClickButton::updateIcon()
+{
+    if (m_iconName.isEmpty()) return;
+    const QString path = m_selected
+        ? ":/icons/selected/" + m_iconName + ".svg"
+        : ":/icons/"          + m_iconName + ".svg";
+    setIcon(QIcon(path));
 }
 
 void ClickButton::updateStyle()
@@ -98,14 +114,14 @@ void ClickButton::updateStyle()
             "QToolButton {"
             "  background: #3A3A3A;"
             "  color: #DDDDDD;"
-            "  border: 1px solid #555555;"
+            "  border: 2px solid #555555;"
             "  border-radius: 5px;"
             "  font-size: 11px;"
             "  padding: 4px 2px;"
             "}"
             "QToolButton:hover {"
             "  background: #4A4A4A;"
-            "  border: 1px solid #FFA600;"
+            "  border: 2px solid #FFA600;"
             "  color: #FFA600;"
             "}"
             "QToolButton:pressed { background: #2A2A2A; }"
@@ -419,7 +435,7 @@ ClickButton* MainWindow::makeButton(const QString& label, const QString& tooltip
     btn->setToolTip(tooltip);
     btn->setToolButtonStyle(m_settings.iconsOnly ? Qt::ToolButtonIconOnly
                                                   : Qt::ToolButtonTextUnderIcon);
-    btn->setIcon(QIcon(":/icons/" + iconName + ".svg"));
+    btn->setButtonIcon(iconName);
     if (m_settings.buttonLayout == ButtonLayout::Vertical ||
         m_settings.buttonLayout == ButtonLayout::VerticalTwo) {
         btn->setMinimumSize(18, 36);

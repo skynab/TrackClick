@@ -99,6 +99,7 @@ public:
     ClickType clickType() const { return m_type; }
     void setSelected(bool sel);
     bool isSelected() const { return m_selected; }
+    void setButtonIcon(const QString& iconName);
 
 signals:
     void clickTypePressed(ClickType type);
@@ -106,5 +107,7 @@ signals:
 private:
     ClickType m_type;
     bool      m_selected = false;
+    QString   m_iconName;
     void updateStyle();
+    void updateIcon();
 };

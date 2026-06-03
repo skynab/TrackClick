@@ -18,6 +18,20 @@
         <file alias="scroll_left.svg">icons/scroll_left.svg</file>
         <file alias="scroll_right.svg">icons/scroll_right.svg</file>
     </qresource>
+    <qresource prefix="/icons/selected">
+        <file alias="left_click.svg">icons/selected/left_click.svg</file>
+        <file alias="left_double.svg">icons/selected/left_double.svg</file>
+        <file alias="left_drag.svg">icons/selected/left_drag.svg</file>
+        <file alias="right_click.svg">icons/selected/right_click.svg</file>
+        <file alias="right_double.svg">icons/selected/right_double.svg</file>
+        <file alias="right_drag.svg">icons/selected/right_drag.svg</file>
+        <file alias="middle_click.svg">icons/selected/middle_click.svg</file>
+        <file alias="middle_double.svg">icons/selected/middle_double.svg</file>
+        <file alias="scroll_up.svg">icons/selected/scroll_up.svg</file>
+        <file alias="scroll_down.svg">icons/selected/scroll_down.svg</file>
+        <file alias="scroll_left.svg">icons/selected/scroll_left.svg</file>
+        <file alias="scroll_right.svg">icons/selected/scroll_right.svg</file>
+    </qresource>
     <qresource prefix="/translations">
         <file alias="trackclick_fr.ts">translations/trackclick_fr.ts</file>
         <file alias="trackclick_es.ts">translations/trackclick_es.ts</file>

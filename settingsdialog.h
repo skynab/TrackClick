@@ -6,8 +6,10 @@
 #include <QDoubleSpinBox>
 #include <QDialogButtonBox>
 #include <QGroupBox>
-#include <QSlider>
 #include <QLabel>
+#include <QPushButton>
+#include <QSlider>
+#include <QTranslator>
 
 enum class ButtonLayout { Rectangle, Horizontal, Vertical, VerticalTwo };
 
@@ -54,15 +56,45 @@ class SettingsDialog : public QDialog
 {
     Q_OBJECT
 public:
-    explicit SettingsDialog(const AppSettings& current, QWidget* parent = nullptr);
+    // appTranslator — the translator currently installed by MainWindow (may be
+    // nullptr for English).  The dialog removes it from qApp for its lifetime
+    // so that preview translators have sole control, then restores it on close.
+    explicit SettingsDialog(const AppSettings& current,
+                            QTranslator* appTranslator = nullptr,
+                            QWidget* parent = nullptr);
     AppSettings settings() const { return m_settings; }
+
+protected:
+    void changeEvent(QEvent* e) override;
+    void done(int result) override;
 
 private:
     void buildUi();
     void loadFrom(const AppSettings& s);
     AppSettings readUi() const;
+    void retranslateUi();
+    void applyLanguagePreview(const QString& lang);
+    void cleanupPreviewTranslator();
 
-    AppSettings m_settings;
+    AppSettings  m_settings;
+    QTranslator* m_previewTranslator = nullptr;
+    QTranslator* m_appTranslator     = nullptr; // borrowed from MainWindow
+
+    // ── Group boxes (titles need retranslation) ───────────────
+    QGroupBox* m_grpDwell = nullptr;
+    QGroupBox* m_grpBtns  = nullptr;
+    QGroupBox* m_grpWin   = nullptr;
+
+    // ── Form-row labels (need retranslation) ──────────────────
+    QLabel* m_lblDwellTime   = nullptr;
+    QLabel* m_lblSensitivity = nullptr;
+    QLabel* m_lblOpacity     = nullptr;
+    QLabel* m_lblBtnLayout   = nullptr;
+    QLabel* m_lblLanguage    = nullptr;
+#ifdef Q_OS_MAC
+    QLabel*      m_lblPermissions   = nullptr;
+    QPushButton* m_btnAccessibility = nullptr;
+#endif
 
     // Dwell
     QSpinBox*    m_dwellMs;

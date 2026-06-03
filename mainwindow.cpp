@@ -625,7 +625,7 @@ void MainWindow::onDwellFired(QPoint /*pos*/, ClickType type)
 
 void MainWindow::onSettingsClicked()
 {
-    SettingsDialog dlg(m_settings, this);
+    SettingsDialog dlg(m_settings, m_translator, this);
     if (dlg.exec() == QDialog::Accepted) {
         applySettings(dlg.settings());
     }

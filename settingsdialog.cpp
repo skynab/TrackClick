@@ -1,4 +1,7 @@
 #include "settingsdialog.h"
+#include "translations/tsparser.h"
+#include <QApplication>
+#include <QEvent>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QGridLayout>
@@ -87,14 +90,34 @@ QPushButton[flat=true] {
 QPushButton[flat=true]:hover { background: #4D4D4D; }
 )";
 
-SettingsDialog::SettingsDialog(const AppSettings& current, QWidget* parent)
-    : QDialog(parent), m_settings(current)
+SettingsDialog::SettingsDialog(const AppSettings& current,
+                               QTranslator* appTranslator,
+                               QWidget* parent)
+    : QDialog(parent), m_settings(current), m_appTranslator(appTranslator)
 {
     setWindowTitle(tr("TrackClick — Settings"));
     setModal(true);
     setStyleSheet(STYLE);
     buildUi();
     loadFrom(current);
+
+    // Seize sole control of the qApp translator for the dialog's lifetime.
+    // Removing MainWindow's translator here ensures that when the user picks
+    // English the preview system can install nothing and tr() correctly falls
+    // through to source strings — even if the app was previously in another
+    // language.  Screen repaints are deferred until the event loop runs, so
+    // the two rapid LanguageChange events below produce no visible flicker.
+    if (m_appTranslator)
+        qApp->removeTranslator(m_appTranslator);
+
+    // Warm up the preview for the starting language so the dialog reflects
+    // the current language immediately.  Connected AFTER this call so the
+    // combo's initial value doesn't fire a duplicate preview.
+    applyLanguagePreview(current.language);
+
+    connect(m_cmbLanguage, &QComboBox::currentIndexChanged, this, [this](){
+        applyLanguagePreview(m_cmbLanguage->currentData().toString());
+    });
 
     connect(m_buttons, &QDialogButtonBox::accepted, this, [this](){
         m_settings = readUi();
@@ -103,6 +126,109 @@ SettingsDialog::SettingsDialog(const AppSettings& current, QWidget* parent)
     connect(m_buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
 }
 
+// ── Language preview ──────────────────────────────────────────────────────────
+
+void SettingsDialog::applyLanguagePreview(const QString& lang)
+{
+    // Swap only the preview translator — do NOT restore m_appTranslator here.
+    // m_appTranslator stays out of qApp for the entire dialog lifetime so that
+    // choosing English (no preview translator) correctly shows English rather
+    // than falling back to the previously-active language.
+    if (m_previewTranslator) {
+        qApp->removeTranslator(m_previewTranslator);
+        delete m_previewTranslator;
+        m_previewTranslator = nullptr;
+    }
+
+    if (lang != "en") {
+        m_previewTranslator = loadBestTranslator(lang, this);
+        if (m_previewTranslator)
+            qApp->installTranslator(m_previewTranslator);
+    }
+    // Qt automatically broadcasts QEvent::LanguageChange to this dialog when
+    // the translator list changes, which triggers changeEvent → retranslateUi().
+}
+
+void SettingsDialog::cleanupPreviewTranslator()
+{
+    if (m_previewTranslator) {
+        qApp->removeTranslator(m_previewTranslator);
+        delete m_previewTranslator;
+        m_previewTranslator = nullptr;
+    }
+    // Hand the app translator back to qApp so that after the dialog closes
+    // the main window reverts to its previous language (on Cancel) or
+    // MainWindow::installLanguage can remove and replace it (on Accept).
+    if (m_appTranslator) {
+        qApp->installTranslator(m_appTranslator);
+        m_appTranslator = nullptr; // ownership stays with MainWindow
+    }
+}
+
+void SettingsDialog::done(int result)
+{
+    // Always clean up before closing so that MainWindow::installLanguage()
+    // (called on Accept) starts with only its own translator installed, and
+    // on Cancel the app reverts to whatever translator was active before the
+    // dialog opened.
+    cleanupPreviewTranslator();
+    QDialog::done(result);
+}
+
+// ── Retranslation ─────────────────────────────────────────────────────────────
+
+void SettingsDialog::changeEvent(QEvent* e)
+{
+    QDialog::changeEvent(e);
+    if (e->type() == QEvent::LanguageChange)
+        retranslateUi();
+}
+
+void SettingsDialog::retranslateUi()
+{
+    setWindowTitle(tr("TrackClick — Settings"));
+
+    m_grpDwell->setTitle(tr("AutoMouse / Dwell Clicking"));
+    m_lblDwellTime->setText(tr("Dwell time:"));
+    m_lblSensitivity->setText(tr("Sensitivity:"));
+#ifdef Q_OS_MAC
+    m_lblPermissions->setText(tr("Permissions:"));
+    m_btnAccessibility->setText(tr("Open Accessibility Settings…"));
+#endif
+
+    m_grpBtns->setTitle(tr("Visible Buttons"));
+    m_chkLeftClick->setText(tr("Left Click"));
+    m_chkLeftDouble->setText(tr("Left Double"));
+    m_chkLeftDrag->setText(tr("Left Drag"));
+    m_chkRightClick->setText(tr("Right Click"));
+    m_chkRightDouble->setText(tr("Right Double"));
+    m_chkRightDrag->setText(tr("Right Drag"));
+    m_chkMiddleClick->setText(tr("Middle Click"));
+    m_chkMiddleDouble->setText(tr("Middle Double"));
+    m_chkScrollUp->setText(tr("Scroll Up"));
+    m_chkScrollDown->setText(tr("Scroll Down"));
+    m_chkScrollHoriz->setText(tr("Scroll Left/Right"));
+    m_chkModCtrl->setText(tr("Ctrl modifier"));
+    m_chkModAlt->setText(tr("Alt modifier"));
+    m_chkModShift->setText(tr("Shift modifier"));
+    m_chkExitButton->setText(tr("Exit button"));
+
+    m_grpWin->setTitle(tr("Window"));
+    m_chkAlwaysOnTop->setText(tr("Always on top"));
+    m_chkStartMinimized->setText(tr("Start minimized to tray"));
+    m_chkAudio->setText(tr("Audio feedback on click"));
+    m_chkIconsOnly->setText(tr("Icons only (hide button labels)"));
+    m_lblOpacity->setText(tr("Opacity:"));
+    m_lblBtnLayout->setText(tr("Button layout:"));
+    m_cmbLayout->setItemText(0, tr("Rectangle (grid)"));
+    m_cmbLayout->setItemText(1, tr("Horizontal (one row)"));
+    m_cmbLayout->setItemText(2, tr("Vertical (one column)"));
+    m_cmbLayout->setItemText(3, tr("Vertical (two columns)"));
+    m_lblLanguage->setText(tr("Language:"));
+}
+
+// ── UI construction ───────────────────────────────────────────────────────────
+
 void SettingsDialog::buildUi()
 {
     auto* root = new QVBoxLayout(this);
@@ -110,33 +236,35 @@ void SettingsDialog::buildUi()
     root->setContentsMargins(14, 14, 14, 14);
 
     // ── Dwell / AutoMouse ─────────────────────────────────────
-    auto* grpDwell = new QGroupBox(tr("AutoMouse / Dwell Clicking"));
-    auto* fl       = new QFormLayout(grpDwell);
+    m_grpDwell   = new QGroupBox(tr("AutoMouse / Dwell Clicking"));
+    auto* fl     = new QFormLayout(m_grpDwell);
     fl->setSpacing(6);
 
-    m_dwellMs   = new QSpinBox; m_dwellMs->setRange(100, 10000); m_dwellMs->setSuffix(" ms");
-    m_sensitivPx= new QSpinBox; m_sensitivPx->setRange(1, 100);   m_sensitivPx->setSuffix(" px");
-    fl->addRow(tr("Dwell time:"),    m_dwellMs);
-    fl->addRow(tr("Sensitivity:"),   m_sensitivPx);
+    m_dwellMs    = new QSpinBox; m_dwellMs->setRange(100, 10000); m_dwellMs->setSuffix(" ms");
+    m_sensitivPx = new QSpinBox; m_sensitivPx->setRange(1, 100);  m_sensitivPx->setSuffix(" px");
+
+    m_lblDwellTime   = new QLabel(tr("Dwell time:"));
+    m_lblSensitivity = new QLabel(tr("Sensitivity:"));
+    fl->addRow(m_lblDwellTime,   m_dwellMs);
+    fl->addRow(m_lblSensitivity, m_sensitivPx);
 
 #ifdef Q_OS_MAC
-    {
-        auto* btn = new QPushButton(tr("Open Accessibility Settings…"));
-        btn->setProperty("flat", true);
-        connect(btn, &QPushButton::clicked, this, [](){
-            QDesktopServices::openUrl(QUrl(
-                "x-apple.systempreferences:"
-                "com.apple.preference.security?Privacy_Accessibility"));
-        });
-        fl->addRow(tr("Permissions:"), btn);
-    }
+    m_lblPermissions   = new QLabel(tr("Permissions:"));
+    m_btnAccessibility = new QPushButton(tr("Open Accessibility Settings…"));
+    m_btnAccessibility->setProperty("flat", true);
+    connect(m_btnAccessibility, &QPushButton::clicked, this, [](){
+        QDesktopServices::openUrl(QUrl(
+            "x-apple.systempreferences:"
+            "com.apple.preference.security?Privacy_Accessibility"));
+    });
+    fl->addRow(m_lblPermissions, m_btnAccessibility);
 #endif
 
-    root->addWidget(grpDwell);
+    root->addWidget(m_grpDwell);
 
     // ── Button Visibility ─────────────────────────────────────
-    auto* grpBtns = new QGroupBox(tr("Visible Buttons"));
-    auto* grid    = new QGridLayout(grpBtns);
+    m_grpBtns    = new QGroupBox(tr("Visible Buttons"));
+    auto* grid   = new QGridLayout(m_grpBtns);
     grid->setSpacing(6);
 
     m_chkLeftClick   = new QCheckBox(tr("Left Click"));
@@ -167,11 +295,11 @@ void SettingsDialog::buildUi()
     addChk(m_chkScrollDown);  addChk(m_chkScrollHoriz); addChk(m_chkModCtrl);
     addChk(m_chkModAlt);      addChk(m_chkModShift);    addChk(m_chkExitButton);
 
-    root->addWidget(grpBtns);
+    root->addWidget(m_grpBtns);
 
     // ── Window ────────────────────────────────────────────────
-    auto* grpWin = new QGroupBox(tr("Window"));
-    auto* wfl    = new QFormLayout(grpWin);
+    m_grpWin     = new QGroupBox(tr("Window"));
+    auto* wfl    = new QFormLayout(m_grpWin);
     wfl->setSpacing(6);
 
     auto* opRow = new QHBoxLayout;
@@ -210,14 +338,18 @@ void SettingsDialog::buildUi()
     m_cmbLanguage->addItem("日本語",    "ja");
     m_cmbLanguage->addItem("한국어",    "ko");
 
-    wfl->addRow(tr("Opacity:"), opRow);
+    m_lblOpacity   = new QLabel(tr("Opacity:"));
+    m_lblBtnLayout = new QLabel(tr("Button layout:"));
+    m_lblLanguage  = new QLabel(tr("Language:"));
+
+    wfl->addRow(m_lblOpacity, opRow);
     wfl->addRow(m_chkAlwaysOnTop);
     wfl->addRow(m_chkStartMinimized);
     wfl->addRow(m_chkAudio);
     wfl->addRow(m_chkIconsOnly);
-    wfl->addRow(tr("Button layout:"), m_cmbLayout);
-    wfl->addRow(tr("Language:"),      m_cmbLanguage);
-    root->addWidget(grpWin);
+    wfl->addRow(m_lblBtnLayout, m_cmbLayout);
+    wfl->addRow(m_lblLanguage,  m_cmbLanguage);
+    root->addWidget(m_grpWin);
 
     // ── Buttons ───────────────────────────────────────────────
     m_buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);

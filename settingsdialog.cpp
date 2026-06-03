@@ -6,12 +6,16 @@
 #include <QGroupBox>
 #include <QLabel>
 #include <QPushButton>
+#ifdef Q_OS_MAC
+#  include <QDesktopServices>
+#  include <QUrl>
+#endif
 
 // ── TrackIR palette ──────────────────────────────────────────
 static const char* STYLE = R"(
 QDialog {
     background: #2D2D2D;
-    color: #FFFFFF;
+    color: #979797;
     font-family: "Segoe UI", Arial, sans-serif;
     font-size: 12px;
 }
@@ -27,20 +31,21 @@ QGroupBox::title {
     left: 8px;
     padding: 0 4px;
 }
-QLabel  { color: #FFFFFF; }
-QCheckBox { color: #FFFFFF; spacing: 6px; }
+QLabel  { color: #979797; }
+QCheckBox { color: #979797; spacing: 6px; }
 QCheckBox::indicator {
-    width: 14px; height: 14px;
-    border: 1px solid #FFA600;
-    border-radius: 2px;
-    background: #2D2D2D;
+    width: 25px; height: 11px;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    image: url(:/icons/toggle_off.svg);
 }
 QCheckBox::indicator:checked {
-    image: url(:/icons/checkmark.svg);
+    image: url(:/icons/toggle_on.svg);
 }
 QSpinBox, QDoubleSpinBox, QComboBox {
     background: #1A1A1A;
-    color: #FFA600;
+    color: #979797;
     border: 1px solid #555;
     border-radius: 3px;
     padding: 2px 4px;
@@ -48,8 +53,8 @@ QSpinBox, QDoubleSpinBox, QComboBox {
 QComboBox::drop-down { border: none; width: 18px; }
 QComboBox QAbstractItemView {
     background: #2D2D2D;
-    color: #FFA600;
-    border: 1px solid #FFA600;
+    color: #979797;
+    border: 1px solid #555;
     selection-background-color: #FFA600;
     selection-color: #1A1A1A;
 }
@@ -113,6 +118,20 @@ void SettingsDialog::buildUi()
     m_sensitivPx= new QSpinBox; m_sensitivPx->setRange(1, 100);   m_sensitivPx->setSuffix(" px");
     fl->addRow(tr("Dwell time:"),    m_dwellMs);
     fl->addRow(tr("Sensitivity:"),   m_sensitivPx);
+
+#ifdef Q_OS_MAC
+    {
+        auto* btn = new QPushButton(tr("Open Accessibility Settings…"));
+        btn->setProperty("flat", true);
+        connect(btn, &QPushButton::clicked, this, [](){
+            QDesktopServices::openUrl(QUrl(
+                "x-apple.systempreferences:"
+                "com.apple.preference.security?Privacy_Accessibility"));
+        });
+        fl->addRow(tr("Permissions:"), btn);
+    }
+#endif
+
     root->addWidget(grpDwell);
 
     // ── Button Visibility ─────────────────────────────────────
@@ -184,6 +203,7 @@ void SettingsDialog::buildUi()
     m_cmbLanguage->setSizeAdjustPolicy(QComboBox::AdjustToContents);
     m_cmbLanguage->setMinimumWidth(130);
     m_cmbLanguage->addItem("English",  "en");
+    m_cmbLanguage->addItem("Čeština",  "cs");
     m_cmbLanguage->addItem("Français", "fr");
     m_cmbLanguage->addItem("Español",  "es");
     m_cmbLanguage->addItem("中文简体",  "zh_CN");

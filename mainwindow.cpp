@@ -135,7 +135,7 @@ void ClickButton::updateStyle()
 // ─────────────────────────────────────────────────────────────
 //  MainWindow
 // ─────────────────────────────────────────────────────────────
-MainWindow::MainWindow(QWidget* parent)
+MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     : QWidget(parent)
     , m_persist("TrackClick", "TrackClick")
 {
@@ -164,6 +164,13 @@ MainWindow::MainWindow(QWidget* parent)
     m_settings.iconsOnly       = m_persist.value("show/iconsOnly",   false).toBool();
     m_settings.buttonLayout    = static_cast<ButtonLayout>(m_persist.value("show/buttonLayout", 0).toInt());
     m_settings.language        = m_persist.value("language",          "en").toString();
+
+    // Adopt any translator already installed at startup so installLanguage()
+    // can remove it when the user later switches languages (e.g. back to English).
+    if (startupTranslator) {
+        m_translator = startupTranslator;
+        m_translator->setParent(this);   // transfer ownership from QApplication
+    }
 
     // Window flags: frameless, stays on top
     Qt::WindowFlags flags = Qt::Window | Qt::FramelessWindowHint | Qt::Tool;

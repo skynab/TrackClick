@@ -45,6 +45,8 @@
     <message><source>AutoMouse / Dwell Clicking</source><translation>AutoRatón / Clic por permanencia</translation></message>
     <message><source>Dwell time:</source><translation>Tiempo de permanencia:</translation></message>
     <message><source>Sensitivity:</source><translation>Sensibilidad:</translation></message>
+    <message><source>Permissions:</source><translation>Permisos:</translation></message>
+    <message><source>Open Accessibility Settings…</source><translation>Abrir configuración de accesibilidad…</translation></message>
     <message><source>Visible Buttons</source><translation>Botones visibles</translation></message>
     <message><source>Left Click</source><translation>Clic izquierdo</translation></message>
     <message><source>Left Double</source><translation>Doble izquierdo</translation></message>

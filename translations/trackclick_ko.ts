@@ -45,6 +45,8 @@
     <message><source>AutoMouse / Dwell Clicking</source><translation>자동 마우스 / 머물기 클릭</translation></message>
     <message><source>Dwell time:</source><translation>머물기 시간:</translation></message>
     <message><source>Sensitivity:</source><translation>감도:</translation></message>
+    <message><source>Permissions:</source><translation>권한:</translation></message>
+    <message><source>Open Accessibility Settings…</source><translation>손쉬운 사용 설정 열기…</translation></message>
     <message><source>Visible Buttons</source><translation>표시 버튼</translation></message>
     <message><source>Left Click</source><translation>왼쪽 클릭</translation></message>
     <message><source>Left Double</source><translation>왼쪽 더블 클릭</translation></message>

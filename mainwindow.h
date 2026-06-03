@@ -20,7 +20,7 @@ class MainWindow : public QWidget
 {
     Q_OBJECT
 public:
-    explicit MainWindow(QWidget* parent = nullptr);
+    explicit MainWindow(QTranslator* startupTranslator = nullptr, QWidget* parent = nullptr);
     ~MainWindow() override = default;
 
 protected:

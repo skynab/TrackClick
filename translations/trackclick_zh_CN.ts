@@ -45,6 +45,8 @@
     <message><source>AutoMouse / Dwell Clicking</source><translation>自动鼠标 / 悬停点击</translation></message>
     <message><source>Dwell time:</source><translation>悬停时间：</translation></message>
     <message><source>Sensitivity:</source><translation>灵敏度：</translation></message>
+    <message><source>Permissions:</source><translation>权限：</translation></message>
+    <message><source>Open Accessibility Settings…</source><translation>打开辅助功能设置…</translation></message>
     <message><source>Visible Buttons</source><translation>可见按钮</translation></message>
     <message><source>Left Click</source><translation>左键单击</translation></message>
     <message><source>Left Double</source><translation>左键双击</translation></message>

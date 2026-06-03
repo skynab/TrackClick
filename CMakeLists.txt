@@ -57,6 +57,7 @@ install(TARGETS TrackClick DESTINATION bin)
 
 # ── Translations ──────────────────────────────────────────────────────────────
 set(TS_FILES
+    translations/trackclick_cs.ts
     translations/trackclick_fr.ts
     translations/trackclick_es.ts
     translations/trackclick_zh_CN.ts

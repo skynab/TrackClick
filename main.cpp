@@ -17,12 +17,16 @@ int main(int argc, char* argv[])
     app.setOrganizationName("TrackClick");
     app.setOrganizationDomain("trackclick.app");
 
-    // Install translator for the saved language before any UI is created
+    // Install translator for the saved language before any UI is created.
+    // The pointer is passed to MainWindow so it can remove it when the user
+    // switches languages (e.g. back to English); MainWindow takes ownership.
+    QTranslator* startupTranslator = nullptr;
     {
         QSettings s("TrackClick", "TrackClick");
         const QString lang = s.value("language", "en").toString();
-        if (QTranslator* t = loadBestTranslator(lang, &app))
-            app.installTranslator(t);
+        startupTranslator = loadBestTranslator(lang, &app);
+        if (startupTranslator)
+            app.installTranslator(startupTranslator);
     }
 
     // Don't quit when last window is hidden (keep tray alive)
@@ -36,7 +40,7 @@ int main(int argc, char* argv[])
                 "but you won't be able to hide it to the tray."));
     }
 
-    MainWindow w;
+    MainWindow w(startupTranslator);
     w.show();
 
     return app.exec();

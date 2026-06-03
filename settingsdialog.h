@@ -9,7 +9,7 @@
 #include <QSlider>
 #include <QLabel>
 
-enum class ButtonLayout { Rectangle, Horizontal, Vertical };
+enum class ButtonLayout { Rectangle, Horizontal, Vertical, VerticalTwo };
 
 struct AppSettings {
     // Dwell / AutoMouse

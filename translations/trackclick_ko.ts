@@ -4,12 +4,6 @@
 <context>
     <name>MainWindow</name>
     <message><source>TrackClick</source><translation>TrackClick</translation></message>
-    <message><source>⬤  TrackClick</source><translation>⬤  TrackClick</translation></message>
-    <message><source>⬤  TrackClick  [AUTO]</source><translation>⬤  TrackClick  [자동]</translation></message>
-    <message><source>AUTO</source><translation>자동</translation></message>
-    <message><source>AUTO ●</source><translation>자동 ●</translation></message>
-    <message><source>Toggle AutoMouse dwell-clicking</source><translation>자동 마우스 머물기 클릭 전환</translation></message>
-    <message><source>Settings</source><translation>설정</translation></message>
     <message><source>Hide to tray (right-click tray icon to quit)</source><translation>트레이에 숨기기 (오른쪽 클릭으로 종료)</translation></message>
     <message><source>TrackClick Virtual Mouse</source><translation>TrackClick 가상 마우스</translation></message>
     <message><source>Show / Hide</source><translation>표시 / 숨기기</translation></message>
@@ -76,6 +70,7 @@
     <message><source>Button layout:</source><translation>버튼 레이아웃:</translation></message>
     <message><source>Rectangle (grid)</source><translation>직사각형 (그리드)</translation></message>
     <message><source>Horizontal (one row)</source><translation>가로 (한 줄)</translation></message>
+    <message><source>Vertical (two columns)</source><translation>세로 (두 열)</translation></message>
     <message><source>Vertical (one column)</source><translation>세로 (한 열)</translation></message>
     <message><source>Language:</source><translation>언어:</translation></message>
 </context>

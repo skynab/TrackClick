@@ -4,12 +4,6 @@
 <context>
     <name>MainWindow</name>
     <message><source>TrackClick</source><translation>TrackClick</translation></message>
-    <message><source>⬤  TrackClick</source><translation>⬤  TrackClick</translation></message>
-    <message><source>⬤  TrackClick  [AUTO]</source><translation>⬤  TrackClick  [自动]</translation></message>
-    <message><source>AUTO</source><translation>自动</translation></message>
-    <message><source>AUTO ●</source><translation>自动 ●</translation></message>
-    <message><source>Toggle AutoMouse dwell-clicking</source><translation>切换自动鼠标悬停点击</translation></message>
-    <message><source>Settings</source><translation>设置</translation></message>
     <message><source>Hide to tray (right-click tray icon to quit)</source><translation>最小化到托盘（右键单击托盘图标退出）</translation></message>
     <message><source>TrackClick Virtual Mouse</source><translation>TrackClick 虚拟鼠标</translation></message>
     <message><source>Show / Hide</source><translation>显示 / 隐藏</translation></message>
@@ -76,6 +70,7 @@
     <message><source>Button layout:</source><translation>按钮布局：</translation></message>
     <message><source>Rectangle (grid)</source><translation>矩形（网格）</translation></message>
     <message><source>Horizontal (one row)</source><translation>水平（单行）</translation></message>
+    <message><source>Vertical (two columns)</source><translation>垂直（双列）</translation></message>
     <message><source>Vertical (one column)</source><translation>垂直（单列）</translation></message>
     <message><source>Language:</source><translation>语言：</translation></message>
 </context>

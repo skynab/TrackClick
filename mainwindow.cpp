@@ -62,7 +62,7 @@ ClickButton::ClickButton(const QString& label, ClickType type, QWidget* parent)
 {
     setText(label);
     setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
-    setMinimumSize(64, 44);
+    setMinimumSize(32, 44);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     setCheckable(false);
     updateStyle();
@@ -179,24 +179,33 @@ void MainWindow::buildUi()
 
     // ── Title bar ─────────────────────────────────────────────
     m_titleBar = new QWidget;
+    m_titleBar->setObjectName("titleBar");
     m_titleBar->setFixedHeight(30);
     m_titleBar->setStyleSheet(
-        "QWidget { background: #1A1A1A; border-bottom: 2px solid #FFA600; }"
-        "QLabel  { color: #FFA600; font-weight: bold; font-size: 12px; background: transparent; }"
+        "#titleBar { background: #1A1A1A; border-bottom: 2px solid #FFA600; }"
+        "QLabel    { color: #FFA600; font-weight: bold; font-size: 12px;"
+        "            background: transparent; border: none; }"
     );
     auto* tbLayout = new QHBoxLayout(m_titleBar);
     tbLayout->setContentsMargins(8, 0, 4, 0);
     tbLayout->setSpacing(4);
 
-    m_titleLabel = new QLabel(tr("⬤  TrackClick"));
+    m_titleIcon = new QLabel;
+    m_titleIcon->setPixmap(QIcon(":/icons/app.svg").pixmap(16, 16));
+    m_titleIcon->setFixedSize(20, 20);
+    m_titleIcon->setAlignment(Qt::AlignCenter);
+    tbLayout->addWidget(m_titleIcon);
+
+    m_titleLabel = new QLabel(tr("TrackClick"));
+    m_titleLabel->setMinimumWidth(0);  // let it clip rather than force window wider
     tbLayout->addWidget(m_titleLabel, 1);
 
     // Auto button
-    m_autoBtn = new QPushButton("AUTO");
+    m_autoBtn = new QPushButton;
     m_autoBtn->setIcon(QIcon(":/icons/auto.svg"));
-    m_autoBtn->setIconSize(QSize(14, 14));
+    m_autoBtn->setIconSize(QSize(18, 18));
     m_autoBtn->setCheckable(true);
-    m_autoBtn->setFixedSize(48, 22);
+    m_autoBtn->setFixedSize(38, 22);
     m_autoBtn->setToolTip(tr("Toggle AutoMouse dwell-clicking"));
     m_autoBtn->setStyleSheet(
         "QPushButton { background:#3A3A3A; color:#AAA; border:1px solid #555; border-radius:3px; font-size:10px; font-weight:bold; }"
@@ -210,7 +219,7 @@ void MainWindow::buildUi()
     m_settingsBtn = new QPushButton;
     m_settingsBtn->setIcon(QIcon(":/icons/settings.svg"));
     m_settingsBtn->setIconSize(QSize(16, 16));
-    m_settingsBtn->setFixedSize(26, 22);
+    m_settingsBtn->setFixedSize(22, 22);
     m_settingsBtn->setToolTip(tr("Settings"));
     m_settingsBtn->setStyleSheet(
         "QPushButton { background:#3A3A3A; color:#CCC; border:1px solid #555; border-radius:3px; font-size:14px; }"
@@ -224,7 +233,7 @@ void MainWindow::buildUi()
     m_exitBtn = new QPushButton;
     m_exitBtn->setIcon(QIcon(":/icons/close.svg"));
     m_exitBtn->setIconSize(QSize(14, 14));
-    m_exitBtn->setFixedSize(26, 22);
+    m_exitBtn->setFixedSize(22, 22);
     m_exitBtn->setToolTip(tr("Hide to tray (right-click tray icon to quit)"));
     m_exitBtn->setStyleSheet(
         "QPushButton { background:#3A3A3A; color:#CCC; border:1px solid #555; border-radius:3px; font-size:12px; }"
@@ -280,12 +289,23 @@ void MainWindow::rebuildButtons()
 
     auto* grid = new QGridLayout(m_btnArea);
     grid->setSpacing(4);
-    grid->setContentsMargins(4, 4, 4, 4);
+    // Vertical modes use tight horizontal margins so two-col ≈ current one-col width
+    // and one-col ≈ half that.
+    const bool isVerticalMode = (m_settings.buttonLayout == ButtonLayout::Vertical ||
+                                  m_settings.buttonLayout == ButtonLayout::VerticalTwo);
+    if (isVerticalMode) {
+        m_btnArea->setContentsMargins(2, 4, 2, 4);
+        grid->setContentsMargins(2, 4, 2, 4);
+    } else {
+        m_btnArea->setContentsMargins(6, 6, 6, 6);
+        grid->setContentsMargins(4, 4, 4, 4);
+    }
 
     int row = 0, col = 0;
-    const int COLS = (m_settings.buttonLayout == ButtonLayout::Vertical)  ? 1
-                   : (m_settings.buttonLayout == ButtonLayout::Horizontal) ? 99
-                   :                                                          3;
+    const int COLS = (m_settings.buttonLayout == ButtonLayout::Vertical)    ? 1
+                   : (m_settings.buttonLayout == ButtonLayout::VerticalTwo)  ? 2
+                   : (m_settings.buttonLayout == ButtonLayout::Horizontal)   ? 99
+                   :                                                            3;
 
     auto add = [&](ClickButton* btn){
         m_clickButtons.append(btn);
@@ -346,8 +366,7 @@ void MainWindow::rebuildButtons()
         if (col >= COLS) { col = 0; row++; }
     };
 
-    const QSize modSize = (m_settings.buttonLayout == ButtonLayout::Vertical)
-                          ? QSize(44, 24) : QSize(64, 28);
+    const QSize modSize = isVerticalMode ? QSize(18, 22) : QSize(32, 28);
 
     if (m_settings.showModCtrl) {
         m_ctrlBtn = new QPushButton("Ctrl");
@@ -401,9 +420,10 @@ ClickButton* MainWindow::makeButton(const QString& label, const QString& tooltip
     btn->setToolButtonStyle(m_settings.iconsOnly ? Qt::ToolButtonIconOnly
                                                   : Qt::ToolButtonTextUnderIcon);
     btn->setIcon(QIcon(":/icons/" + iconName + ".svg"));
-    if (m_settings.buttonLayout == ButtonLayout::Vertical) {
-        btn->setMinimumSize(44, 36);
-        btn->setIconSize(QSize(18, 18));
+    if (m_settings.buttonLayout == ButtonLayout::Vertical ||
+        m_settings.buttonLayout == ButtonLayout::VerticalTwo) {
+        btn->setMinimumSize(18, 36);
+        btn->setIconSize(QSize(16, 16));
     } else {
         btn->setIconSize(QSize(24, 24));
     }
@@ -542,15 +562,13 @@ void MainWindow::onAutoToggled(bool on)
 
     if (on) {
         m_dwell->arm(m_selectedType, m_modifiers);
-        m_autoBtn->setText(tr("AUTO ●"));
-        m_titleLabel->setText(tr("⬤  TrackClick  [AUTO]"));
     } else {
         m_dwell->disarm();
-        m_autoBtn->setText(tr("AUTO"));
-        m_titleLabel->setText(tr("⬤  TrackClick"));
         m_dwellBar->setValue(0);
     }
-    adjustSize();
+    // Adjust height only — keeps the window width stable so the dwell bar
+    // simply fills whatever width the window already has.
+    resize(width(), sizeHint().height());
 }
 
 void MainWindow::onDwellProgress(float frac)
@@ -680,12 +698,9 @@ void MainWindow::retranslateUi()
 {
     setWindowTitle(tr("TrackClick"));
     if (m_titleLabel)
-        m_titleLabel->setText(m_autoEnabled ? tr("⬤  TrackClick  [AUTO]")
-                                            : tr("⬤  TrackClick"));
-    if (m_autoBtn) {
-        m_autoBtn->setText(m_autoEnabled ? tr("AUTO ●") : tr("AUTO"));
+        m_titleLabel->setText(tr("TrackClick"));
+    if (m_autoBtn)
         m_autoBtn->setToolTip(tr("Toggle AutoMouse dwell-clicking"));
-    }
     if (m_settingsBtn) m_settingsBtn->setToolTip(tr("Settings"));
     if (m_exitBtn)     m_exitBtn->setToolTip(tr("Hide to tray (right-click tray icon to quit)"));
     if (m_tray)        m_tray->setToolTip(tr("TrackClick Virtual Mouse"));

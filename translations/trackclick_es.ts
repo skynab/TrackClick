@@ -4,12 +4,6 @@
 <context>
     <name>MainWindow</name>
     <message><source>TrackClick</source><translation>TrackClick</translation></message>
-    <message><source>⬤  TrackClick</source><translation>⬤  TrackClick</translation></message>
-    <message><source>⬤  TrackClick  [AUTO]</source><translation>⬤  TrackClick  [AUTO]</translation></message>
-    <message><source>AUTO</source><translation>AUTO</translation></message>
-    <message><source>AUTO ●</source><translation>AUTO ●</translation></message>
-    <message><source>Toggle AutoMouse dwell-clicking</source><translation>Activar/Desactivar clic automático</translation></message>
-    <message><source>Settings</source><translation>Configuración</translation></message>
     <message><source>Hide to tray (right-click tray icon to quit)</source><translation>Ocultar en bandeja (clic derecho para salir)</translation></message>
     <message><source>TrackClick Virtual Mouse</source><translation>TrackClick — Ratón virtual</translation></message>
     <message><source>Show / Hide</source><translation>Mostrar / Ocultar</translation></message>
@@ -76,6 +70,7 @@
     <message><source>Button layout:</source><translation>Diseño de botones:</translation></message>
     <message><source>Rectangle (grid)</source><translation>Rectángulo (cuadrícula)</translation></message>
     <message><source>Horizontal (one row)</source><translation>Horizontal (una fila)</translation></message>
+    <message><source>Vertical (two columns)</source><translation>Vertical (dos columnas)</translation></message>
     <message><source>Vertical (one column)</source><translation>Vertical (una columna)</translation></message>
     <message><source>Language:</source><translation>Idioma:</translation></message>
 </context>

@@ -4,12 +4,6 @@
 <context>
     <name>MainWindow</name>
     <message><source>TrackClick</source><translation>TrackClick</translation></message>
-    <message><source>⬤  TrackClick</source><translation>⬤  TrackClick</translation></message>
-    <message><source>⬤  TrackClick  [AUTO]</source><translation>⬤  TrackClick  [自動]</translation></message>
-    <message><source>AUTO</source><translation>自動</translation></message>
-    <message><source>AUTO ●</source><translation>自動 ●</translation></message>
-    <message><source>Toggle AutoMouse dwell-clicking</source><translation>オートマウス滞留クリックの切り替え</translation></message>
-    <message><source>Settings</source><translation>設定</translation></message>
     <message><source>Hide to tray (right-click tray icon to quit)</source><translation>トレイに隠す（右クリックで終了）</translation></message>
     <message><source>TrackClick Virtual Mouse</source><translation>TrackClick 仮想マウス</translation></message>
     <message><source>Show / Hide</source><translation>表示 / 非表示</translation></message>
@@ -76,6 +70,7 @@
     <message><source>Button layout:</source><translation>ボタンレイアウト：</translation></message>
     <message><source>Rectangle (grid)</source><translation>矩形（グリッド）</translation></message>
     <message><source>Horizontal (one row)</source><translation>横並び（1行）</translation></message>
+    <message><source>Vertical (two columns)</source><translation>縦並び（2列）</translation></message>
     <message><source>Vertical (one column)</source><translation>縦並び（1列）</translation></message>
     <message><source>Language:</source><translation>言語：</translation></message>
 </context>

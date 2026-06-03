@@ -173,9 +173,11 @@ void SettingsDialog::buildUi()
     m_cmbLayout->addItem(tr("Rectangle (grid)"));
     m_cmbLayout->addItem(tr("Horizontal (one row)"));
     m_cmbLayout->addItem(tr("Vertical (one column)"));
+    m_cmbLayout->addItem(tr("Vertical (two columns)"));
 
     // Language names are shown in their native script — intentionally not tr()
     m_cmbLanguage = new QComboBox;
+    m_cmbLanguage->setSizeAdjustPolicy(QComboBox::AdjustToContents);
     m_cmbLanguage->addItem("English",  "en");
     m_cmbLanguage->addItem("Français", "fr");
     m_cmbLanguage->addItem("Español",  "es");

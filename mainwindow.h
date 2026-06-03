@@ -54,6 +54,7 @@ private:
 
     // ── UI elements ───────────────────────────────────────────
     QWidget*      m_titleBar   = nullptr;
+    QLabel*       m_titleIcon  = nullptr;
     QLabel*       m_titleLabel = nullptr;
     QPushButton*  m_autoBtn    = nullptr;
     QPushButton*  m_settingsBtn= nullptr;

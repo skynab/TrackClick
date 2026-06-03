@@ -167,6 +167,10 @@ MainWindow::MainWindow(QWidget* parent)
     if (m_settings.alwaysOnTop) flags |= Qt::WindowStaysOnTopHint;
     setWindowFlags(flags);
     setAttribute(Qt::WA_TranslucentBackground, false);
+    // On macOS, Qt::Tool creates an NSPanel that hides when another app becomes
+    // active (hidesOnDeactivation = true by default).  This attribute disables
+    // that behaviour so the toolbar stays visible regardless of focus.
+    setAttribute(Qt::WA_MacAlwaysShowToolWindow);
     setStyleSheet(BASE_STYLE);
     setWindowTitle(tr("TrackClick"));
     setWindowOpacity(m_settings.windowOpacity);
@@ -622,6 +626,7 @@ void MainWindow::applySettings(const AppSettings& s)
     Qt::WindowFlags flags = Qt::Window | Qt::FramelessWindowHint | Qt::Tool;
     if (s.alwaysOnTop) flags |= Qt::WindowStaysOnTopHint;
     setWindowFlags(flags);
+    setAttribute(Qt::WA_MacAlwaysShowToolWindow);
     show();
 
     if (s.language != oldLanguage) {

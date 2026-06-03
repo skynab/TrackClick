@@ -15,6 +15,9 @@
 #include <QIcon>
 #include <QSize>
 #include "translations/tsparser.h"
+#ifdef Q_OS_MAC
+#  include "macos_utils.h"
+#endif
 
 // ─────────────────────────────────────────────────────────────
 //  Palette constants
@@ -171,6 +174,11 @@ MainWindow::MainWindow(QWidget* parent)
     // active (hidesOnDeactivation = true by default).  This attribute disables
     // that behaviour so the toolbar stays visible regardless of focus.
     setAttribute(Qt::WA_MacAlwaysShowToolWindow);
+#ifdef Q_OS_MAC
+    // Keep the window visible during Mission Control / Exposé and on all Spaces.
+    // Must be called after setWindowFlags (which can recreate the native handle).
+    applyMacOSWindowBehavior(winId());
+#endif
     setStyleSheet(BASE_STYLE);
     setWindowTitle(tr("TrackClick"));
     setWindowOpacity(m_settings.windowOpacity);
@@ -386,7 +394,9 @@ void MainWindow::rebuildButtons()
         if (col >= COLS) { col = 0; row++; }
     };
 
-    const QSize modSize = isVerticalMode ? QSize(18, 22) : QSize(32, 28);
+    const QSize modSize = (m_settings.buttonLayout == ButtonLayout::Vertical)   ? QSize(0,  22)
+                        : (m_settings.buttonLayout == ButtonLayout::VerticalTwo) ? QSize(18, 22)
+                        :                                                           QSize(32, 28);
 
     if (m_settings.showModCtrl) {
         m_ctrlBtn = new QPushButton("Ctrl");
@@ -440,8 +450,10 @@ ClickButton* MainWindow::makeButton(const QString& label, const QString& tooltip
     btn->setToolButtonStyle(m_settings.iconsOnly ? Qt::ToolButtonIconOnly
                                                   : Qt::ToolButtonTextUnderIcon);
     btn->setButtonIcon(iconName);
-    if (m_settings.buttonLayout == ButtonLayout::Vertical ||
-        m_settings.buttonLayout == ButtonLayout::VerticalTwo) {
+    if (m_settings.buttonLayout == ButtonLayout::Vertical) {
+        btn->setMinimumSize(0, 36);
+        btn->setIconSize(QSize(16, 16));
+    } else if (m_settings.buttonLayout == ButtonLayout::VerticalTwo) {
         btn->setMinimumSize(18, 36);
         btn->setIconSize(QSize(16, 16));
     } else {
@@ -627,6 +639,9 @@ void MainWindow::applySettings(const AppSettings& s)
     if (s.alwaysOnTop) flags |= Qt::WindowStaysOnTopHint;
     setWindowFlags(flags);
     setAttribute(Qt::WA_MacAlwaysShowToolWindow);
+#ifdef Q_OS_MAC
+    applyMacOSWindowBehavior(winId());
+#endif
     show();
 
     if (s.language != oldLanguage) {

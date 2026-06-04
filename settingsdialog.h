@@ -46,6 +46,7 @@ struct AppSettings {
 
     // Button appearance
     bool iconsOnly           = false;
+    bool largeButtons        = false;
     ButtonLayout buttonLayout = ButtonLayout::Rectangle;
 
     // Language (ISO code: "en", "fr", "es", "zh_CN", "ja", "ko")
@@ -124,6 +125,7 @@ private:
     QCheckBox*   m_chkStartMinimized;
     QCheckBox*   m_chkAudio;
     QCheckBox*   m_chkIconsOnly;
+    QCheckBox*   m_chkLargeButtons;
     QComboBox*   m_cmbLayout;
     QComboBox*   m_cmbLanguage;
 

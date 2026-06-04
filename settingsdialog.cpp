@@ -24,7 +24,7 @@ QDialog {
 }
 QGroupBox {
     color: #FFA600;
-    border: 1px solid #FFA600;
+    border: 1px solid #979797;
     border-radius: 4px;
     margin-top: 10px;
     padding-top: 6px;
@@ -218,6 +218,7 @@ void SettingsDialog::retranslateUi()
     m_chkStartMinimized->setText(tr("Start minimized to tray"));
     m_chkAudio->setText(tr("Audio feedback on click"));
     m_chkIconsOnly->setText(tr("Icons only (hide button labels)"));
+    m_chkLargeButtons->setText(tr("Large buttons"));
     m_lblOpacity->setText(tr("Opacity:"));
     m_lblBtnLayout->setText(tr("Button layout:"));
     m_cmbLayout->setItemText(0, tr("Rectangle (grid)"));
@@ -301,6 +302,8 @@ void SettingsDialog::buildUi()
     m_grpWin     = new QGroupBox(tr("Window"));
     auto* wfl    = new QFormLayout(m_grpWin);
     wfl->setSpacing(6);
+    wfl->setFormAlignment(Qt::AlignHCenter | Qt::AlignTop);
+    wfl->setLabelAlignment(Qt::AlignHCenter);
 
     auto* opRow = new QHBoxLayout;
     m_opacitySlider = new QSlider(Qt::Horizontal);
@@ -317,6 +320,7 @@ void SettingsDialog::buildUi()
     m_chkStartMinimized= new QCheckBox(tr("Start minimized to tray"));
     m_chkAudio         = new QCheckBox(tr("Audio feedback on click"));
     m_chkIconsOnly     = new QCheckBox(tr("Icons only (hide button labels)"));
+    m_chkLargeButtons  = new QCheckBox(tr("Large buttons"));
 
     m_cmbLayout = new QComboBox;
     m_cmbLayout->setSizeAdjustPolicy(QComboBox::AdjustToContents);
@@ -347,6 +351,7 @@ void SettingsDialog::buildUi()
     wfl->addRow(m_chkStartMinimized);
     wfl->addRow(m_chkAudio);
     wfl->addRow(m_chkIconsOnly);
+    wfl->addRow(m_chkLargeButtons);
     wfl->addRow(m_lblBtnLayout, m_cmbLayout);
     wfl->addRow(m_lblLanguage,  m_cmbLanguage);
     root->addWidget(m_grpWin);
@@ -382,6 +387,7 @@ void SettingsDialog::loadFrom(const AppSettings& s)
     m_chkStartMinimized->setChecked(s.startMinimized);
     m_chkAudio->setChecked(s.audioFeedback);
     m_chkIconsOnly->setChecked(s.iconsOnly);
+    m_chkLargeButtons->setChecked(s.largeButtons);
     m_cmbLayout->setCurrentIndex(static_cast<int>(s.buttonLayout));
     for (int i = 0; i < m_cmbLanguage->count(); ++i) {
         if (m_cmbLanguage->itemData(i).toString() == s.language) {
@@ -418,6 +424,7 @@ AppSettings SettingsDialog::readUi() const
     s.startMinimized  = m_chkStartMinimized->isChecked();
     s.audioFeedback   = m_chkAudio->isChecked();
     s.iconsOnly       = m_chkIconsOnly->isChecked();
+    s.largeButtons    = m_chkLargeButtons->isChecked();
     s.buttonLayout    = static_cast<ButtonLayout>(m_cmbLayout->currentIndex());
     s.language        = m_cmbLanguage->currentData().toString();
     return s;

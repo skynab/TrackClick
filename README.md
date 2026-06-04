@@ -11,7 +11,7 @@ A cross-platform virtual mouse / dwell-clicker for Windows, macOS, and Linux, bu
 - **AutoMouse (dwell click)** — hover to click automatically after a configurable delay; orange progress bar shows countdown
 - **Settings dialog** — dwell time, sensitivity, visible buttons, opacity, button layout, icon-only mode
 - **Button layouts** — Rectangle (grid), Horizontal (one row), or Vertical (one column)
-- **Multilingual UI** — English, Français, Español, 中文简体, 日本語, 한국어; language switches live without restart
+- **Multilingual UI** — English, Čeština, Français, Español, 中文简体, 日本語, 한국어; language switches live without restart
 - **System tray** — minimize to tray; double-click to restore
 - **Persistent settings** — window position and all preferences saved across sessions
 
@@ -24,14 +24,6 @@ A cross-platform virtual mouse / dwell-clicker for Windows, macOS, and Linux, bu
 | macOS | Xcode 13+; grant **Accessibility** permission on first launch |
 | Linux | `libxtst-dev` (Debian/Ubuntu) or `libXtst-devel` (Fedora/RHEL); X11/XWayland required |
 
-**Translations (optional):** Non-English languages require Qt LinguistTools (`lrelease`) to compile `.ts → .qm` files. If the tools are absent the build still succeeds and the app runs in English.
-
-| Package manager | Command |
-|---|---|
-| Homebrew (macOS) | `brew install qt` (full bundle includes LinguistTools) |
-| apt (Debian/Ubuntu) | `sudo apt install qttools5-dev-tools` |
-| dnf (Fedora) | `sudo dnf install qt6-linguist` |
-| winget / installer | Install **Qt Linguist** component from the Qt online installer |
 
 ## Build
 
@@ -56,11 +48,14 @@ cmake -B build -DCMAKE_BUILD_TYPE=Release \
 
 See [BUILD.md](BUILD.md) for platform-specific notes.
 
-### Compiling translations manually
+### Compiling translations to .qm (optional optimisation)
 
-If LinguistTools are available but you want to compile `.qm` files outside of CMake:
+All translation `.ts` files are embedded directly in the binary via `resources.qrc` and parsed at runtime — **no external tools are required** for any language to work.
+
+If Qt LinguistTools (`lrelease`) happen to be installed, CMake automatically compiles the `.ts` files to binary `.qm` format, which loads slightly faster. You can also do this manually:
 
 ```bash
+lrelease translations/trackclick_cs.ts    -qm build/translations/trackclick_cs.qm
 lrelease translations/trackclick_fr.ts    -qm build/translations/trackclick_fr.qm
 lrelease translations/trackclick_es.ts    -qm build/translations/trackclick_es.qm
 lrelease translations/trackclick_zh_CN.ts -qm build/translations/trackclick_zh_CN.qm
@@ -68,7 +63,7 @@ lrelease translations/trackclick_ja.ts    -qm build/translations/trackclick_ja.q
 lrelease translations/trackclick_ko.ts    -qm build/translations/trackclick_ko.qm
 ```
 
-Place the resulting `.qm` files in a `translations/` folder next to the executable. The app searches that directory at startup and on every language change.
+Place the resulting `.qm` files in a `translations/` folder next to the executable. The app searches that directory first and falls back to the embedded `.ts` copy.
 
 ### Updating translations without rebuilding
 
@@ -94,17 +89,18 @@ Place a file named `trackclick_<code>.ts` (e.g. `trackclick_fr.ts`) in that dire
 ### Adding a new language
 
 1. Create `translations/trackclick_<code>.ts` following the format of an existing file.
-2. Add it to the `TS_FILES` list in `CMakeLists.txt`.
+2. Add it to `resources.qrc` (under the `/translations` prefix) so it is embedded in the binary.
 3. Add a `m_cmbLanguage->addItem(...)` entry in `SettingsDialog::buildUi()` (`settingsdialog.cpp`).
+4. *(Optional)* Add it to the `TS_FILES` list in `CMakeLists.txt` so CMake compiles a `.qm` file when LinguistTools are available.
 
 ## Project Structure
 
 ```
 TrackClick/
 ├── CMakeLists.txt        — Build system
-├── resources.qrc         — Embedded icon assets
+├── resources.qrc         — Embedded icons and translation files
 ├── icons/                — SVG button icons
-├── translations/         — Qt Linguist .ts source files (fr, es, zh_CN, ja, ko)
+├── translations/         — Qt Linguist .ts source files (cs, fr, es, zh_CN, ja, ko)
 ├── main.cpp              — Entry point
 ├── mainwindow.h/cpp      — Floating toolbar UI
 ├── dwellmanager.h/cpp    — AutoMouse dwell-click engine

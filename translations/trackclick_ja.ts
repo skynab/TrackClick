@@ -69,6 +69,7 @@
     <message><source>Start minimized to tray</source><translation>最小化してトレイから開始</translation></message>
     <message><source>Audio feedback on click</source><translation>クリック時の音声フィードバック</translation></message>
     <message><source>Icons only (hide button labels)</source><translation>アイコンのみ（ラベルを非表示）</translation></message>
+    <message><source>Large buttons</source><translation>大きいボタン</translation></message>
     <message><source>Button layout:</source><translation>ボタンレイアウト：</translation></message>
     <message><source>Rectangle (grid)</source><translation>矩形（グリッド）</translation></message>
     <message><source>Horizontal (one row)</source><translation>横並び（1行）</translation></message>

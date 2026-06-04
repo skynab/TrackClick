@@ -69,6 +69,7 @@
     <message><source>Start minimized to tray</source><translation>启动时最小化到托盘</translation></message>
     <message><source>Audio feedback on click</source><translation>点击时音频反馈</translation></message>
     <message><source>Icons only (hide button labels)</source><translation>仅图标（隐藏按钮标签）</translation></message>
+    <message><source>Large buttons</source><translation>大按钮</translation></message>
     <message><source>Button layout:</source><translation>按钮布局：</translation></message>
     <message><source>Rectangle (grid)</source><translation>矩形（网格）</translation></message>
     <message><source>Horizontal (one row)</source><translation>水平（单行）</translation></message>

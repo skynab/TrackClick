@@ -69,6 +69,7 @@
     <message><source>Start minimized to tray</source><translation>Démarrer minimisé</translation></message>
     <message><source>Audio feedback on click</source><translation>Retour audio au clic</translation></message>
     <message><source>Icons only (hide button labels)</source><translation>Icônes seules (masquer les étiquettes)</translation></message>
+    <message><source>Large buttons</source><translation>Grands boutons</translation></message>
     <message><source>Button layout:</source><translation>Disposition :</translation></message>
     <message><source>Rectangle (grid)</source><translation>Rectangle (grille)</translation></message>
     <message><source>Horizontal (one row)</source><translation>Horizontal (une rangée)</translation></message>

@@ -87,6 +87,16 @@ void ClickButton::setButtonIcon(const QString& iconName)
     updateIcon();
 }
 
+void ClickButton::setLargeMode(bool large)
+{
+    m_large = large;
+    updateStyle();
+    if (!m_iconName.isEmpty()) {
+        const int sz = large ? 36 : 24;
+        setIconSize(QSize(sz, sz));
+    }
+}
+
 void ClickButton::updateIcon()
 {
     if (m_iconName.isEmpty()) return;
@@ -98,29 +108,31 @@ void ClickButton::updateIcon()
 
 void ClickButton::updateStyle()
 {
+    const char* fs  = m_large ? "14px" : "11px";
+    const char* pad = m_large ? "6px 4px" : "4px 2px";
     if (m_selected) {
-        setStyleSheet(
+        setStyleSheet(QString(
             "QToolButton {"
             "  background: #FFA600;"
             "  color: #1A1A1A;"
             "  border: 2px solid #FFB833;"
             "  border-radius: 5px;"
             "  font-weight: bold;"
-            "  font-size: 11px;"
-            "  padding: 4px 2px;"
+            "  font-size: %1;"
+            "  padding: %2;"
             "}"
             "QToolButton:hover { background: #FFB833; }"
             "QToolButton:pressed { background: #CC8400; }"
-        );
+        ).arg(fs).arg(pad));
     } else {
-        setStyleSheet(
+        setStyleSheet(QString(
             "QToolButton {"
             "  background: #3A3A3A;"
             "  color: #DDDDDD;"
             "  border: 2px solid #555555;"
             "  border-radius: 5px;"
-            "  font-size: 11px;"
-            "  padding: 4px 2px;"
+            "  font-size: %1;"
+            "  padding: %2;"
             "}"
             "QToolButton:hover {"
             "  background: #4A4A4A;"
@@ -128,7 +140,7 @@ void ClickButton::updateStyle()
             "  color: #FFA600;"
             "}"
             "QToolButton:pressed { background: #2A2A2A; }"
-        );
+        ).arg(fs).arg(pad));
     }
 }
 
@@ -161,7 +173,8 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     m_settings.showExitButton  = m_persist.value("show/exit",        true).toBool();
     m_settings.startMinimized  = m_persist.value("window/startMin",  false).toBool();
     m_settings.audioFeedback   = m_persist.value("audio/enabled",    false).toBool();
-    m_settings.iconsOnly       = m_persist.value("show/iconsOnly",   false).toBool();
+    m_settings.iconsOnly       = m_persist.value("show/iconsOnly",    false).toBool();
+    m_settings.largeButtons    = m_persist.value("show/largeButtons", false).toBool();
     m_settings.buttonLayout    = static_cast<ButtonLayout>(m_persist.value("show/buttonLayout", 0).toInt());
     m_settings.language        = m_persist.value("language",          "en").toString();
 
@@ -385,14 +398,17 @@ void MainWindow::rebuildButtons()
     if (col > 0) { row++; col = 0; }
 
     // ── Modifier row ──────────────────────────────────────────
-    auto modStyle = [](bool on) -> QString {
+    const bool large = m_settings.largeButtons;
+    auto modStyle = [large](bool on) -> QString {
+        const char* fs  = large ? "14px" : "11px";
+        const char* pad = large ? "4px"  : "2px";
         return on
-            ? "QPushButton { background:#FFA600; color:#1A1A1A; border:2px solid #FFB833; "
-              "border-radius:4px; font-weight:bold; font-size:11px; padding:2px; }"
-              "QPushButton:hover { background:#FFB833; }"
-            : "QPushButton { background:#3A3A3A; color:#AAA; border:1px solid #555; "
-              "border-radius:4px; font-size:11px; padding:2px; }"
-              "QPushButton:hover { background:#4A4A4A; border:1px solid #FFA600; color:#FFA600; }";
+            ? QString("QPushButton { background:#FFA600; color:#1A1A1A; border:2px solid #FFB833; "
+                      "border-radius:4px; font-weight:bold; font-size:%1; padding:%2; }"
+                      "QPushButton:hover { background:#FFB833; }").arg(fs).arg(pad)
+            : QString("QPushButton { background:#3A3A3A; color:#AAA; border:1px solid #555; "
+                      "border-radius:4px; font-size:%1; padding:%2; }"
+                      "QPushButton:hover { background:#4A4A4A; border:1px solid #FFA600; color:#FFA600; }").arg(fs).arg(pad);
     };
 
     // Place a modifier button using the same column-wrap logic as click buttons.
@@ -401,7 +417,8 @@ void MainWindow::rebuildButtons()
         if (col >= COLS) { col = 0; row++; }
     };
 
-    const QSize modSize = isVerticalMode ? QSize(0, 22) : QSize(32, 28);
+    const QSize modSize = isVerticalMode ? QSize(0, large ? 32 : 22)
+                                         : QSize(large ? 48 : 32, large ? 40 : 28);
 
     if (m_settings.showModCtrl) {
         m_ctrlBtn = new QPushButton("Ctrl");
@@ -455,14 +472,15 @@ ClickButton* MainWindow::makeButton(const QString& label, const QString& tooltip
     btn->setToolButtonStyle(m_settings.iconsOnly ? Qt::ToolButtonIconOnly
                                                   : Qt::ToolButtonTextUnderIcon);
     btn->setButtonIcon(iconName);
-    if (m_settings.buttonLayout == ButtonLayout::Vertical) {
-        btn->setMinimumSize(0, 36);
-        btn->setIconSize(QSize(16, 16));
-    } else if (m_settings.buttonLayout == ButtonLayout::VerticalTwo) {
-        btn->setMinimumSize(0, 36);
-        btn->setIconSize(QSize(16, 16));
-    } else {
-        btn->setIconSize(QSize(24, 24));
+    btn->setLargeMode(m_settings.largeButtons);   // scales style, font, icon size
+
+    const bool large = m_settings.largeButtons;
+    if (m_settings.buttonLayout == ButtonLayout::Vertical ||
+        m_settings.buttonLayout == ButtonLayout::VerticalTwo) {
+        btn->setMinimumSize(0, large ? 54 : 36);
+        btn->setIconSize(QSize(large ? 24 : 16, large ? 24 : 16));
+    } else if (large) {
+        btn->setMinimumSize(48, 64);
     }
     return btn;
 }
@@ -678,6 +696,7 @@ void MainWindow::applySettings(const AppSettings& s)
     m_persist.setValue("show/modShift",      s.showModShift);
     m_persist.setValue("show/exit",          s.showExitButton);
     m_persist.setValue("show/iconsOnly",     s.iconsOnly);
+    m_persist.setValue("show/largeButtons",  s.largeButtons);
     m_persist.setValue("show/buttonLayout",  static_cast<int>(s.buttonLayout));
     m_persist.setValue("language",           s.language);
 }

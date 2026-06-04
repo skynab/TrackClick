@@ -69,6 +69,7 @@
     <message><source>Start minimized to tray</source><translation>트레이에 최소화하여 시작</translation></message>
     <message><source>Audio feedback on click</source><translation>클릭 시 오디오 피드백</translation></message>
     <message><source>Icons only (hide button labels)</source><translation>아이콘만 (버튼 레이블 숨기기)</translation></message>
+    <message><source>Large buttons</source><translation>큰 버튼</translation></message>
     <message><source>Button layout:</source><translation>버튼 레이아웃:</translation></message>
     <message><source>Rectangle (grid)</source><translation>직사각형 (그리드)</translation></message>
     <message><source>Horizontal (one row)</source><translation>가로 (한 줄)</translation></message>

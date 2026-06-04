@@ -100,6 +100,7 @@ public:
     void setSelected(bool sel);
     bool isSelected() const { return m_selected; }
     void setButtonIcon(const QString& iconName);
+    void setLargeMode(bool large);
 
 signals:
     void clickTypePressed(ClickType type);
@@ -107,6 +108,7 @@ signals:
 private:
     ClickType m_type;
     bool      m_selected = false;
+    bool      m_large    = false;
     QString   m_iconName;
     void updateStyle();
     void updateIcon();

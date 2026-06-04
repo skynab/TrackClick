@@ -71,6 +71,7 @@
     <message><source>Start minimized to tray</source><translation>Spustit minimalizovaně</translation></message>
     <message><source>Audio feedback on click</source><translation>Zvuková odezva při kliknutí</translation></message>
     <message><source>Icons only (hide button labels)</source><translation>Pouze ikony (skrýt popisky)</translation></message>
+    <message><source>Large buttons</source><translation>Velká tlačítka</translation></message>
     <message><source>Button layout:</source><translation>Rozvržení tlačítek:</translation></message>
     <message><source>Rectangle (grid)</source><translation>Obdélník (mřížka)</translation></message>
     <message><source>Horizontal (one row)</source><translation>Vodorovně (jeden řádek)</translation></message>

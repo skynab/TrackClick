@@ -52,6 +52,16 @@ private:
     void installLanguage(const QString& lang);
     ClickButton* makeButton(const QString& label, const QString& tooltip, ClickType type, const QString& iconName);
 
+    // ── Resize helpers ────────────────────────────────────────────
+    enum class ResizeEdge {
+        None,
+        Left, Right, Top, Bottom,
+        TopLeft, TopRight, BottomLeft, BottomRight
+    };
+    ResizeEdge edgeAt(QPoint pos) const;
+    static Qt::CursorShape cursorForEdge(ResizeEdge e);
+    static constexpr int RESIZE_MARGIN = 10;
+
     // ── UI elements ───────────────────────────────────────────
     QWidget*      m_titleBar   = nullptr;
     QLabel*       m_titleIcon  = nullptr;
@@ -75,8 +85,11 @@ private:
     ClickType   m_selectedType = ClickType::LeftClick;
     int         m_modifiers    = ModNone;
     bool        m_autoEnabled  = false;
-    bool        m_dragging     = false;  // drag click in progress
+    bool        m_dragging     = false;  // window drag in progress
     QPoint      m_dragOffset;            // for window dragging
+    ResizeEdge  m_resizeEdge  = ResizeEdge::None;
+    QPoint      m_resizeStart;           // global pos when resize began
+    QRect       m_resizeGeo;             // window geometry when resize began
 
     // ── Sub-objects ───────────────────────────────────────────
     DwellManager*     m_dwell      = nullptr;

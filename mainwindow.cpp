@@ -221,6 +221,8 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
 
 void MainWindow::buildUi()
 {
+    setMouseTracking(true);   // needed for cursor updates without a button held
+
     auto* root = new QVBoxLayout(this);
     root->setSpacing(0);
     root->setContentsMargins(0, 0, 0, 0);
@@ -246,7 +248,8 @@ void MainWindow::buildUi()
 
     m_titleLabel = new QLabel(tr("TrackClick"));
     m_titleLabel->setMinimumWidth(0);  // let it clip rather than force window wider
-    tbLayout->addWidget(m_titleLabel, 1);
+    tbLayout->addWidget(m_titleLabel);
+    tbLayout->addStretch(1);  // always pushes the action buttons to the right
 
     // Auto button
     m_autoBtn = new QPushButton;
@@ -305,6 +308,7 @@ void MainWindow::buildUi()
     m_dwellBar->setValue(0);
     m_dwellBar->setFixedHeight(8);
     m_dwellBar->setTextVisible(false);
+    m_dwellBar->setMinimumWidth(0);
     m_dwellBar->setVisible(false);
     root->addWidget(m_dwellBar);
 
@@ -315,6 +319,7 @@ void MainWindow::buildUi()
         "background: #1A1A1A; border-top: 1px solid #3A3A3A; }"
     );
     m_statusLabel->setFixedHeight(18);
+    m_statusLabel->setMinimumWidth(0);
     m_statusLabel->setVisible(false);
     root->addWidget(m_statusLabel);
 
@@ -341,6 +346,14 @@ void MainWindow::rebuildButtons()
     // spacing (4 px), so VerticalOne = exactly half the width of VerticalTwo.
     const bool isVerticalMode = (m_settings.buttonLayout == ButtonLayout::Vertical ||
                                   m_settings.buttonLayout == ButtonLayout::VerticalTwo);
+    const bool vertOne = (m_settings.buttonLayout == ButtonLayout::Vertical);
+
+    // In single-column vertical mode, collapse the title label and shrink the
+    // auto button to match the settings/exit buttons — this halves the window
+    // width relative to every other layout mode.
+    m_titleLabel->setVisible(!vertOne);
+    m_autoBtn->setFixedSize(vertOne ? 22 : 38, 22);
+
     if (isVerticalMode) {
         m_btnArea->setContentsMargins(1, 4, 1, 4);
         grid->setContentsMargins(1, 4, 1, 4);
@@ -512,28 +525,89 @@ void MainWindow::buildTray()
     m_tray->show();
 }
 
-// ─── Drag the frameless window ────────────────────────────────────────────
+// ─── Resize / drag the frameless window ──────────────────────────────────
+
+MainWindow::ResizeEdge MainWindow::edgeAt(QPoint p) const
+{
+    const QRect  r = rect();
+    const int    m = RESIZE_MARGIN;
+    const bool onL = p.x() <= m;
+    const bool onR = p.x() >= r.width()  - m;
+    const bool onT = p.y() <= m;
+    const bool onB = p.y() >= r.height() - m;
+    if (onT && onL) return ResizeEdge::TopLeft;
+    if (onT && onR) return ResizeEdge::TopRight;
+    if (onB && onL) return ResizeEdge::BottomLeft;
+    if (onB && onR) return ResizeEdge::BottomRight;
+    if (onL)        return ResizeEdge::Left;
+    if (onR)        return ResizeEdge::Right;
+    if (onT)        return ResizeEdge::Top;
+    if (onB)        return ResizeEdge::Bottom;
+    return ResizeEdge::None;
+}
+
+Qt::CursorShape MainWindow::cursorForEdge(ResizeEdge e)
+{
+    switch (e) {
+        case ResizeEdge::Left:  case ResizeEdge::Right:        return Qt::SizeHorCursor;
+        case ResizeEdge::Top:   case ResizeEdge::Bottom:       return Qt::SizeVerCursor;
+        case ResizeEdge::TopLeft: case ResizeEdge::BottomRight:return Qt::SizeFDiagCursor;
+        case ResizeEdge::TopRight:case ResizeEdge::BottomLeft: return Qt::SizeBDiagCursor;
+        default:                                               return Qt::ArrowCursor;
+    }
+}
+
 void MainWindow::mousePressEvent(QMouseEvent* ev)
 {
-    if (ev->button() == Qt::LeftButton) {
-        // Only drag from title bar area
-        if (m_titleBar && m_titleBar->geometry().contains(ev->pos())) {
-            m_dragging  = true;
-            m_dragOffset = ev->globalPosition().toPoint() - frameGeometry().topLeft();
-        }
+    if (ev->button() != Qt::LeftButton) return;
+
+    const ResizeEdge edge = edgeAt(ev->pos());
+    if (edge != ResizeEdge::None) {
+        m_resizeEdge  = edge;
+        m_resizeStart = ev->globalPosition().toPoint();
+        m_resizeGeo   = frameGeometry();
+        return;
+    }
+
+    if (m_titleBar && m_titleBar->geometry().contains(ev->pos())) {
+        m_dragging   = true;
+        m_dragOffset = ev->globalPosition().toPoint() - frameGeometry().topLeft();
     }
 }
 
 void MainWindow::mouseMoveEvent(QMouseEvent* ev)
 {
+    if (m_resizeEdge != ResizeEdge::None) {
+        const QPoint delta = ev->globalPosition().toPoint() - m_resizeStart;
+        QRect geo = m_resizeGeo;
+        switch (m_resizeEdge) {
+            case ResizeEdge::Left:        geo.setLeft(geo.left()   + delta.x()); break;
+            case ResizeEdge::Right:       geo.setRight(geo.right() + delta.x()); break;
+            case ResizeEdge::Top:         geo.setTop(geo.top()     + delta.y()); break;
+            case ResizeEdge::Bottom:      geo.setBottom(geo.bottom()+ delta.y());break;
+            case ResizeEdge::TopLeft:     geo.setTopLeft(geo.topLeft()         + delta); break;
+            case ResizeEdge::TopRight:    geo.setTopRight(geo.topRight()       + delta); break;
+            case ResizeEdge::BottomLeft:  geo.setBottomLeft(geo.bottomLeft()   + delta); break;
+            case ResizeEdge::BottomRight: geo.setBottomRight(geo.bottomRight() + delta); break;
+            default: break;
+        }
+        setGeometry(geo.normalized());
+        return;
+    }
+
     if (m_dragging) {
         move(ev->globalPosition().toPoint() - m_dragOffset);
+        return;
     }
+
+    // Hover — update cursor to hint at available resize edges
+    setCursor(cursorForEdge(edgeAt(ev->pos())));
 }
 
 void MainWindow::mouseReleaseEvent(QMouseEvent*)
 {
-    m_dragging = false;
+    m_resizeEdge = ResizeEdge::None;
+    m_dragging   = false;
     saveWindowSettings();
 }
 

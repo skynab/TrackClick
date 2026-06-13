@@ -1,0 +1,106 @@
+name: Build
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            name: Linux
+          - os: macos-14
+            name: macOS
+          - os: windows-latest
+            name: Windows
+
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.name }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ── Qt: Linux ────────────────────────────────────────────────────────────
+      - name: Install Qt (Linux)
+        if: matrix.name == 'Linux'
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y \
+            qt6-base-dev \
+            libgl1-mesa-dev \
+            libx11-dev \
+            libxtst-dev
+
+      # ── Qt: macOS ────────────────────────────────────────────────────────────
+      - name: Install Qt (macOS)
+        if: matrix.name == 'macOS'
+        run: |
+          brew install qt
+          echo "$(brew --prefix qt)/bin" >> "$GITHUB_PATH"
+
+      # ── Qt: Windows ──────────────────────────────────────────────────────────
+      - name: Install Qt (Windows)
+        if: matrix.name == 'Windows'
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.7.*'
+          arch: win64_msvc2019_64
+          cache: true
+
+      # ── Build ─────────────────────────────────────────────────────────────────
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      # ── Package: Linux ────────────────────────────────────────────────────────
+      - name: Package (Linux)
+        if: matrix.name == 'Linux'
+        run: |
+          mkdir dist
+          cp build/TrackClick dist/
+          tar -czf TrackClick-Linux.tar.gz -C dist .
+
+      # ── Package: macOS ────────────────────────────────────────────────────────
+      - name: Package (macOS)
+        if: matrix.name == 'macOS'
+        run: |
+          macdeployqt build/TrackClick.app -dmg
+          mv build/TrackClick.dmg TrackClick-macOS.dmg
+
+      # ── Package: Windows ──────────────────────────────────────────────────────
+      - name: Package (Windows)
+        if: matrix.name == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path dist -Force
+          Copy-Item build\Release\TrackClick.exe dist\
+          windeployqt --release dist\TrackClick.exe
+          Compress-Archive -Path dist\* -DestinationPath TrackClick-Windows.zip
+
+      # ── Upload artifacts ──────────────────────────────────────────────────────
+      - name: Upload (Linux)
+        if: matrix.name == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: TrackClick-Linux
+          path: TrackClick-Linux.tar.gz
+
+      - name: Upload (macOS)
+        if: matrix.name == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: TrackClick-macOS
+          path: TrackClick-macOS.dmg
+
+      - name: Upload (Windows)
+        if: matrix.name == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: TrackClick-Windows
+          path: TrackClick-Windows.zip

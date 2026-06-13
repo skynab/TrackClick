@@ -1,5 +1,10 @@
 #include "mainwindow.h"
 #include <QApplication>
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#  define GLOBAL_POS(ev) (ev)->globalPosition().toPoint()
+#else
+#  define GLOBAL_POS(ev) (ev)->globalPos()
+#endif
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QGridLayout>
@@ -564,21 +569,21 @@ void MainWindow::mousePressEvent(QMouseEvent* ev)
     const ResizeEdge edge = edgeAt(ev->pos());
     if (edge != ResizeEdge::None) {
         m_resizeEdge  = edge;
-        m_resizeStart = ev->globalPosition().toPoint();
+        m_resizeStart = GLOBAL_POS(ev);
         m_resizeGeo   = frameGeometry();
         return;
     }
 
     if (m_titleBar && m_titleBar->geometry().contains(ev->pos())) {
         m_dragging   = true;
-        m_dragOffset = ev->globalPosition().toPoint() - frameGeometry().topLeft();
+        m_dragOffset = GLOBAL_POS(ev) - frameGeometry().topLeft();
     }
 }
 
 void MainWindow::mouseMoveEvent(QMouseEvent* ev)
 {
     if (m_resizeEdge != ResizeEdge::None) {
-        const QPoint delta = ev->globalPosition().toPoint() - m_resizeStart;
+        const QPoint delta = GLOBAL_POS(ev) - m_resizeStart;
         QRect geo = m_resizeGeo;
         switch (m_resizeEdge) {
             case ResizeEdge::Left:        geo.setLeft(geo.left()   + delta.x()); break;
@@ -596,7 +601,7 @@ void MainWindow::mouseMoveEvent(QMouseEvent* ev)
     }
 
     if (m_dragging) {
-        move(ev->globalPosition().toPoint() - m_dragOffset);
+        move(GLOBAL_POS(ev) - m_dragOffset);
         return;
     }
 

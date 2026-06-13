@@ -7,8 +7,21 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
-find_package(Qt6 OPTIONAL_COMPONENTS LinguistTools QUIET)
+# ── Qt version detection ──────────────────────────────────────────────────────
+# Prefer Qt6; fall back to Qt5 (5.12+) if Qt6 is not available.
+find_package(Qt6 QUIET COMPONENTS Core Gui Widgets)
+if(Qt6_FOUND)
+    set(QT Qt6)
+    find_package(Qt6 OPTIONAL_COMPONENTS LinguistTools QUIET)
+    set(LINGUIST_FOUND ${Qt6LinguistTools_FOUND})
+    message(STATUS "TrackClick: building with Qt6 ${Qt6_VERSION}")
+else()
+    find_package(Qt5 5.12 REQUIRED COMPONENTS Core Gui Widgets)
+    set(QT Qt5)
+    find_package(Qt5 OPTIONAL_COMPONENTS LinguistTools QUIET)
+    set(LINGUIST_FOUND ${Qt5LinguistTools_FOUND})
+    message(STATUS "TrackClick: building with Qt5 ${Qt5_VERSION}")
+endif()
 
 set(SOURCES
     main.cpp
@@ -33,7 +46,11 @@ else()
     add_executable(TrackClick ${SOURCES} ${HEADERS})
 endif()
 
-target_link_libraries(TrackClick PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets)
+target_link_libraries(TrackClick PRIVATE
+    ${QT}::Core
+    ${QT}::Gui
+    ${QT}::Widgets
+)
 
 if(WIN32)
     target_link_libraries(TrackClick PRIVATE user32)
@@ -68,11 +85,18 @@ set(TS_FILES
 # .ts files are embedded in resources.qrc and parsed at runtime by TsTranslator
 # — no lrelease required for the build.
 # If LinguistTools ARE available, also compile .qm files for faster startup.
-if(Qt6LinguistTools_FOUND)
-    qt_add_lrelease(TrackClick
-        TS_FILES ${TS_FILES}
-        QM_FILES_OUTPUT_VARIABLE QM_FILES
-    )
+if(LINGUIST_FOUND)
+    if(Qt6_FOUND)
+        qt_add_lrelease(TrackClick
+            TS_FILES ${TS_FILES}
+            QM_FILES_OUTPUT_VARIABLE QM_FILES
+        )
+    else()
+        qt5_add_translation(QM_FILES ${TS_FILES})
+        add_custom_target(TrackClick_translations DEPENDS ${QM_FILES})
+        add_dependencies(TrackClick TrackClick_translations)
+    endif()
+
     add_custom_command(TARGET TrackClick POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory
             "$<TARGET_FILE_DIR:TrackClick>/translations"

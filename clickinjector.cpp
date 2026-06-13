@@ -235,6 +235,7 @@ void ClickInjector::performClick(ClickType type, QPoint pos, int mods)
 #elif defined(PLATFORM_LINUX)
 #include <X11/Xlib.h>
 #include <X11/extensions/XTest.h>
+#include <X11/keysym.h>
 #include <QGuiApplication>
 
 static Display* getDisplay()

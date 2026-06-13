@@ -48,7 +48,7 @@ struct AppSettings {
     // Button appearance
     bool iconsOnly           = false;
     bool largeButtons        = false;
-    ButtonLayout buttonLayout = ButtonLayout::Rectangle;
+    ButtonLayout buttonLayout = ButtonLayout::Vertical;
 
     // Language (ISO code: "en", "fr", "es", "zh_CN", "ja", "ko")
     QString language         = "en";
@@ -132,4 +132,5 @@ private:
     QComboBox*   m_cmbLanguage;
 
     QDialogButtonBox* m_buttons;
+    QPushButton*      m_resetBtn = nullptr;
 };

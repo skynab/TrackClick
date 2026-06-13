@@ -191,7 +191,7 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     m_settings.audioFeedback   = m_persist.value("audio/enabled",    false).toBool();
     m_settings.iconsOnly       = m_persist.value("show/iconsOnly",    false).toBool();
     m_settings.largeButtons    = m_persist.value("show/largeButtons", false).toBool();
-    m_settings.buttonLayout    = static_cast<ButtonLayout>(m_persist.value("show/buttonLayout", 0).toInt());
+    m_settings.buttonLayout    = static_cast<ButtonLayout>(m_persist.value("show/buttonLayout", static_cast<int>(ButtonLayout::Vertical)).toInt());
     m_settings.language        = m_persist.value("language",          "en").toString();
 
     // Adopt any translator already installed at startup so installLanguage()

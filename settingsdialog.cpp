@@ -124,6 +124,9 @@ SettingsDialog::SettingsDialog(const AppSettings& current,
         accept();
     });
     connect(m_buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
+    connect(m_resetBtn, &QPushButton::clicked, this, [this](){
+        loadFrom(AppSettings{});
+    });
 }
 
 // ── Language preview ──────────────────────────────────────────────────────────
@@ -227,6 +230,7 @@ void SettingsDialog::retranslateUi()
     m_cmbLayout->setItemText(2, tr("Vertical (one column)"));
     m_cmbLayout->setItemText(3, tr("Vertical (two columns)"));
     m_lblLanguage->setText(tr("Language:"));
+    m_resetBtn->setText(tr("Reset to Defaults"));
 }
 
 // ── UI construction ───────────────────────────────────────────────────────────
@@ -360,7 +364,8 @@ void SettingsDialog::buildUi()
     root->addWidget(m_grpWin);
 
     // ── Buttons ───────────────────────────────────────────────
-    m_buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+    m_buttons  = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+    m_resetBtn = m_buttons->addButton(tr("Reset to Defaults"), QDialogButtonBox::ResetRole);
     root->addWidget(m_buttons);
 }
 

@@ -38,6 +38,7 @@
     <message><source>Ready — hover to dwell-click</source><translation>準備完了 — ホバーでクリック</translation></message>
     <message><source>Selected: </source><translation>選択済み：</translation></message>
     <message><source>Running in the system tray. Right-click the tray icon to quit.</source><translation>システムトレイで実行中。トレイアイコンを右クリックして終了。</translation></message>
+    <message><source>Quit Program</source><translation>プログラムを終了</translation></message>
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -63,6 +64,7 @@
     <message><source>Alt modifier</source><translation>Alt 修飾キー</translation></message>
     <message><source>Shift modifier</source><translation>Shift 修飾キー</translation></message>
     <message><source>Exit button</source><translation>終了ボタン</translation></message>
+    <message><source>Quit button</source><translation>プログラム終了ボタン</translation></message>
     <message><source>Window</source><translation>ウィンドウ</translation></message>
     <message><source>Opacity:</source><translation>不透明度：</translation></message>
     <message><source>Always on top</source><translation>常に最前面に表示</translation></message>

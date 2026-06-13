@@ -38,6 +38,7 @@
     <message><source>Ready — hover to dwell-click</source><translation>Prêt — survolez pour cliquer</translation></message>
     <message><source>Selected: </source><translation>Sélectionné : </translation></message>
     <message><source>Running in the system tray. Right-click the tray icon to quit.</source><translation>En cours d&apos;exécution dans la zone de notification. Clic droit pour quitter.</translation></message>
+    <message><source>Quit Program</source><translation>Quitter le programme</translation></message>
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -63,6 +64,7 @@
     <message><source>Alt modifier</source><translation>Modificateur Alt</translation></message>
     <message><source>Shift modifier</source><translation>Modificateur Maj</translation></message>
     <message><source>Exit button</source><translation>Bouton quitter</translation></message>
+    <message><source>Quit button</source><translation>Bouton quitter le programme</translation></message>
     <message><source>Window</source><translation>Fenêtre</translation></message>
     <message><source>Opacity:</source><translation>Opacité :</translation></message>
     <message><source>Always on top</source><translation>Toujours au premier plan</translation></message>

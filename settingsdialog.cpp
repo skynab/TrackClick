@@ -212,6 +212,7 @@ void SettingsDialog::retranslateUi()
     m_chkModAlt->setText(tr("Alt modifier"));
     m_chkModShift->setText(tr("Shift modifier"));
     m_chkExitButton->setText(tr("Exit button"));
+    m_chkQuitButton->setText(tr("Quit button"));
 
     m_grpWin->setTitle(tr("Window"));
     m_chkAlwaysOnTop->setText(tr("Always on top"));
@@ -283,6 +284,7 @@ void SettingsDialog::buildUi()
     m_chkModAlt      = new QCheckBox(tr("Alt modifier"));
     m_chkModShift    = new QCheckBox(tr("Shift modifier"));
     m_chkExitButton  = new QCheckBox(tr("Exit button"));
+    m_chkQuitButton  = new QCheckBox(tr("Quit button"));
 
     int row = 0, col = 0;
     auto addChk = [&](QCheckBox* c){
@@ -295,6 +297,7 @@ void SettingsDialog::buildUi()
     addChk(m_chkMiddleClick); addChk(m_chkMiddleDouble);addChk(m_chkScrollUp);
     addChk(m_chkScrollDown);  addChk(m_chkScrollHoriz); addChk(m_chkModCtrl);
     addChk(m_chkModAlt);      addChk(m_chkModShift);    addChk(m_chkExitButton);
+    addChk(m_chkQuitButton);
 
     root->addWidget(m_grpBtns);
 
@@ -381,6 +384,7 @@ void SettingsDialog::loadFrom(const AppSettings& s)
     m_chkModAlt->setChecked(s.showModAlt);
     m_chkModShift->setChecked(s.showModShift);
     m_chkExitButton->setChecked(s.showExitButton);
+    m_chkQuitButton->setChecked(s.showQuitButton);
 
     m_opacitySlider->setValue(static_cast<int>(s.windowOpacity * 100));
     m_chkAlwaysOnTop->setChecked(s.alwaysOnTop);
@@ -418,6 +422,7 @@ AppSettings SettingsDialog::readUi() const
     s.showModAlt      = m_chkModAlt->isChecked();
     s.showModShift    = m_chkModShift->isChecked();
     s.showExitButton  = m_chkExitButton->isChecked();
+    s.showQuitButton  = m_chkQuitButton->isChecked();
 
     s.windowOpacity   = m_opacitySlider->value() / 100.0;
     s.alwaysOnTop     = m_chkAlwaysOnTop->isChecked();

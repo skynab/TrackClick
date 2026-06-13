@@ -38,6 +38,7 @@
     <message><source>Ready — hover to dwell-click</source><translation>就绪 — 悬停以点击</translation></message>
     <message><source>Selected: </source><translation>已选择：</translation></message>
     <message><source>Running in the system tray. Right-click the tray icon to quit.</source><translation>正在系统托盘中运行。右键单击托盘图标退出。</translation></message>
+    <message><source>Quit Program</source><translation>退出程序</translation></message>
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -63,6 +64,7 @@
     <message><source>Alt modifier</source><translation>Alt 修饰键</translation></message>
     <message><source>Shift modifier</source><translation>Shift 修饰键</translation></message>
     <message><source>Exit button</source><translation>退出按钮</translation></message>
+    <message><source>Quit button</source><translation>退出程序按钮</translation></message>
     <message><source>Window</source><translation>窗口</translation></message>
     <message><source>Opacity:</source><translation>不透明度：</translation></message>
     <message><source>Always on top</source><translation>总在最前</translation></message>

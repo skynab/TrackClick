@@ -40,6 +40,7 @@
     <message><source>Ready — hover to dwell-click</source><translation>Připraveno — najeďte pro kliknutí</translation></message>
     <message><source>Selected: </source><translation>Vybráno: </translation></message>
     <message><source>Running in the system tray. Right-click the tray icon to quit.</source><translation>Běží v systémové liště. Pravým klikem na ikonu ukončíte.</translation></message>
+    <message><source>Quit Program</source><translation>Ukončit program</translation></message>
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -65,6 +66,7 @@
     <message><source>Alt modifier</source><translation>Modifikátor Alt</translation></message>
     <message><source>Shift modifier</source><translation>Modifikátor Shift</translation></message>
     <message><source>Exit button</source><translation>Tlačítko ukončit</translation></message>
+    <message><source>Quit button</source><translation>Tlačítko ukončit program</translation></message>
     <message><source>Window</source><translation>Okno</translation></message>
     <message><source>Opacity:</source><translation>Průhlednost:</translation></message>
     <message><source>Always on top</source><translation>Vždy nahoře</translation></message>

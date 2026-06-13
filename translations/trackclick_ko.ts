@@ -38,6 +38,7 @@
     <message><source>Ready — hover to dwell-click</source><translation>준비 완료 — 마우스를 올려 클릭</translation></message>
     <message><source>Selected: </source><translation>선택됨: </translation></message>
     <message><source>Running in the system tray. Right-click the tray icon to quit.</source><translation>시스템 트레이에서 실행 중. 트레이 아이콘을 오른쪽 클릭하여 종료.</translation></message>
+    <message><source>Quit Program</source><translation>프로그램 종료</translation></message>
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -63,6 +64,7 @@
     <message><source>Alt modifier</source><translation>Alt 수정자</translation></message>
     <message><source>Shift modifier</source><translation>Shift 수정자</translation></message>
     <message><source>Exit button</source><translation>종료 버튼</translation></message>
+    <message><source>Quit button</source><translation>프로그램 종료 버튼</translation></message>
     <message><source>Window</source><translation>창</translation></message>
     <message><source>Opacity:</source><translation>불투명도:</translation></message>
     <message><source>Always on top</source><translation>항상 위에</translation></message>

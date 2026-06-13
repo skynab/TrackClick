@@ -24,17 +24,18 @@ struct AppSettings {
     bool showLeftDouble       = true;
     bool showLeftDrag         = true;
     bool showRightClick       = true;
-    bool showRightDouble      = true;
-    bool showRightDrag        = true;
+    bool showRightDouble      = false;
+    bool showRightDrag        = false;
     bool showMiddleClick      = true;
     bool showMiddleDouble     = false;
-    bool showScrollUp         = true;
-    bool showScrollDown       = true;
+    bool showScrollUp         = false;
+    bool showScrollDown       = false;
     bool showScrollHoriz      = false;
     bool showModCtrl          = true;
     bool showModAlt           = true;
     bool showModShift         = true;
     bool showExitButton       = true;
+    bool showQuitButton       = true;
 
     // Window
     double windowOpacity = 1.0;
@@ -117,6 +118,7 @@ private:
     QCheckBox*   m_chkModAlt;
     QCheckBox*   m_chkModShift;
     QCheckBox*   m_chkExitButton;
+    QCheckBox*   m_chkQuitButton;
 
     // Window
     QSlider*     m_opacitySlider;

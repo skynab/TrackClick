@@ -117,6 +117,14 @@ public:
 
 signals:
     void clickTypePressed(ClickType type);
+    void clickTypeHovered(ClickType type);
+
+protected:
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    void enterEvent(QEnterEvent* ev) override;
+#else
+    void enterEvent(QEvent* ev) override;
+#endif
 
 private:
     ClickType m_type;

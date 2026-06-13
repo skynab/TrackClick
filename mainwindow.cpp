@@ -86,6 +86,16 @@ void ClickButton::setSelected(bool sel)
     updateIcon();
 }
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+void ClickButton::enterEvent(QEnterEvent* ev)
+#else
+void ClickButton::enterEvent(QEvent* ev)
+#endif
+{
+    QToolButton::enterEvent(ev);
+    emit clickTypeHovered(m_type);
+}
+
 void ClickButton::setButtonIcon(const QString& iconName)
 {
     m_iconName = iconName;
@@ -176,6 +186,7 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     m_settings.showModAlt      = m_persist.value("show/modAlt",      true).toBool();
     m_settings.showModShift    = m_persist.value("show/modShift",    true).toBool();
     m_settings.showExitButton  = m_persist.value("show/exit",        true).toBool();
+    m_settings.showQuitButton  = m_persist.value("show/quitButton",  true).toBool();
     m_settings.startMinimized  = m_persist.value("window/startMin",  false).toBool();
     m_settings.audioFeedback   = m_persist.value("audio/enabled",    false).toBool();
     m_settings.iconsOnly       = m_persist.value("show/iconsOnly",    false).toBool();
@@ -379,6 +390,11 @@ void MainWindow::rebuildButtons()
         col++;
         if (col >= COLS) { col = 0; row++; }
         connect(btn, &ClickButton::clickTypePressed, this, &MainWindow::onClickButtonPressed);
+        connect(btn, &ClickButton::clickTypeHovered, this, [this](ClickType type){
+            setClickType(type);
+            if (m_autoEnabled)
+                m_dwell->arm(type, m_modifiers);
+        });
     };
 
     auto addIf = [&](bool show, const QString& lbl, const QString& tip, ClickType t, const QString& icon){
@@ -473,6 +489,24 @@ void MainWindow::rebuildButtons()
             m_shiftBtn->setStyleSheet(modStyle(on));
         });
         addMod(m_shiftBtn);
+    }
+
+    // ── Quit button ───────────────────────────────────────────
+    if (m_settings.showQuitButton) {
+        if (col > 0) { row++; col = 0; }
+        const bool large = m_settings.largeButtons;
+        auto* quitBtn = new QPushButton(tr("Quit Program"), m_btnArea);
+        quitBtn->setStyleSheet(
+            QString("QPushButton { background:#3A1A1A; color:#FF6B6B; border:1px solid #7A3333; "
+                    "border-radius:4px; font-size:%1; padding:%2; }"
+                    "QPushButton:hover { background:#5C2222; border-color:#FF6B6B; }")
+                .arg(large ? "13px" : "11px")
+                .arg(large ? "4px"  : "2px")
+        );
+        quitBtn->setMinimumHeight(large ? 32 : 22);
+        const int span = (COLS == 99) ? 99 : COLS;
+        grid->addWidget(quitBtn, row, 0, 1, span);
+        connect(quitBtn, &QPushButton::clicked, qApp, &QApplication::quit);
     }
 
     // Update selection highlight
@@ -774,6 +808,7 @@ void MainWindow::applySettings(const AppSettings& s)
     m_persist.setValue("show/modAlt",        s.showModAlt);
     m_persist.setValue("show/modShift",      s.showModShift);
     m_persist.setValue("show/exit",          s.showExitButton);
+    m_persist.setValue("show/quitButton",    s.showQuitButton);
     m_persist.setValue("show/iconsOnly",     s.iconsOnly);
     m_persist.setValue("show/largeButtons",  s.largeButtons);
     m_persist.setValue("show/buttonLayout",  static_cast<int>(s.buttonLayout));

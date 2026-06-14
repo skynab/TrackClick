@@ -38,6 +38,12 @@ public:
     // Move the system cursor to pos without clicking.
     static void moveCursor(QPoint pos);
 
+    // Returns the real global cursor position.
+    // On Linux this uses XQueryPointer so it stays accurate on Wayland even
+    // when the cursor is outside the application window (QCursor::pos() goes
+    // stale as soon as the pointer leaves the window on Wayland).
+    static QPoint cursorPos();
+
 private:
     static void pressModifiers(int modifiers);
     static void releaseModifiers(int modifiers);

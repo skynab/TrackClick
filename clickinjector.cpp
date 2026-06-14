@@ -46,6 +46,13 @@ void ClickInjector::moveCursor(QPoint pos)
     sendMouseEvent(MOUSEEVENTF_MOVE, pos.x(), pos.y());
 }
 
+QPoint ClickInjector::cursorPos()
+{
+    POINT p{};
+    GetCursorPos(&p);
+    return QPoint(p.x, p.y);
+}
+
 void ClickInjector::performClick(ClickType type, QPoint pos, int mods)
 {
     // Move first
@@ -152,6 +159,11 @@ static CGEventFlags modsToCGFlags(int mods)
 
 void ClickInjector::pressModifiers(int) {}   // handled via CGEventFlags
 void ClickInjector::releaseModifiers(int) {}
+
+QPoint ClickInjector::cursorPos()
+{
+    return QCursor::pos();
+}
 
 void ClickInjector::moveCursor(QPoint pos)
 {
@@ -358,10 +370,28 @@ void xtestClick(int button, int mods = 0)
 void ClickInjector::pressModifiers(int) {}
 void ClickInjector::releaseModifiers(int) {}
 
+QPoint ClickInjector::cursorPos()
+{
+    // XQueryPointer gives the real global cursor position via XWayland.
+    // QCursor::pos() goes stale on Wayland as soon as the pointer leaves the
+    // application window, making DwellManager fire at the wrong location.
+    Display* dpy = getDisplay();
+    if (dpy) {
+        Window root = DefaultRootWindow(dpy);
+        Window root_ret, child_ret;
+        int rx, ry, wx, wy;
+        unsigned int mask;
+        if (XQueryPointer(dpy, root, &root_ret, &child_ret,
+                          &rx, &ry, &wx, &wy, &mask))
+            return QPoint(rx, ry);
+    }
+    return QCursor::pos();
+}
+
 void ClickInjector::moveCursor(QPoint pos)
 {
     if (udev().isOpen()) {
-        QPoint cur = QCursor::pos();
+        QPoint cur = ClickInjector::cursorPos();
         int dx = pos.x() - cur.x();
         int dy = pos.y() - cur.y();
         if (dx || dy) {
@@ -460,6 +490,7 @@ void ClickInjector::performClick(ClickType type, QPoint pos, int mods)
 void ClickInjector::pressModifiers(int) {}
 void ClickInjector::releaseModifiers(int) {}
 void ClickInjector::moveCursor(QPoint) {}
+QPoint ClickInjector::cursorPos() { return QCursor::pos(); }
 
 void ClickInjector::performClick(ClickType, QPoint, int)
 {

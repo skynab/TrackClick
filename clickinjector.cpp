@@ -230,25 +230,103 @@ void ClickInjector::performClick(ClickType type, QPoint pos, int mods)
 }
 
 // ─────────────────────────────────────────────────────────────
-//  Linux / X11
+//  Linux — uinput (Wayland + X11) with XTest fallback (X11 only)
 // ─────────────────────────────────────────────────────────────
 #elif defined(PLATFORM_LINUX)
+
+// Qt headers must come before X11 headers (X11 defines Bool/Status macros)
+#include <QCursor>
 #include <QGuiApplication>
+
+// ── uinput ────────────────────────────────────────────────────
+#include <linux/input.h>
+#include <linux/uinput.h>
+#include <cerrno>
+#include <cstring>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
+
+// ── XTest (X11 fallback) ──────────────────────────────────────
 #include <X11/Xlib.h>
 #include <X11/extensions/XTest.h>
 #include <X11/keysym.h>
 
-static Display* getDisplay()
+// ── uinput virtual pointer device ────────────────────────────
+namespace {
+
+struct UInputDev {
+    int fd = -1;
+
+    bool tryOpen()
+    {
+        fd = ::open("/dev/uinput", O_WRONLY | O_NONBLOCK);
+        if (fd < 0) return false;
+
+        ioctl(fd, UI_SET_EVBIT, EV_KEY);
+        ioctl(fd, UI_SET_EVBIT, EV_REL);
+        ioctl(fd, UI_SET_EVBIT, EV_SYN);
+
+        for (int b : {REL_X, REL_Y, REL_WHEEL, REL_HWHEEL})
+            ioctl(fd, UI_SET_RELBIT, b);
+        for (int b : {BTN_LEFT, BTN_RIGHT, BTN_MIDDLE,
+                      KEY_LEFTCTRL, KEY_LEFTALT, KEY_LEFTSHIFT})
+            ioctl(fd, UI_SET_KEYBIT, b);
+
+        struct uinput_setup us{};
+        us.id.bustype = BUS_USB;
+        us.id.vendor  = 0x1234;
+        us.id.product = 0x5678;
+        std::strncpy(us.name, "TrackClick Virtual Mouse", UINPUT_MAX_NAME_SIZE - 1);
+
+        if (ioctl(fd, UI_DEV_SETUP, &us) < 0) { destroy(); return false; }
+        if (ioctl(fd, UI_DEV_CREATE)     < 0) { destroy(); return false; }
+
+        // Give the compositor time to recognise the new device.
+        usleep(200'000);
+        return true;
+    }
+
+    void destroy()
+    {
+        if (fd >= 0) { ioctl(fd, UI_DEV_DESTROY); ::close(fd); fd = -1; }
+    }
+
+    bool isOpen() const { return fd >= 0; }
+
+    void emit(uint16_t type, uint16_t code, int32_t val) const
+    {
+        struct input_event ev{};
+        ev.type  = type;
+        ev.code  = code;
+        ev.value = val;
+        ::write(fd, &ev, sizeof(ev));
+    }
+
+    void syn() const { emit(EV_SYN, SYN_REPORT, 0); }
+};
+
+// Initialised on first use — tries uinput, falls back to XTest if denied.
+UInputDev& udev()
+{
+    static UInputDev dev;
+    static bool tried = false;
+    if (!tried) { tried = true; dev.tryOpen(); }
+    return dev;
+}
+
+// ── XTest fallback helpers ────────────────────────────────────
+
+Display* getDisplay()
 {
     static Display* dpy = XOpenDisplay(nullptr);
     return dpy;
 }
 
-static void fakeButton(int button, bool press, int mods = 0)
+void xtestFakeButton(int button, bool press, int mods = 0)
 {
     Display* dpy = getDisplay();
     if (!dpy) return;
-    // Modifiers
     if (press) {
         if (mods & ModCtrl)  XTestFakeKeyEvent(dpy, XKeysymToKeycode(dpy, XK_Control_L), True,  0);
         if (mods & ModAlt)   XTestFakeKeyEvent(dpy, XKeysymToKeycode(dpy, XK_Alt_L),     True,  0);
@@ -263,53 +341,107 @@ static void fakeButton(int button, bool press, int mods = 0)
     XFlush(dpy);
 }
 
-static void click(int button, int mods = 0)
+void xtestClick(int button, int mods = 0)
 {
-    fakeButton(button, true,  mods);
-    fakeButton(button, false, mods);
+    xtestFakeButton(button, true,  mods);
+    xtestFakeButton(button, false, mods);
 }
 
-static void doubleClick(int button, int mods = 0)
-{
-    click(button, mods);
-    click(button, mods);
-}
+} // namespace
+
+// ── ClickInjector ─────────────────────────────────────────────
 
 void ClickInjector::pressModifiers(int) {}
 void ClickInjector::releaseModifiers(int) {}
 
 void ClickInjector::moveCursor(QPoint pos)
 {
-    Display* dpy = getDisplay();
-    if (!dpy) return;
-    XTestFakeMotionEvent(dpy, -1, pos.x(), pos.y(), 0);
-    XFlush(dpy);
+    if (udev().isOpen()) {
+        QPoint cur = QCursor::pos();
+        int dx = pos.x() - cur.x();
+        int dy = pos.y() - cur.y();
+        if (dx || dy) {
+            udev().emit(EV_REL, REL_X, dx);
+            udev().emit(EV_REL, REL_Y, dy);
+            udev().syn();
+        }
+    } else {
+        Display* dpy = getDisplay();
+        if (!dpy) return;
+        XTestFakeMotionEvent(dpy, -1, pos.x(), pos.y(), 0);
+        XFlush(dpy);
+    }
 }
 
 void ClickInjector::performClick(ClickType type, QPoint pos, int mods)
 {
-    Display* dpy = getDisplay();
-    if (!dpy) return;
-    XTestFakeMotionEvent(dpy, -1, pos.x(), pos.y(), 0);
-    XFlush(dpy);
+    // Move to target position first.
+    moveCursor(pos);
 
-    // X11 button numbers: 1=left, 2=middle, 3=right, 4=scroll-up, 5=scroll-down, 6=scroll-left, 7=scroll-right
-    switch (type) {
-    case ClickType::LeftClick:        click(1, mods); break;
-    case ClickType::LeftDoubleClick:  doubleClick(1, mods); break;
-    case ClickType::LeftDown:         fakeButton(1, true,  mods); break;
-    case ClickType::LeftUp:           fakeButton(1, false, mods); break;
-    case ClickType::RightClick:       click(3, mods); break;
-    case ClickType::RightDoubleClick: doubleClick(3, mods); break;
-    case ClickType::RightDown:        fakeButton(3, true,  mods); break;
-    case ClickType::RightUp:          fakeButton(3, false, mods); break;
-    case ClickType::MiddleClick:      click(2, mods); break;
-    case ClickType::MiddleDoubleClick:doubleClick(2, mods); break;
-    case ClickType::ScrollUp:         click(4); break;
-    case ClickType::ScrollDown:       click(5); break;
-    case ClickType::ScrollLeft:       click(6); break;
-    case ClickType::ScrollRight:      click(7); break;
-    default: break;
+    if (udev().isOpen()) {
+        auto& d = udev();
+
+        auto key = [&](int code, bool down) {
+            d.emit(EV_KEY, static_cast<uint16_t>(code), down ? 1 : 0);
+        };
+        auto btn = [&](int code, bool down) {
+            if (down && (mods & ModCtrl))  key(KEY_LEFTCTRL,  true);
+            if (down && (mods & ModAlt))   key(KEY_LEFTALT,   true);
+            if (down && (mods & ModShift)) key(KEY_LEFTSHIFT, true);
+            d.emit(EV_KEY, static_cast<uint16_t>(code), down ? 1 : 0);
+            d.syn();
+            if (!down && (mods & ModShift)) key(KEY_LEFTSHIFT, false);
+            if (!down && (mods & ModAlt))   key(KEY_LEFTALT,   false);
+            if (!down && (mods & ModCtrl))  key(KEY_LEFTCTRL,  false);
+            if (!down) d.syn();
+        };
+        auto click = [&](int code) { btn(code, true); btn(code, false); };
+        auto dbl   = [&](int code) { click(code); click(code); };
+
+        switch (type) {
+        case ClickType::LeftClick:         click(BTN_LEFT);   break;
+        case ClickType::LeftDoubleClick:   dbl(BTN_LEFT);     break;
+        case ClickType::LeftDown:          btn(BTN_LEFT,  true);  break;
+        case ClickType::LeftUp:            btn(BTN_LEFT,  false); break;
+        case ClickType::RightClick:        click(BTN_RIGHT);  break;
+        case ClickType::RightDoubleClick:  dbl(BTN_RIGHT);    break;
+        case ClickType::RightDown:         btn(BTN_RIGHT, true);  break;
+        case ClickType::RightUp:           btn(BTN_RIGHT, false); break;
+        case ClickType::MiddleClick:       click(BTN_MIDDLE); break;
+        case ClickType::MiddleDoubleClick: dbl(BTN_MIDDLE);   break;
+        case ClickType::ScrollUp:
+            d.emit(EV_REL, REL_WHEEL,   1); d.syn(); break;
+        case ClickType::ScrollDown:
+            d.emit(EV_REL, REL_WHEEL,  -1); d.syn(); break;
+        case ClickType::ScrollLeft:
+            d.emit(EV_REL, REL_HWHEEL, -1); d.syn(); break;
+        case ClickType::ScrollRight:
+            d.emit(EV_REL, REL_HWHEEL,  1); d.syn(); break;
+        default: break;
+        }
+    } else {
+        // XTest fallback (X11 sessions without uinput access)
+        // X11 button map: 1=left 2=middle 3=right 4=scroll↑ 5=scroll↓ 6=scroll← 7=scroll→
+        auto click = [&](int b) { xtestClick(b, mods); };
+        auto dbl   = [&](int b) { xtestClick(b, mods); xtestClick(b, mods); };
+
+        switch (type) {
+        case ClickType::LeftClick:         click(1); break;
+        case ClickType::LeftDoubleClick:   dbl(1);   break;
+        case ClickType::LeftDown:          xtestFakeButton(1, true,  mods); break;
+        case ClickType::LeftUp:            xtestFakeButton(1, false, mods); break;
+        case ClickType::RightClick:        click(3); break;
+        case ClickType::RightDoubleClick:  dbl(3);   break;
+        case ClickType::RightDown:         xtestFakeButton(3, true,  mods); break;
+        case ClickType::RightUp:           xtestFakeButton(3, false, mods); break;
+        case ClickType::MiddleClick:       click(2); break;
+        case ClickType::MiddleDoubleClick: dbl(2);   break;
+        case ClickType::ScrollUp:          click(4); break;
+        case ClickType::ScrollDown:        click(5); break;
+        case ClickType::ScrollLeft:        click(6); break;
+        case ClickType::ScrollRight:       click(7); break;
+        default: break;
+        }
     }
 }
 

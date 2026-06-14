@@ -36,6 +36,8 @@ jobs:
             libx11-dev \
             libxtst-dev
           sudo apt-get install -y qt6-multimedia-dev || true
+          # uinput is needed at runtime on Wayland; ensure the header is present for the build
+          sudo modprobe uinput || true
 
       # ── Qt: macOS ────────────────────────────────────────────────────────────
       - name: Install Qt (macOS)

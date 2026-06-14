@@ -9,9 +9,8 @@
           IconSourceFile="installer\TrackClick.ico">
 
     <BootstrapperApplication>
-      <!-- No bootstrapper UI — the MSI's own WixUI_Minimal handles the license
-           dialog and progress, keeping the install experience consistent. -->
-      <bal:WixStandardBootstrapperApplication Theme="none" />
+      <bal:WixStandardBootstrapperApplication Theme="hyperlinkLicense"
+                                              LicenseUrl="" />
     </BootstrapperApplication>
 
     <Chain>

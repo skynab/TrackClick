@@ -44,7 +44,7 @@ set(HEADERS
 )
 
 if(WIN32)
-    add_executable(TrackClick WIN32 ${SOURCES} ${HEADERS})
+    add_executable(TrackClick WIN32 ${SOURCES} ${HEADERS} app.rc)
 elseif(APPLE)
     add_executable(TrackClick MACOSX_BUNDLE ${SOURCES} ${HEADERS})
 else()

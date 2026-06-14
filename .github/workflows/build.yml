@@ -93,7 +93,8 @@ jobs:
           New-Item -ItemType Directory -Path dist -Force
           Copy-Item build\Release\TrackClick.exe dist\
           windeployqt --release dist\TrackClick.exe
-          wix build installer\TrackClick.wxs -b . -ext WixToolset.UI.wixext -o TrackClick-Windows.msi
+          Set-Location installer
+          wix build TrackClick.wxs -b .. -ext WixToolset.UI.wixext -o ..\TrackClick-Windows.msi
 
       # ── Upload artifacts ──────────────────────────────────────────────────────
       - name: Upload (Linux)

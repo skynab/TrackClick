@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   WiX v4 installer for TrackClick.
-  Build from the repo root:
-    wix build installer\TrackClick.wxs -b . -ext WixToolset.UI.wixext -o TrackClick-Windows.msi
-  The -b . bind path lets WiX find the dist\ folder produced by windeployqt.
+  Build from the installer\ directory:
+    cd installer
+    wix build TrackClick.wxs -b .. -ext WixToolset.UI.wixext -o ..\TrackClick-Windows.msi
+  The -b .. bind path points to the repo root where dist\ lives.
+  Glob paths in <Files Include="..."> are relative to this .wxs file's
+  directory, so ..\dist\** correctly reaches the repo-root dist\ folder.
 -->
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
      xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
@@ -23,7 +26,8 @@
 
     <!-- Minimal UI: license agreement then progress + finish -->
     <ui:WixUI Id="WixUI_Minimal" />
-    <WixVariable Id="WixUILicenseRtf" Value="installer\License.rtf" />
+    <!-- License.rtf is in the same directory as this .wxs file -->
+    <WixVariable Id="WixUILicenseRtf" Value="License.rtf" />
 
     <!-- Install location: C:\Program Files\TrackClick\ -->
     <StandardDirectory Id="ProgramFiles6432Folder">
@@ -35,10 +39,10 @@
       <Directory Id="AppMenuFolder" Name="TrackClick" />
     </StandardDirectory>
 
-    <!-- All files produced by windeployqt go into the install folder,
-         preserving subdirectory structure (platforms\, styles\, etc.) -->
+    <!-- All files produced by windeployqt, preserving subdirectory structure.
+         Path is relative to this .wxs file (..\dist\ = repo-root dist\). -->
     <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
-      <Files Include="dist\**" />
+      <Files Include="..\dist\**" />
     </ComponentGroup>
 
     <!-- Start Menu shortcut lives in its own component (needs a registry

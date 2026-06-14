@@ -93,8 +93,30 @@ jobs:
           New-Item -ItemType Directory -Path dist -Force
           Copy-Item build\Release\TrackClick.exe dist\
           windeployqt --release dist\TrackClick.exe
+
+          # Generate installer\AppFiles.wxs listing every file windeployqt produced.
+          # WiX v4 <Files> glob is not supported in ComponentGroup; we build the
+          # fragment explicitly so any Qt DLL layout is handled correctly.
+          $distAbs = (Resolve-Path dist).Path
+          $lines = @(
+            '<?xml version="1.0" encoding="UTF-8"?>',
+            '<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">',
+            '  <Fragment>',
+            '    <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">'
+          )
+          foreach ($f in (Get-ChildItem -Path $distAbs -Recurse -File)) {
+            $rel    = $f.FullName.Substring($distAbs.Length + 1)
+            $subdir = $f.DirectoryName.Substring($distAbs.Length).TrimStart('\')
+            $attrs  = if ($subdir) { " Subdirectory=`"$subdir`"" } else { '' }
+            $lines += "      <Component$attrs Guid=`"*`">"
+            $lines += "        <File Source=`"dist\$rel`" />"
+            $lines += "      </Component>"
+          }
+          $lines += @('    </ComponentGroup>', '  </Fragment>', '</Wix>')
+          $lines | Set-Content installer\AppFiles.wxs -Encoding UTF8
+
           Set-Location installer
-          wix build TrackClick.wxs -b .. -ext WixToolset.UI.wixext -o ..\TrackClick-Windows.msi
+          wix build TrackClick.wxs AppFiles.wxs -b .. -ext WixToolset.UI.wixext -o ..\TrackClick-Windows.msi
 
       # ── Upload artifacts ──────────────────────────────────────────────────────
       - name: Upload (Linux)

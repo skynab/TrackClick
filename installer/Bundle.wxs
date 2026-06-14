@@ -15,8 +15,7 @@
     </BootstrapperApplication>
 
     <Chain>
-      <MsiPackage SourceFile="TrackClick-Windows.msi"
-                  DisplayInternalUI="yes" />
+      <MsiPackage SourceFile="TrackClick-Windows.msi" />
     </Chain>
 
   </Bundle>

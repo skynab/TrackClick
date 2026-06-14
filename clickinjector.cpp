@@ -294,7 +294,7 @@ struct UInputDev {
 
     bool isOpen() const { return fd >= 0; }
 
-    void emit(uint16_t type, uint16_t code, int32_t val) const
+    void send(uint16_t type, uint16_t code, int32_t val) const
     {
         struct input_event ev{};
         ev.type  = type;
@@ -303,7 +303,7 @@ struct UInputDev {
         ::write(fd, &ev, sizeof(ev));
     }
 
-    void syn() const { emit(EV_SYN, SYN_REPORT, 0); }
+    void syn() const { send(EV_SYN, SYN_REPORT, 0); }
 };
 
 // Initialised on first use — tries uinput, falls back to XTest if denied.
@@ -361,8 +361,8 @@ void ClickInjector::moveCursor(QPoint pos)
         int dx = pos.x() - cur.x();
         int dy = pos.y() - cur.y();
         if (dx || dy) {
-            udev().emit(EV_REL, REL_X, dx);
-            udev().emit(EV_REL, REL_Y, dy);
+            udev().send(EV_REL, REL_X, dx);
+            udev().send(EV_REL, REL_Y, dy);
             udev().syn();
         }
     } else {
@@ -382,13 +382,13 @@ void ClickInjector::performClick(ClickType type, QPoint pos, int mods)
         auto& d = udev();
 
         auto key = [&](int code, bool down) {
-            d.emit(EV_KEY, static_cast<uint16_t>(code), down ? 1 : 0);
+            d.send(EV_KEY, static_cast<uint16_t>(code), down ? 1 : 0);
         };
         auto btn = [&](int code, bool down) {
             if (down && (mods & ModCtrl))  key(KEY_LEFTCTRL,  true);
             if (down && (mods & ModAlt))   key(KEY_LEFTALT,   true);
             if (down && (mods & ModShift)) key(KEY_LEFTSHIFT, true);
-            d.emit(EV_KEY, static_cast<uint16_t>(code), down ? 1 : 0);
+            d.send(EV_KEY, static_cast<uint16_t>(code), down ? 1 : 0);
             d.syn();
             if (!down && (mods & ModShift)) key(KEY_LEFTSHIFT, false);
             if (!down && (mods & ModAlt))   key(KEY_LEFTALT,   false);
@@ -410,13 +410,13 @@ void ClickInjector::performClick(ClickType type, QPoint pos, int mods)
         case ClickType::MiddleClick:       click(BTN_MIDDLE); break;
         case ClickType::MiddleDoubleClick: dbl(BTN_MIDDLE);   break;
         case ClickType::ScrollUp:
-            d.emit(EV_REL, REL_WHEEL,   1); d.syn(); break;
+            d.send(EV_REL, REL_WHEEL,   1); d.syn(); break;
         case ClickType::ScrollDown:
-            d.emit(EV_REL, REL_WHEEL,  -1); d.syn(); break;
+            d.send(EV_REL, REL_WHEEL,  -1); d.syn(); break;
         case ClickType::ScrollLeft:
-            d.emit(EV_REL, REL_HWHEEL, -1); d.syn(); break;
+            d.send(EV_REL, REL_HWHEEL, -1); d.syn(); break;
         case ClickType::ScrollRight:
-            d.emit(EV_REL, REL_HWHEEL,  1); d.syn(); break;
+            d.send(EV_REL, REL_HWHEEL,  1); d.syn(); break;
         default: break;
         }
     } else {

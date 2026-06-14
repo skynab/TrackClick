@@ -12,8 +12,11 @@
     <SummaryInformation />
     <MediaTemplate EmbedCab="yes" />
 
+    <!-- Installer/ARP icon: package box graphic -->
     <Icon Id="TrackClick.ico" SourceFile="TrackClick.ico" />
     <Property Id="ARPPRODUCTICON" Value="TrackClick.ico" />
+    <!-- App icon: circle/cursor logo, used on shortcuts -->
+    <Icon Id="TrackClickApp.ico" SourceFile="..\icons\TrackClick.ico" />
 
     <MajorUpgrade DowngradeErrorMessage="A newer version of TrackClick is already installed." />
 
@@ -28,6 +31,8 @@
       <Directory Id="AppMenuFolder" Name="TrackClick" />
     </StandardDirectory>
 
+    <StandardDirectory Id="DesktopFolder" />
+
     <!-- AppFiles ComponentGroup is generated at build time by the workflow -->
     <ComponentGroup Id="Shortcuts">
       <Component Id="StartMenuShortcut" Directory="AppMenuFolder" Guid="*">
@@ -36,11 +41,24 @@
                   Description="Virtual mouse / dwell clicker"
                   Target="[INSTALLFOLDER]TrackClick.exe"
                   WorkingDirectory="INSTALLFOLDER"
-                  Icon="TrackClick.ico" />
+                  Icon="TrackClickApp.ico" />
         <RemoveFolder Id="CleanupAppMenuFolder" Directory="AppMenuFolder" On="uninstall" />
         <RegistryValue Root="HKCU"
                        Key="Software\TrackClick\TrackClick"
                        Name="StartMenuShortcut"
+                       Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+
+      <Component Id="DesktopShortcut" Directory="DesktopFolder" Guid="*">
+        <Shortcut Id="AppDesktopShortcut"
+                  Name="TrackClick"
+                  Description="Virtual mouse / dwell clicker"
+                  Target="[INSTALLFOLDER]TrackClick.exe"
+                  WorkingDirectory="INSTALLFOLDER"
+                  Icon="TrackClickApp.ico" />
+        <RegistryValue Root="HKCU"
+                       Key="Software\TrackClick\TrackClick"
+                       Name="DesktopShortcut"
                        Type="integer" Value="1" KeyPath="yes" />
       </Component>
     </ComponentGroup>

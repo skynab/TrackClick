@@ -45,12 +45,16 @@ void DwellManager::onPoll()
     };
 
     if (m_waiting) {
-        // Wait until cursor moves far enough away from fire-point before re-arming.
-        if (dist(cur, m_anchorPos) > m_sensitivityPx * 2) {
-            m_waiting    = false;
-            m_hovering   = false;
-            m_anchorPos  = cur;
-            m_lastPos    = cur;
+        // Exit waiting when the cursor moves far enough away from the fire point,
+        // OR after one full dwell period — whichever comes first.  The timeout
+        // handles Wayland compositor pointer grabs (e.g. right-click context menus)
+        // that freeze XQueryPointer so movement is never detected.
+        qint64 waitedMs = QDateTime::currentMSecsSinceEpoch() - m_waitStartMs;
+        if (dist(cur, m_anchorPos) > m_sensitivityPx * 2 || waitedMs >= m_dwellMs) {
+            m_waiting      = false;
+            m_hovering     = false;
+            m_anchorPos    = cur;
+            m_lastPos      = cur;
             m_hoverStartMs = QDateTime::currentMSecsSinceEpoch();
         }
         return;
@@ -83,9 +87,10 @@ void DwellManager::onPoll()
         emit dwellFired(cur, m_clickType);
 
         // After firing, wait for cursor to move away before allowing next dwell
-        m_anchorPos = cur;
-        m_waiting   = true;
-        m_hovering  = false;
+        m_anchorPos   = cur;
+        m_waiting     = true;
+        m_hovering    = false;
+        m_waitStartMs = QDateTime::currentMSecsSinceEpoch();
         emit dwellProgress(0.0f);
     }
 }

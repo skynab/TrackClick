@@ -59,4 +59,5 @@ private:
     int       m_sensitivityPx  = 5;
 
     qint64    m_hoverStartMs   = 0;
+    qint64    m_waitStartMs    = 0; // when m_waiting began (for timeout fallback)
 };

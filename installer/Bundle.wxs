@@ -3,7 +3,7 @@
      xmlns:bal="http://wixtoolset.org/schemas/v4/wxs/bal">
 
   <Bundle Name="TrackClick"
-          Version="1.0.0"
+          Version="0.9.0"
           Manufacturer="OptiTrack"
           UpgradeCode="B2C3D4E5-F6A7-8901-BCDE-F12345678901"
           IconSourceFile="installer\TrackClick.ico">

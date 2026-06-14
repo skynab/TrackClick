@@ -125,6 +125,7 @@ void ClickInjector::performClick(ClickType type, QPoint pos, int mods)
 // ─────────────────────────────────────────────────────────────
 #elif defined(PLATFORM_MACOS)
 #include <ApplicationServices/ApplicationServices.h>
+#include <QCursor>
 
 static CGEventRef makeMouseEvent(CGEventType evType, CGMouseButton btn, CGPoint pt)
 {

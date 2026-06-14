@@ -63,6 +63,10 @@ target_link_libraries(TrackClick PRIVATE
     ${QT}::Svg
 )
 
+if(DEFINED BUILD_NUMBER)
+    target_compile_definitions(TrackClick PRIVATE BUILD_NUMBER=${BUILD_NUMBER})
+endif()
+
 if(MULTIMEDIA_FOUND)
     target_link_libraries(TrackClick PRIVATE ${QT}::Multimedia)
     target_compile_definitions(TrackClick PRIVATE HAVE_MULTIMEDIA)

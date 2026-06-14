@@ -282,7 +282,13 @@ void SettingsDialog::buildUi()
     auto* appNameLbl = new QLabel("TrackClick");
     appNameLbl->setStyleSheet(
         "color: #FFFFFF; font-size: 16px; font-weight: bold; background: transparent;");
+#ifdef BUILD_NUMBER
+#  define TC_STR_(x) #x
+#  define TC_STR(x) TC_STR_(x)
+    auto* versionLbl = new QLabel("Version 0.9.0 (build " TC_STR(BUILD_NUMBER) ")");
+#else
     auto* versionLbl = new QLabel("Version 0.9.0");
+#endif
     versionLbl->setStyleSheet(
         "color: #666666; font-size: 11px; background: transparent;");
     nameLay->addWidget(appNameLbl);

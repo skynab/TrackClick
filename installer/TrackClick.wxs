@@ -4,7 +4,7 @@
 
   <Package Name="TrackClick"
            Manufacturer="OptiTrack"
-           Version="0.9.0"
+           Version="0.9.0.$(var.BuildNumber ?? 0)"
            UpgradeCode="7E8A4B2C-1F3D-4E9A-8B6C-2D5F0A3E7B1C"
            Language="1033"
            Compressed="yes">

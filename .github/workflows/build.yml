@@ -82,6 +82,9 @@ jobs:
           # Install the binary so linuxdeploy can find it
           DESTDIR=AppDir cmake --install build --prefix /usr
 
+          # linuxdeploy requires the icon filename to match the Icon= entry in the desktop file
+          cp icons/app.svg icons/TrackClick.svg
+
           # Build the AppImage
           QMAKE=$(which qmake6 || which qmake) \
           OUTPUT=TrackClick-Linux.AppImage \
@@ -90,7 +93,7 @@ jobs:
             --plugin qt \
             --output appimage \
             --desktop-file installer/TrackClick.desktop \
-            --icon-file icons/app.svg
+            --icon-file icons/TrackClick.svg
 
       # ── Package: macOS ────────────────────────────────────────────────────────
       - name: Package (macOS)

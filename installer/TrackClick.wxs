@@ -22,6 +22,8 @@
 
     <ui:WixUI Id="WixUI_Minimal" />
     <WixVariable Id="WixUILicenseRtf" Value="License.rtf" />
+    <WixVariable Id="WixUIDialogBmp"  Value="dialog.bmp" />
+    <WixVariable Id="WixUIBannerBmp"  Value="banner.bmp" />
 
     <StandardDirectory Id="ProgramFiles6432Folder">
       <Directory Id="INSTALLFOLDER" Name="TrackClick" />

@@ -327,6 +327,9 @@ void xtestFakeButton(int button, bool press, int mods = 0)
 {
     Display* dpy = getDisplay();
     if (!dpy) return;
+    // Never send a motion event before the button event — on Wayland the
+    // compositor overrides the pointer position from the motion, causing
+    // snap-back.  The cursor is already at the right location.
     if (press) {
         if (mods & ModCtrl)  XTestFakeKeyEvent(dpy, XKeysymToKeycode(dpy, XK_Control_L), True,  0);
         if (mods & ModAlt)   XTestFakeKeyEvent(dpy, XKeysymToKeycode(dpy, XK_Alt_L),     True,  0);
@@ -375,8 +378,10 @@ void ClickInjector::moveCursor(QPoint pos)
 
 void ClickInjector::performClick(ClickType type, QPoint pos, int mods)
 {
-    // Move to target position first.
-    moveCursor(pos);
+    // Do not move the cursor before clicking. For a dwell clicker the cursor
+    // is already at the target; moving it causes snap-back on Wayland because
+    // QCursor::pos() is unreliable there and the computed delta is wrong.
+    Q_UNUSED(pos)
 
     if (udev().isOpen()) {
         auto& d = udev();

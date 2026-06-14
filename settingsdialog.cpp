@@ -2,13 +2,16 @@
 #include "translations/tsparser.h"
 #include <QApplication>
 #include <QEvent>
+#include <QFrame>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QGridLayout>
 #include <QFormLayout>
 #include <QGroupBox>
 #include <QLabel>
+#include <QPainter>
 #include <QPushButton>
+#include <QSvgRenderer>
 #ifdef Q_OS_MAC
 #  include <QDesktopServices>
 #  include <QUrl>
@@ -240,6 +243,53 @@ void SettingsDialog::buildUi()
     auto* root = new QVBoxLayout(this);
     root->setSpacing(10);
     root->setContentsMargins(14, 14, 14, 14);
+
+    // ── Brand header ──────────────────────────────────────────
+    auto* header = new QWidget;
+    header->setObjectName("appHeader");
+    header->setStyleSheet(
+        "QWidget#appHeader { background: #1A1A1A; border-radius: 6px; }");
+
+    auto* hLay = new QHBoxLayout(header);
+    hLay->setContentsMargins(14, 10, 14, 10);
+    hLay->setSpacing(14);
+
+    // OptiTrack logo rendered from embedded SVG
+    QSvgRenderer svgRend(QString(":/icons/optitrack_logo.svg"));
+    const int logoH = 30;
+    const int logoW = qRound(svgRend.defaultSize().width()
+                             * logoH / double(svgRend.defaultSize().height()));
+    QPixmap logoPx(logoW, logoH);
+    logoPx.fill(Qt::transparent);
+    QPainter logoPainter(&logoPx);
+    svgRend.render(&logoPainter);
+
+    auto* logoLbl = new QLabel;
+    logoLbl->setPixmap(logoPx);
+    logoLbl->setStyleSheet("background: transparent;");
+    hLay->addWidget(logoLbl);
+
+    // Vertical divider
+    auto* vSep = new QFrame;
+    vSep->setFrameShape(QFrame::VLine);
+    vSep->setStyleSheet("color: #444;");
+    hLay->addWidget(vSep);
+
+    // App name + version
+    auto* nameLay = new QVBoxLayout;
+    nameLay->setSpacing(1);
+    auto* appNameLbl = new QLabel("TrackClick");
+    appNameLbl->setStyleSheet(
+        "color: #FFFFFF; font-size: 16px; font-weight: bold; background: transparent;");
+    auto* versionLbl = new QLabel("Version 1.0.0");
+    versionLbl->setStyleSheet(
+        "color: #666666; font-size: 11px; background: transparent;");
+    nameLay->addWidget(appNameLbl);
+    nameLay->addWidget(versionLbl);
+    hLay->addLayout(nameLay);
+    hLay->addStretch(1);
+
+    root->addWidget(header);
 
     // ── Dwell / AutoMouse ─────────────────────────────────────
     m_grpDwell   = new QGroupBox(tr("AutoMouse / Dwell Clicking"));

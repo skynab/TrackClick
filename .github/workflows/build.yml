@@ -31,9 +31,11 @@ jobs:
           sudo apt-get update -q
           sudo apt-get install -y \
             qt6-base-dev \
+            libqt6svg6-dev \
             libgl1-mesa-dev \
             libx11-dev \
             libxtst-dev
+          sudo apt-get install -y qt6-multimedia-dev || true
 
       # ── Qt: macOS ────────────────────────────────────────────────────────────
       - name: Install Qt (macOS)
@@ -53,6 +55,13 @@ jobs:
           version: '6.7.*'
           arch: win64_msvc2019_64
           cache: true
+
+      # ── WiX v4: Windows ──────────────────────────────────────────────────────
+      - name: Install WiX (Windows)
+        if: matrix.name == 'Windows'
+        run: |
+          dotnet tool install --global wix
+          wix extension add --global WixToolset.UI.wixext
 
       # ── Build ─────────────────────────────────────────────────────────────────
       - name: Configure
@@ -84,7 +93,7 @@ jobs:
           New-Item -ItemType Directory -Path dist -Force
           Copy-Item build\Release\TrackClick.exe dist\
           windeployqt --release dist\TrackClick.exe
-          Compress-Archive -Path dist\* -DestinationPath TrackClick-Windows.zip
+          wix build installer\TrackClick.wxs -b . -ext WixToolset.UI.wixext -o TrackClick-Windows.msi
 
       # ── Upload artifacts ──────────────────────────────────────────────────────
       - name: Upload (Linux)
@@ -106,4 +115,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: TrackClick-Windows
-          path: TrackClick-Windows.zip
+          path: TrackClick-Windows.msi

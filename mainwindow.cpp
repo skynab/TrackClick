@@ -96,6 +96,12 @@ void ClickButton::enterEvent(QEvent* ev)
     emit clickTypeHovered(m_type);
 }
 
+void ClickButton::leaveEvent(QEvent* ev)
+{
+    QToolButton::leaveEvent(ev);
+    emit clickTypeLeft();
+}
+
 void ClickButton::setButtonIcon(const QString& iconName)
 {
     m_iconName = iconName;
@@ -222,6 +228,21 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     m_dwell = new DwellManager(this);
     m_dwell->setDwellMs(m_settings.dwellMs);
     m_dwell->setSensitivityPx(m_settings.sensitivityPx);
+
+#ifdef HAVE_MULTIMEDIA
+    m_clickSound = new QSoundEffect(this);
+    m_clickSound->setSource(QUrl("qrc:/sounds/click-noise.wav"));
+#endif
+
+    m_hoverTimer = new QTimer(this);
+    m_hoverTimer->setSingleShot(true);
+    connect(m_hoverTimer, &QTimer::timeout, this, [this](){
+        if (m_hoveredType != ClickType::None) {
+            setClickType(m_hoveredType);
+            if (m_autoEnabled)
+                m_dwell->arm(m_hoveredType, m_modifiers);
+        }
+    });
 
     connect(m_dwell, &DwellManager::dwellProgress, this, &MainWindow::onDwellProgress);
     connect(m_dwell, &DwellManager::dwellFired,    this, &MainWindow::onDwellFired);
@@ -391,9 +412,12 @@ void MainWindow::rebuildButtons()
         if (col >= COLS) { col = 0; row++; }
         connect(btn, &ClickButton::clickTypePressed, this, &MainWindow::onClickButtonPressed);
         connect(btn, &ClickButton::clickTypeHovered, this, [this](ClickType type){
-            setClickType(type);
-            if (m_autoEnabled)
-                m_dwell->arm(type, m_modifiers);
+            m_hoveredType = type;
+            m_hoverTimer->start(m_settings.dwellMs);
+        });
+        connect(btn, &ClickButton::clickTypeLeft, this, [this](){
+            m_hoverTimer->stop();
+            m_hoveredType = ClickType::None;
         });
     };
 
@@ -688,6 +712,9 @@ void MainWindow::onClickButtonPressed(ClickType type)
         // Manual mode: inject the click at the current cursor position
         QPoint pos = QCursor::pos();
         ClickInjector::performClick(type, pos, m_modifiers);
+#ifdef HAVE_MULTIMEDIA
+        if (m_settings.audioFeedback) m_clickSound->play();
+#endif
 
         // Clear modifiers after use (one-shot)
         m_modifiers = ModNone;
@@ -748,6 +775,10 @@ void MainWindow::onDwellProgress(float frac)
 
 void MainWindow::onDwellFired(QPoint /*pos*/, ClickType type)
 {
+#ifdef HAVE_MULTIMEDIA
+    if (m_settings.audioFeedback) m_clickSound->play();
+#endif
+
     // Re-arm for continuous clicking
     if (m_autoEnabled) {
         m_dwell->arm(type, m_modifiers);

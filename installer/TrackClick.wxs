@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  WiX v4 installer for TrackClick.
+  Build from the repo root:
+    wix build installer\TrackClick.wxs -b . -ext WixToolset.UI.wixext -o TrackClick-Windows.msi
+  The -b . bind path lets WiX find the dist\ folder produced by windeployqt.
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+
+  <Package Name="TrackClick"
+           Manufacturer="Anthony Lazzaro"
+           Version="1.0.0"
+           UpgradeCode="7E8A4B2C-1F3D-4E9A-8B6C-2D5F0A3E7B1C"
+           Language="1033"
+           Compressed="yes">
+
+    <SummaryInformation />
+    <MediaTemplate EmbedCab="yes" />
+
+    <!-- Remove any older version before installing a newer one -->
+    <MajorUpgrade DowngradeErrorMessage="A newer version of TrackClick is already installed." />
+
+    <!-- Minimal UI: license agreement then progress + finish -->
+    <ui:WixUI Id="WixUI_Minimal" />
+    <WixVariable Id="WixUILicenseRtf" Value="installer\License.rtf" />
+
+    <!-- Install location: C:\Program Files\TrackClick\ -->
+    <StandardDirectory Id="ProgramFiles6432Folder">
+      <Directory Id="INSTALLFOLDER" Name="TrackClick" />
+    </StandardDirectory>
+
+    <!-- Start Menu folder -->
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="AppMenuFolder" Name="TrackClick" />
+    </StandardDirectory>
+
+    <!-- All files produced by windeployqt go into the install folder,
+         preserving subdirectory structure (platforms\, styles\, etc.) -->
+    <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
+      <Files Include="dist\**" />
+    </ComponentGroup>
+
+    <!-- Start Menu shortcut lives in its own component (needs a registry
+         KeyPath because shortcuts cannot be KeyPath themselves) -->
+    <ComponentGroup Id="Shortcuts">
+      <Component Id="StartMenuShortcut" Directory="AppMenuFolder" Guid="*">
+        <Shortcut Id="AppStartMenuShortcut"
+                  Name="TrackClick"
+                  Description="Virtual mouse / dwell clicker"
+                  Target="[INSTALLFOLDER]TrackClick.exe"
+                  WorkingDirectory="INSTALLFOLDER" />
+        <RemoveFolder Id="CleanupAppMenuFolder" Directory="AppMenuFolder" On="uninstall" />
+        <RegistryValue Root="HKCU"
+                       Key="Software\TrackClick\TrackClick"
+                       Name="StartMenuShortcut"
+                       Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <Feature Id="ProductFeature" Title="TrackClick" Level="1">
+      <ComponentGroupRef Id="AppFiles" />
+      <ComponentGroupRef Id="Shortcuts" />
+    </Feature>
+
+  </Package>
+</Wix>

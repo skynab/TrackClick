@@ -12,14 +12,17 @@ set(CMAKE_AUTOUIC ON)
 find_package(Qt6 QUIET COMPONENTS Core Gui Widgets)
 if(Qt6_FOUND)
     set(QT Qt6)
-    find_package(Qt6 OPTIONAL_COMPONENTS LinguistTools QUIET)
+    find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Svg)
+    find_package(Qt6 OPTIONAL_COMPONENTS Multimedia LinguistTools QUIET)
     set(LINGUIST_FOUND ${Qt6LinguistTools_FOUND})
+    set(MULTIMEDIA_FOUND ${Qt6Multimedia_FOUND})
     message(STATUS "TrackClick: building with Qt6 ${Qt6_VERSION}")
 else()
-    find_package(Qt5 5.12 REQUIRED COMPONENTS Core Gui Widgets)
+    find_package(Qt5 5.12 REQUIRED COMPONENTS Core Gui Widgets Svg)
     set(QT Qt5)
-    find_package(Qt5 OPTIONAL_COMPONENTS LinguistTools QUIET)
+    find_package(Qt5 OPTIONAL_COMPONENTS Multimedia LinguistTools QUIET)
     set(LINGUIST_FOUND ${Qt5LinguistTools_FOUND})
+    set(MULTIMEDIA_FOUND ${Qt5Multimedia_FOUND})
     message(STATUS "TrackClick: building with Qt5 ${Qt5_VERSION}")
 endif()
 
@@ -52,7 +55,16 @@ target_link_libraries(TrackClick PRIVATE
     ${QT}::Core
     ${QT}::Gui
     ${QT}::Widgets
+    ${QT}::Svg
 )
+
+if(MULTIMEDIA_FOUND)
+    target_link_libraries(TrackClick PRIVATE ${QT}::Multimedia)
+    target_compile_definitions(TrackClick PRIVATE HAVE_MULTIMEDIA)
+    message(STATUS "TrackClick: audio support enabled")
+else()
+    message(STATUS "TrackClick: audio support disabled (Qt Multimedia not found)")
+endif()
 
 if(WIN32)
     target_link_libraries(TrackClick PRIVATE user32)

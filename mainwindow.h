@@ -9,6 +9,9 @@
 #include <QProgressBar>
 #include <QAction>
 #include <QSettings>
+#ifdef HAVE_MULTIMEDIA
+#  include <QSoundEffect>
+#endif
 #include <QTranslator>
 #include "clickinjector.h"
 #include "dwellmanager.h"
@@ -91,6 +94,10 @@ private:
     QPoint      m_resizeStart;           // global pos when resize began
     QRect       m_resizeGeo;             // window geometry when resize began
 
+    // ── Hover-select timer ────────────────────────────────────
+    QTimer*    m_hoverTimer  = nullptr;
+    ClickType  m_hoveredType = ClickType::None;
+
     // ── Sub-objects ───────────────────────────────────────────
     DwellManager*     m_dwell      = nullptr;
     QSystemTrayIcon*  m_tray       = nullptr;
@@ -98,6 +105,9 @@ private:
     QAction*          m_showAct    = nullptr;
     QAction*          m_quitAct    = nullptr;
     QTranslator*      m_translator = nullptr;
+#ifdef HAVE_MULTIMEDIA
+    QSoundEffect*     m_clickSound = nullptr;
+#endif
 
     AppSettings   m_settings;
     QSettings     m_persist;
@@ -118,6 +128,7 @@ public:
 signals:
     void clickTypePressed(ClickType type);
     void clickTypeHovered(ClickType type);
+    void clickTypeLeft();
 
 protected:
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
@@ -125,6 +136,7 @@ protected:
 #else
     void enterEvent(QEvent* ev) override;
 #endif
+    void leaveEvent(QEvent* ev) override;
 
 private:
     ClickType m_type;

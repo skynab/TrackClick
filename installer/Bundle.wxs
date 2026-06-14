@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:bal="http://wixtoolset.org/schemas/v4/wxs/bal">
+
+  <Bundle Name="TrackClick"
+          Version="1.0.0"
+          Manufacturer="OptiTrack"
+          UpgradeCode="B2C3D4E5-F6A7-8901-BCDE-F12345678901"
+          IconSourceFile="installer\TrackClick.ico">
+
+    <BootstrapperApplication>
+      <!-- No bootstrapper UI — the MSI's own WixUI_Minimal handles the license
+           dialog and progress, keeping the install experience consistent. -->
+      <bal:WixStandardBootstrapperApplication Theme="none" />
+    </BootstrapperApplication>
+
+    <Chain>
+      <MsiPackage SourceFile="TrackClick-Windows.msi"
+                  DisplayInternalUI="yes" />
+    </Chain>
+
+  </Bundle>
+
+</Wix>

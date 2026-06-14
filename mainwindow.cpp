@@ -1,5 +1,9 @@
 #include "mainwindow.h"
 #include <QApplication>
+#include <QDir>
+#include <QFile>
+#include <QStandardPaths>
+#include <QTextStream>
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #  define GLOBAL_POS(ev) (ev)->globalPosition().toPoint()
 #else
@@ -193,7 +197,8 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     m_settings.showModShift    = m_persist.value("show/modShift",    true).toBool();
     m_settings.showExitButton  = m_persist.value("show/exit",        true).toBool();
     m_settings.showQuitButton  = m_persist.value("show/quitButton",  true).toBool();
-    m_settings.startMinimized  = m_persist.value("window/startMin",  false).toBool();
+    m_settings.startMinimized   = m_persist.value("window/startMin",        false).toBool();
+    m_settings.launchOnStartup  = m_persist.value("window/launchOnStartup", false).toBool();
     m_settings.audioFeedback   = m_persist.value("audio/enabled",    false).toBool();
     m_settings.iconsOnly       = m_persist.value("show/iconsOnly",    false).toBool();
     m_settings.largeButtons    = m_persist.value("show/largeButtons", false).toBool();
@@ -361,6 +366,34 @@ void MainWindow::buildUi()
     adjustSize();
 }
 
+// Attaches dwell-hover toggle behaviour to a modifier QPushButton.
+// Parented to the button so it is deleted automatically with it.
+class ModHoverFilter : public QObject {
+public:
+    explicit ModHoverFilter(QPushButton* btn, const int* dwellMs)
+        : QObject(btn), m_dwellMs(dwellMs)
+    {
+        m_timer = new QTimer(this);
+        m_timer->setSingleShot(true);
+        QObject::connect(m_timer, &QTimer::timeout, btn, [btn](){ btn->toggle(); });
+        btn->installEventFilter(this);
+    }
+
+protected:
+    bool eventFilter(QObject*, QEvent* ev) override
+    {
+        if (ev->type() == QEvent::Enter)
+            m_timer->start(*m_dwellMs);
+        else if (ev->type() == QEvent::Leave)
+            m_timer->stop();
+        return false;
+    }
+
+private:
+    QTimer*    m_timer;
+    const int* m_dwellMs;
+};
+
 void MainWindow::rebuildButtons()
 {
     // Clear existing
@@ -486,6 +519,7 @@ void MainWindow::rebuildButtons()
             if (on) m_modifiers |= ModCtrl; else m_modifiers &= ~ModCtrl;
             m_ctrlBtn->setStyleSheet(modStyle(on));
         });
+        new ModHoverFilter(m_ctrlBtn, &m_settings.dwellMs);
         addMod(m_ctrlBtn);
     }
     if (m_settings.showModAlt) {
@@ -498,6 +532,7 @@ void MainWindow::rebuildButtons()
             if (on) m_modifiers |= ModAlt; else m_modifiers &= ~ModAlt;
             m_altBtn->setStyleSheet(modStyle(on));
         });
+        new ModHoverFilter(m_altBtn, &m_settings.dwellMs);
         addMod(m_altBtn);
     }
     if (m_settings.showModShift) {
@@ -510,6 +545,7 @@ void MainWindow::rebuildButtons()
             if (on) m_modifiers |= ModShift; else m_modifiers &= ~ModShift;
             m_shiftBtn->setStyleSheet(modStyle(on));
         });
+        new ModHoverFilter(m_shiftBtn, &m_settings.dwellMs);
         addMod(m_shiftBtn);
     }
 
@@ -791,6 +827,81 @@ void MainWindow::onSettingsClicked()
     }
 }
 
+// ── Launch-on-startup helpers (platform-specific) ─────────────────────────
+
+#if defined(Q_OS_WIN)
+static void setLaunchOnStartup(bool enable)
+{
+    QSettings reg(
+        "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+        QSettings::NativeFormat);
+    if (enable)
+        reg.setValue("TrackClick",
+            QDir::toNativeSeparators(QCoreApplication::applicationFilePath()));
+    else
+        reg.remove("TrackClick");
+}
+
+#elif defined(Q_OS_MACOS)
+static void setLaunchOnStartup(bool enable)
+{
+    const QString plist =
+        QDir::homePath() + "/Library/LaunchAgents/com.optitrack.trackclick.plist";
+    if (enable) {
+        QDir().mkpath(QFileInfo(plist).absolutePath());
+        QFile f(plist);
+        if (f.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            QTextStream out(&f);
+            out << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                   "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\""
+                   " \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
+                   "<plist version=\"1.0\">\n"
+                   "<dict>\n"
+                   "    <key>Label</key>\n"
+                   "    <string>com.optitrack.trackclick</string>\n"
+                   "    <key>ProgramArguments</key>\n"
+                   "    <array>\n"
+                   "        <string>" << QCoreApplication::applicationFilePath() << "</string>\n"
+                   "    </array>\n"
+                   "    <key>RunAtLoad</key>\n"
+                   "    <true/>\n"
+                   "</dict>\n"
+                   "</plist>\n";
+        }
+    } else {
+        QFile::remove(plist);
+    }
+}
+
+#elif defined(Q_OS_LINUX)
+static void setLaunchOnStartup(bool enable)
+{
+    const QString dir =
+        QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + "/autostart";
+    const QString path = dir + "/trackclick.desktop";
+    if (enable) {
+        QDir().mkpath(dir);
+        QFile f(path);
+        if (f.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            QTextStream out(&f);
+            out << "[Desktop Entry]\n"
+                   "Type=Application\n"
+                   "Name=TrackClick\n"
+                   "Exec=" << QCoreApplication::applicationFilePath() << "\n"
+                   "Hidden=false\n"
+                   "X-GNOME-Autostart-enabled=true\n";
+        }
+    } else {
+        QFile::remove(path);
+    }
+}
+
+#else
+static void setLaunchOnStartup(bool) {}
+#endif
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 void MainWindow::applySettings(const AppSettings& s)
 {
     const QString oldLanguage = m_settings.language;
@@ -821,6 +932,9 @@ void MainWindow::applySettings(const AppSettings& s)
     m_persist.setValue("window/opacity",     s.windowOpacity);
     m_persist.setValue("window/alwaysOnTop", s.alwaysOnTop);
     m_persist.setValue("window/startMin",    s.startMinimized);
+    m_persist.setValue("window/launchOnStartup", s.launchOnStartup);
+    if (s.launchOnStartup != m_settings.launchOnStartup)
+        setLaunchOnStartup(s.launchOnStartup);
     m_persist.setValue("audio/enabled",      s.audioFeedback);
     m_persist.setValue("show/leftClick",     s.showLeftClick);
     m_persist.setValue("show/leftDouble",    s.showLeftDouble);

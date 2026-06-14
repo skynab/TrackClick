@@ -223,6 +223,7 @@ void SettingsDialog::retranslateUi()
     m_grpWin->setTitle(tr("Window"));
     m_chkAlwaysOnTop->setText(tr("Always on top"));
     m_chkStartMinimized->setText(tr("Start minimized to tray"));
+    m_chkLaunchOnStartup->setText(tr("Launch on system startup"));
     m_chkAudio->setText(tr("Audio feedback on click"));
     m_chkIconsOnly->setText(tr("Icons only (hide button labels)"));
     m_chkLargeButtons->setText(tr("Large buttons"));
@@ -373,8 +374,9 @@ void SettingsDialog::buildUi()
         m_opacityLabel->setText(QString::number(v) + "%");
     });
 
-    m_chkAlwaysOnTop   = new QCheckBox(tr("Always on top"));
-    m_chkStartMinimized= new QCheckBox(tr("Start minimized to tray"));
+    m_chkAlwaysOnTop    = new QCheckBox(tr("Always on top"));
+    m_chkStartMinimized = new QCheckBox(tr("Start minimized to tray"));
+    m_chkLaunchOnStartup= new QCheckBox(tr("Launch on system startup"));
     m_chkAudio         = new QCheckBox(tr("Audio feedback on click"));
     m_chkIconsOnly     = new QCheckBox(tr("Icons only (hide button labels)"));
     m_chkLargeButtons  = new QCheckBox(tr("Large buttons"));
@@ -406,6 +408,7 @@ void SettingsDialog::buildUi()
     wfl->addRow(m_lblOpacity, opRow);
     wfl->addRow(m_chkAlwaysOnTop);
     wfl->addRow(m_chkStartMinimized);
+    wfl->addRow(m_chkLaunchOnStartup);
     wfl->addRow(m_chkAudio);
     wfl->addRow(m_chkIconsOnly);
     wfl->addRow(m_chkLargeButtons);
@@ -444,6 +447,7 @@ void SettingsDialog::loadFrom(const AppSettings& s)
     m_opacitySlider->setValue(static_cast<int>(s.windowOpacity * 100));
     m_chkAlwaysOnTop->setChecked(s.alwaysOnTop);
     m_chkStartMinimized->setChecked(s.startMinimized);
+    m_chkLaunchOnStartup->setChecked(s.launchOnStartup);
     m_chkAudio->setChecked(s.audioFeedback);
     m_chkIconsOnly->setChecked(s.iconsOnly);
     m_chkLargeButtons->setChecked(s.largeButtons);
@@ -480,8 +484,9 @@ AppSettings SettingsDialog::readUi() const
     s.showQuitButton  = m_chkQuitButton->isChecked();
 
     s.windowOpacity   = m_opacitySlider->value() / 100.0;
-    s.alwaysOnTop     = m_chkAlwaysOnTop->isChecked();
-    s.startMinimized  = m_chkStartMinimized->isChecked();
+    s.alwaysOnTop      = m_chkAlwaysOnTop->isChecked();
+    s.startMinimized   = m_chkStartMinimized->isChecked();
+    s.launchOnStartup  = m_chkLaunchOnStartup->isChecked();
     s.audioFeedback   = m_chkAudio->isChecked();
     s.iconsOnly       = m_chkIconsOnly->isChecked();
     s.largeButtons    = m_chkLargeButtons->isChecked();

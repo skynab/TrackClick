@@ -38,9 +38,10 @@ struct AppSettings {
     bool showQuitButton       = true;
 
     // Window
-    double windowOpacity = 1.0;
-    bool   alwaysOnTop   = true;
+    double windowOpacity  = 1.0;
+    bool   alwaysOnTop    = true;
     bool   startMinimized = false;
+    bool   launchOnStartup = false;
 
     // Audio feedback
     bool audioFeedback   = false;
@@ -125,6 +126,7 @@ private:
     QLabel*      m_opacityLabel;
     QCheckBox*   m_chkAlwaysOnTop;
     QCheckBox*   m_chkStartMinimized;
+    QCheckBox*   m_chkLaunchOnStartup;
     QCheckBox*   m_chkAudio;
     QCheckBox*   m_chkIconsOnly;
     QCheckBox*   m_chkLargeButtons;

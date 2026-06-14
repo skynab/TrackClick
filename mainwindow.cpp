@@ -835,12 +835,23 @@ static void setLaunchOnStartup(bool enable)
     QSettings reg(
         "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
         QSettings::NativeFormat);
+    // Windows Settings > Apps > Startup reads toggle state from StartupApproved\Run.
+    // Without this entry the app may not appear in the Settings list at all.
+    QSettings approved(
+        "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StartupApproved\\Run",
+        QSettings::NativeFormat);
+
     if (enable) {
         const QString exe = QDir::toNativeSeparators(QCoreApplication::applicationFilePath());
         reg.setValue("TrackClick", QString("\"%1\"").arg(exe));
-    }
-    else
+        // 12-byte REG_BINARY: bytes 0-3 = 0x00000002 (enabled), rest = 0
+        QByteArray state(12, '\0');
+        state[0] = 0x02;
+        approved.setValue("TrackClick", state);
+    } else {
         reg.remove("TrackClick");
+        approved.remove("TrackClick");
+    }
 }
 
 #elif defined(Q_OS_MACOS)

@@ -835,9 +835,10 @@ static void setLaunchOnStartup(bool enable)
     QSettings reg(
         "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
         QSettings::NativeFormat);
-    if (enable)
-        reg.setValue("TrackClick",
-            QDir::toNativeSeparators(QCoreApplication::applicationFilePath()));
+    if (enable) {
+        const QString exe = QDir::toNativeSeparators(QCoreApplication::applicationFilePath());
+        reg.setValue("TrackClick", QString("\"%1\"").arg(exe));
+    }
     else
         reg.remove("TrackClick");
 }

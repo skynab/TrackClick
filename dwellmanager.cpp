@@ -1,4 +1,5 @@
 #include "dwellmanager.h"
+#include "clickinjector.h"
 #include <QCursor>
 #include <QDateTime>
 #include <cmath>
@@ -18,7 +19,7 @@ void DwellManager::arm(ClickType type, int modifiers)
     m_armed      = true;
     m_waiting    = false;
     m_hovering   = false;
-    m_anchorPos  = QCursor::pos();
+    m_anchorPos  = ClickInjector::cursorPos();
     m_lastPos    = m_anchorPos;
     m_hoverStartMs = QDateTime::currentMSecsSinceEpoch();
 }
@@ -35,7 +36,7 @@ void DwellManager::onPoll()
 {
     if (!m_armed) return;
 
-    QPoint cur = QCursor::pos();
+    QPoint cur = ClickInjector::cursorPos();
 
     auto dist = [](QPoint a, QPoint b) -> double {
         double dx = a.x() - b.x();

@@ -251,9 +251,7 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     buildTray();
     loadWindowSettings();
 
-    if (m_settings.startMinimized) {
-        hide();
-    }
+
 }
 
 void MainWindow::buildUi()

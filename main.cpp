@@ -41,7 +41,14 @@ int main(int argc, char* argv[])
     }
 
     MainWindow w(startupTranslator);
-    w.show();
+
+    // Honour "start minimized to tray": read the persisted setting before
+    // showing the window so we never flash it on screen then hide it.
+    {
+        QSettings s("TrackClick", "TrackClick");
+        if (!s.value("window/startMin", false).toBool())
+            w.show();
+    }
 
     return app.exec();
 }

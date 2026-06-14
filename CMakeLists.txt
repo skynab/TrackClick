@@ -46,7 +46,12 @@ set(HEADERS
 if(WIN32)
     add_executable(TrackClick WIN32 ${SOURCES} ${HEADERS} app.rc)
 elseif(APPLE)
-    add_executable(TrackClick MACOSX_BUNDLE ${SOURCES} ${HEADERS})
+    set(MACOSX_ICON icons/TrackClick.icns)
+    set_source_files_properties(${MACOSX_ICON} PROPERTIES
+        MACOSX_PACKAGE_LOCATION Resources)
+    add_executable(TrackClick MACOSX_BUNDLE ${SOURCES} ${HEADERS} ${MACOSX_ICON})
+    set_target_properties(TrackClick PROPERTIES
+        MACOSX_BUNDLE_ICON_FILE TrackClick.icns)
 else()
     add_executable(TrackClick ${SOURCES} ${HEADERS})
 endif()

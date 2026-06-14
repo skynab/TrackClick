@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=TrackClick
+Comment=Dwell-click accessibility tool
+Exec=TrackClick
+Icon=TrackClick
+Type=Application
+Categories=Utility;Accessibility;

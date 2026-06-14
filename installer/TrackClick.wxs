@@ -12,6 +12,9 @@
     <SummaryInformation />
     <MediaTemplate EmbedCab="yes" />
 
+    <Icon Id="TrackClick.ico" SourceFile="TrackClick.ico" />
+    <Property Id="ARPPRODUCTICON" Value="TrackClick.ico" />
+
     <MajorUpgrade DowngradeErrorMessage="A newer version of TrackClick is already installed." />
 
     <ui:WixUI Id="WixUI_Minimal" />
@@ -32,7 +35,8 @@
                   Name="TrackClick"
                   Description="Virtual mouse / dwell clicker"
                   Target="[INSTALLFOLDER]TrackClick.exe"
-                  WorkingDirectory="INSTALLFOLDER" />
+                  WorkingDirectory="INSTALLFOLDER"
+                  Icon="TrackClick.ico" />
         <RemoveFolder Id="CleanupAppMenuFolder" Directory="AppMenuFolder" On="uninstall" />
         <RegistryValue Root="HKCU"
                        Key="Software\TrackClick\TrackClick"

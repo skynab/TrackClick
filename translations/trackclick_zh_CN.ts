@@ -78,5 +78,7 @@
     <message><source>Vertical (two columns)</source><translation>垂直（双列）</translation></message>
     <message><source>Vertical (one column)</source><translation>垂直（单列）</translation></message>
     <message><source>Language:</source><translation>语言：</translation></message>
+    <message><source>Scroll repeat:</source><translation>滚动重复次数：</translation></message>
+    <message><source>Launch on system startup</source><translation>开机自动启动</translation></message>
 </context>
 </TS>

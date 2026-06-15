@@ -78,5 +78,7 @@
     <message><source>Vertical (two columns)</source><translation>縦並び（2列）</translation></message>
     <message><source>Vertical (one column)</source><translation>縦並び（1列）</translation></message>
     <message><source>Language:</source><translation>言語：</translation></message>
+    <message><source>Scroll repeat:</source><translation>スクロール繰り返し：</translation></message>
+    <message><source>Launch on system startup</source><translation>システム起動時に起動</translation></message>
 </context>
 </TS>

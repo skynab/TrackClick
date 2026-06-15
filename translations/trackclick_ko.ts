@@ -78,5 +78,7 @@
     <message><source>Vertical (two columns)</source><translation>세로 (두 열)</translation></message>
     <message><source>Vertical (one column)</source><translation>세로 (한 열)</translation></message>
     <message><source>Language:</source><translation>언어:</translation></message>
+    <message><source>Scroll repeat:</source><translation>스크롤 반복:</translation></message>
+    <message><source>Launch on system startup</source><translation>시스템 시작 시 실행</translation></message>
 </context>
 </TS>

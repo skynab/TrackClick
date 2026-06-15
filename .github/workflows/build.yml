@@ -57,6 +57,8 @@ jobs:
         run: cmake --build build-tests --config Debug --parallel
 
       - name: Run tests
+        env:
+          QT_QPA_PLATFORM: offscreen
         run: ctest --test-dir build-tests -C Debug --output-on-failure
 
   build:

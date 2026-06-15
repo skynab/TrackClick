@@ -13,10 +13,8 @@
     <SummaryInformation />
     <MediaTemplate EmbedCab="yes" />
 
-    <!-- Installer/ARP icon: package box graphic -->
-    <Icon Id="TrackClick.ico" SourceFile="TrackClick.ico" />
+    <Icon Id="TrackClick.ico" SourceFile="..\icons\TrackClick.ico" />
     <Property Id="ARPPRODUCTICON" Value="TrackClick.ico" />
-    <!-- App icon: circle/cursor logo, used on shortcuts -->
     <Icon Id="TrackClickApp.ico" SourceFile="..\icons\TrackClick.ico" />
 
     <MajorUpgrade DowngradeErrorMessage="A newer version of TrackClick is already installed." />

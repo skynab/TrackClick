@@ -60,9 +60,9 @@
     <message><source>Scroll Up</source><translation>上にスクロール</translation></message>
     <message><source>Scroll Down</source><translation>下にスクロール</translation></message>
     <message><source>Scroll Left/Right</source><translation>左右にスクロール</translation></message>
-    <message><source>Ctrl modifier</source><translation>Ctrl 修飾キー</translation></message>
-    <message><source>Alt modifier</source><translation>Alt 修飾キー</translation></message>
-    <message><source>Shift modifier</source><translation>Shift 修飾キー</translation></message>
+    <message><source>Ctrl modifier</source><translation>Ctrl キー</translation></message>
+    <message><source>Alt modifier</source><translation>Alt キー</translation></message>
+    <message><source>Shift modifier</source><translation>Shift キー</translation></message>
     <message><source>Exit button</source><translation>終了ボタン</translation></message>
     <message><source>Quit button</source><translation>プログラム終了ボタン</translation></message>
     <message><source>Window</source><translation>ウィンドウ</translation></message>

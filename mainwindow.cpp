@@ -206,6 +206,7 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     m_settings.buttonLayout    = static_cast<ButtonLayout>(m_persist.value("show/buttonLayout", static_cast<int>(ButtonLayout::Vertical)).toInt());
     m_settings.language        = m_persist.value("language",          "en").toString();
     m_settings.scrollRepeat    = m_persist.value("scroll/repeat",      3).toInt();
+    m_settings.repeatOnDwell   = m_persist.value("dwell/repeatOnDwell", false).toBool();
 
     // Adopt any translator already installed at startup so installLanguage()
     // can remove it when the user later switches languages (e.g. back to English).
@@ -236,6 +237,7 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     m_dwell->setDwellMs(m_settings.dwellMs);
     m_dwell->setSensitivityPx(m_settings.sensitivityPx);
     m_dwell->setScrollRepeat(m_settings.scrollRepeat);
+    m_dwell->setRepeatOnDwell(m_settings.repeatOnDwell);
 
 #ifdef HAVE_MULTIMEDIA
     m_clickSound = new QSoundEffect(this);
@@ -303,8 +305,8 @@ void MainWindow::buildUi()
     m_autoBtn->setToolTip(tr("Toggle AutoMouse dwell-clicking"));
     m_autoBtn->setStyleSheet(
         "QPushButton { background:#3A3A3A; color:#AAA; border:1px solid #555; border-radius:3px; font-size:10px; font-weight:bold; }"
-        "QPushButton:checked { background:#FFA600; color:#1A1A1A; border:1px solid #FFB833; }"
-        "QPushButton:hover { border:1px solid #FFA600; }"
+        "QPushButton:checked { background:#FFA028; color:#1A1A1A; border:1px solid #FFB040; }"
+        "QPushButton:hover { border:1px solid #FFA028; }"
     );
     connect(m_autoBtn, &QPushButton::toggled, this, &MainWindow::onAutoToggled);
     tbLayout->addWidget(m_autoBtn);
@@ -565,12 +567,12 @@ void MainWindow::rebuildButtons()
             const char* fs  = large ? "14px" : "11px";
             const char* pad = large ? "4px"  : "2px";
             return on
-                ? QString("QPushButton { background:#00AA55; color:#FFF; border:2px solid #00CC66; "
+                ? QString("QPushButton { background:#FFA028; color:#1A1A1A; border:2px solid #FFB040; "
                           "border-radius:4px; font-weight:bold; font-size:%1; padding:%2; }"
-                          "QPushButton:hover { background:#00CC66; }").arg(fs).arg(pad)
+                          "QPushButton:hover { background:#FFB040; }").arg(fs).arg(pad)
                 : QString("QPushButton { background:#3A3A3A; color:#AAA; border:1px solid #555; "
                           "border-radius:4px; font-size:%1; padding:%2; }"
-                          "QPushButton:hover { background:#4A4A4A; border:1px solid #00AA55; color:#00AA55; }").arg(fs).arg(pad);
+                          "QPushButton:hover { background:#4A4A4A; border:1px solid #FFA028; color:#FFA028; }").arg(fs).arg(pad);
         };
 
         m_dwellActiveBtn = new QPushButton(tr("Dwell Active"), m_btnArea);
@@ -848,12 +850,12 @@ void MainWindow::onAutoToggled(bool on)
         const char* fs  = large ? "14px" : "11px";
         const char* pad = large ? "4px"  : "2px";
         m_dwellActiveBtn->setStyleSheet(on
-            ? QString("QPushButton { background:#00AA55; color:#FFF; border:2px solid #00CC66; "
+            ? QString("QPushButton { background:#FFA028; color:#1A1A1A; border:2px solid #FFB040; "
                       "border-radius:4px; font-weight:bold; font-size:%1; padding:%2; }"
-                      "QPushButton:hover { background:#00CC66; }").arg(fs).arg(pad)
+                      "QPushButton:hover { background:#FFB040; }").arg(fs).arg(pad)
             : QString("QPushButton { background:#3A3A3A; color:#AAA; border:1px solid #555; "
                       "border-radius:4px; font-size:%1; padding:%2; }"
-                      "QPushButton:hover { background:#4A4A4A; border:1px solid #00AA55; color:#00AA55; }").arg(fs).arg(pad));
+                      "QPushButton:hover { background:#4A4A4A; border:1px solid #FFA028; color:#FFA028; }").arg(fs).arg(pad));
     }
 
     m_dwellBar->setVisible(on);
@@ -1015,6 +1017,7 @@ void MainWindow::applySettings(const AppSettings& s)
     m_dwell->setDwellMs(s.dwellMs);
     m_dwell->setSensitivityPx(s.sensitivityPx);
     m_dwell->setScrollRepeat(s.scrollRepeat);
+    m_dwell->setRepeatOnDwell(s.repeatOnDwell);
     setWindowOpacity(s.windowOpacity);
 
     Qt::WindowFlags flags = Qt::Window | Qt::FramelessWindowHint | Qt::Tool;
@@ -1064,6 +1067,7 @@ void MainWindow::applySettings(const AppSettings& s)
     m_persist.setValue("show/buttonLayout",  static_cast<int>(s.buttonLayout));
     m_persist.setValue("language",           s.language);
     m_persist.setValue("scroll/repeat",      s.scrollRepeat);
+    m_persist.setValue("dwell/repeatOnDwell", s.repeatOnDwell);
 }
 
 void MainWindow::onExitClicked()

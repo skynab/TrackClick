@@ -28,6 +28,7 @@ public:
     void setDwellMs(int ms)          { m_dwellMs = ms; }
     void setSensitivityPx(int px)    { m_sensitivityPx = px; }
     void setScrollRepeat(int n)      { m_scrollRepeat = n; }
+    void setRepeatOnDwell(bool repeat){ m_repeatOnDwell = repeat; }
     void setPollIntervalMs(int ms)   { m_pollTimer.setInterval(ms); }
     // Update modifier mask without resetting the current dwell countdown.
     void setModifiers(int mods)      { m_modifiers = mods; }
@@ -64,6 +65,7 @@ private:
     int       m_dwellMs        = 1000;
     int       m_sensitivityPx  = 5;
     int       m_scrollRepeat   = 3;
+    bool      m_repeatOnDwell  = false;
 
     qint64    m_hoverStartMs   = 0;
     qint64    m_waitStartMs    = 0; // when m_waiting began (for timeout fallback)

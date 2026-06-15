@@ -198,6 +198,7 @@ void SettingsDialog::retranslateUi()
     m_lblDwellTime->setText(tr("Dwell time:"));
     m_lblSensitivity->setText(tr("Sensitivity:"));
     m_lblScrollRepeat->setText(tr("Scroll repeat:"));
+    m_chkRepeatMode->setText(tr("Repeat click while cursor stays still"));
 #ifdef Q_OS_MAC
     m_lblPermissions->setText(tr("Permissions:"));
     m_btnAccessibility->setText(tr("Open Accessibility Settings…"));
@@ -309,12 +310,15 @@ void SettingsDialog::buildUi()
     m_sensitivPx   = new QSpinBox; m_sensitivPx->setRange(1, 100);  m_sensitivPx->setSuffix(" px");
     m_scrollRepeat = new QSpinBox; m_scrollRepeat->setRange(1, 20);
 
+    m_chkRepeatMode = new QCheckBox(tr("Repeat click while cursor stays still"));
+
     m_lblDwellTime    = new QLabel(tr("Dwell time:"));
     m_lblSensitivity  = new QLabel(tr("Sensitivity:"));
     m_lblScrollRepeat = new QLabel(tr("Scroll repeat:"));
     fl->addRow(m_lblDwellTime,    m_dwellMs);
     fl->addRow(m_lblSensitivity,  m_sensitivPx);
     fl->addRow(m_lblScrollRepeat, m_scrollRepeat);
+    fl->addRow(m_chkRepeatMode);
 
 #ifdef Q_OS_MAC
     m_lblPermissions   = new QLabel(tr("Permissions:"));
@@ -439,6 +443,7 @@ void SettingsDialog::loadFrom(const AppSettings& s)
     m_dwellMs->setValue(s.dwellMs);
     m_sensitivPx->setValue(s.sensitivityPx);
     m_scrollRepeat->setValue(s.scrollRepeat);
+    m_chkRepeatMode->setChecked(s.repeatOnDwell);
 
     m_chkLeftClick->setChecked(s.showLeftClick);
     m_chkLeftDouble->setChecked(s.showLeftDouble);
@@ -480,6 +485,7 @@ AppSettings SettingsDialog::readUi() const
     s.dwellMs       = m_dwellMs->value();
     s.sensitivityPx = m_sensitivPx->value();
     s.scrollRepeat  = m_scrollRepeat->value();
+    s.repeatOnDwell = m_chkRepeatMode->isChecked();
 
     s.showLeftClick   = m_chkLeftClick->isChecked();
     s.showLeftDouble  = m_chkLeftDouble->isChecked();

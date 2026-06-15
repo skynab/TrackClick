@@ -107,10 +107,11 @@ private slots:
     }
 
     // -----------------------------------------------------------------------
-    // 4. After a normal click, the manager waits for cursor movement before
-    //    allowing a second fire (prevents immediate double-click on release).
+    // 4. After a click fires, no second click occurs while cursor stays still —
+    //    in one-shot mode (default) because the manager disarms, and in repeat
+    //    mode because the waiting phase blocks re-fire until cursor moves.
     // -----------------------------------------------------------------------
-    void test_waitingBlocksImmediateReFire()
+    void test_noReFire_CursorStill()
     {
         auto dm = make(500);
         dm->arm(ClickType::LeftClick);
@@ -126,22 +127,18 @@ private slots:
     }
 
     // -----------------------------------------------------------------------
-    // 5. If the cursor appears frozen during the wait (e.g. XQueryPointer
-    //    returning stale data on Wayland when the pointer is outside the
-    //    XWayland session), the manager disarms to prevent repeated
-    //    unintended clicks.  The user must re-arm by hovering over a button.
+    // 5. In one-shot mode (default), the manager disarms immediately after
+    //    the click fires so no second action can occur until the user
+    //    re-arms by hovering over a toolbar button again.
     // -----------------------------------------------------------------------
-    void test_waitingTimeoutDisarms()
+    void test_oneShotDisarmsAfterFire()
     {
-        auto dm = make(500);
+        auto dm = make(500);  // repeatOnDwell defaults to false (one-shot)
         dm->arm(ClickType::LeftClick);
 
         poll(dm.get());
-        poll(dm.get(), 500);  // first click fires; enters waiting
+        poll(dm.get(), 500);  // first click fires; manager immediately disarms
         QCOMPARE(m_clicks.size(), 1);
-
-        // Cursor stays put; waiting times out — manager disarms
-        poll(dm.get(), 500);
         QVERIFY(!dm->isArmed());
 
         // No second click fires even with further polling
@@ -171,11 +168,13 @@ private slots:
     }
 
     // -----------------------------------------------------------------------
-    // 7. After LeftDown → LeftUp, the next dwell fires LeftDown again.
+    // 7. After LeftDown → LeftUp, the next dwell fires LeftDown again
+    //    (repeat mode — drag type is preserved for continuous use).
     // -----------------------------------------------------------------------
     void test_leftDragToggle_RestoredForNextDrag()
     {
         auto dm = make(500);
+        dm->setRepeatOnDwell(true);  // repeat mode: drag can fire multiple times
         dm->arm(ClickType::LeftDown);
 
         poll(dm.get());

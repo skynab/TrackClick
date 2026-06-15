@@ -72,12 +72,14 @@ void DwellManager::onPoll()
             m_lastPos      = cur;
             m_hoverStartMs = m_nowFn();
 
-            if (timedOut && !movedAway) {
+            if (timedOut && !movedAway && !m_repeatOnDwell) {
                 // Cursor position appeared frozen throughout the entire wait —
                 // most likely the pointer is outside the XWayland session on
                 // Wayland, so XQueryPointer returns stale data and movement
                 // cannot be detected.  Disarm to prevent repeated unintended
                 // clicks; the user re-arms by hovering over a button again.
+                // In repeat mode the user explicitly wants continuous firing,
+                // so we let waiting exit normally and allow the next dwell.
                 m_armed = false;
                 emit dwellProgress(0.0f);
             }
@@ -160,8 +162,7 @@ void DwellManager::onPoll()
             return;
         }
 
-        // For Up events (completing a drag), restore the original Down type and
-        // use normal waiting so an accidental re-trigger is prevented.
+        // For Up events (completing a drag), restore the original Down type.
         if (m_clickType == ClickType::LeftUp && m_dragActive) {
             m_clickType  = ClickType::LeftDown;
             m_dragActive = false;
@@ -170,7 +171,17 @@ void DwellManager::onPoll()
             m_dragActive = false;
         }
 
-        // Normal post-fire: wait for cursor to move before allowing next dwell.
+        // One-shot mode: disarm after each action so the user must re-hover a
+        // toolbar button to fire again (mode 2 / "select then fire once").
+        if (!m_repeatOnDwell) {
+            m_armed   = false;
+            m_waiting = false;
+            emit dwellProgress(0.0f);
+            return;
+        }
+
+        // Repeat mode: wait for cursor to move before allowing next dwell
+        // (prevents an immediate double-fire at the same location).
         m_anchorPos   = cur;
         m_waiting     = true;
         m_hovering    = false;

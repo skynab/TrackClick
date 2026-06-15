@@ -26,7 +26,12 @@ jobs:
         if: matrix.name == 'Linux'
         run: |
           sudo apt-get update -q
-          sudo apt-get install -y qt6-base-dev libx11-dev libxtst-dev
+          sudo apt-get install -y \
+            qt6-base-dev \
+            libqt6svg6-dev \
+            libgl1-mesa-dev \
+            libx11-dev \
+            libxtst-dev
 
       - name: Install Qt (macOS)
         if: matrix.name == 'macOS'

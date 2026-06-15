@@ -1,7 +1,6 @@
 #include "dwellmanager.h"
 #include "clickinjector.h"
 #include <QCursor>
-#include <QDateTime>
 #include <cmath>
 
 DwellManager::DwellManager(QObject* parent)
@@ -17,26 +16,26 @@ void DwellManager::arm(ClickType type, int modifiers)
     // If a drag Down was fired but not yet released, release it now before
     // switching to a different action — otherwise the button stays held.
     if (m_dragActive) {
-        ClickInjector::performClick(m_clickType, ClickInjector::cursorPos(), m_modifiers);
+        m_clickFn(m_clickType, m_cursorPosFn(), m_modifiers);
         m_dragActive = false;
     }
 
-    m_clickType  = type;
-    m_modifiers  = modifiers;
-    m_armed      = true;
-    m_waiting    = false;
-    m_hovering   = false;
-    m_dragActive = false;
-    m_anchorPos  = ClickInjector::cursorPos();
-    m_lastPos    = m_anchorPos;
-    m_hoverStartMs = QDateTime::currentMSecsSinceEpoch();
+    m_clickType    = type;
+    m_modifiers    = modifiers;
+    m_armed        = true;
+    m_waiting      = false;
+    m_hovering     = false;
+    m_dragActive   = false;
+    m_anchorPos    = m_cursorPosFn();
+    m_lastPos      = m_anchorPos;
+    m_hoverStartMs = m_nowFn();
 }
 
 void DwellManager::disarm()
 {
     // If a drag Down was fired but not released, release it to avoid stuck buttons.
     if (m_dragActive) {
-        ClickInjector::performClick(m_clickType, ClickInjector::cursorPos(), m_modifiers);
+        m_clickFn(m_clickType, m_cursorPosFn(), m_modifiers);
         m_dragActive = false;
     }
     m_armed    = false;
@@ -49,7 +48,7 @@ void DwellManager::onPoll()
 {
     if (!m_armed) return;
 
-    QPoint cur = ClickInjector::cursorPos();
+    QPoint cur = m_cursorPosFn();
 
     auto dist = [](QPoint a, QPoint b) -> double {
         double dx = a.x() - b.x();
@@ -62,13 +61,13 @@ void DwellManager::onPoll()
         // OR after one full dwell period — whichever comes first.  The timeout
         // handles Wayland compositor pointer grabs (e.g. right-click context menus)
         // that freeze XQueryPointer so movement is never detected.
-        qint64 waitedMs = QDateTime::currentMSecsSinceEpoch() - m_waitStartMs;
+        qint64 waitedMs = m_nowFn() - m_waitStartMs;
         if (dist(cur, m_anchorPos) > m_sensitivityPx * 2 || waitedMs >= m_dwellMs) {
             m_waiting      = false;
             m_hovering     = false;
             m_anchorPos    = cur;
             m_lastPos      = cur;
-            m_hoverStartMs = QDateTime::currentMSecsSinceEpoch();
+            m_hoverStartMs = m_nowFn();
         }
         return;
     }
@@ -77,14 +76,14 @@ void DwellManager::onPoll()
     // (e.g. XQueryPointer glitches keep resetting the hover countdown), force
     // the Up event so the user is never permanently locked out.
     if (m_dragActive) {
-        qint64 heldMs = QDateTime::currentMSecsSinceEpoch() - m_dragStartMs;
+        qint64 heldMs = m_nowFn() - m_dragStartMs;
         if (heldMs >= 10000) {
-            ClickInjector::performClick(m_clickType, cur, m_modifiers);
-            m_clickType  = (m_clickType == ClickType::LeftUp) ? ClickType::LeftDown : ClickType::RightDown;
-            m_dragActive = false;
-            m_waiting    = true;
-            m_hovering   = false;
-            m_waitStartMs = QDateTime::currentMSecsSinceEpoch();
+            m_clickFn(m_clickType, cur, m_modifiers);
+            m_clickType   = (m_clickType == ClickType::LeftUp) ? ClickType::LeftDown : ClickType::RightDown;
+            m_dragActive  = false;
+            m_waiting     = true;
+            m_hovering    = false;
+            m_waitStartMs = m_nowFn();
             emit dwellProgress(0.0f);
             return;
         }
@@ -95,7 +94,7 @@ void DwellManager::onPoll()
         m_anchorPos    = cur;
         m_lastPos      = cur;
         m_hovering     = false;
-        m_hoverStartMs = QDateTime::currentMSecsSinceEpoch();
+        m_hoverStartMs = m_nowFn();
         emit dwellProgress(0.0f);
         return;
     }
@@ -103,17 +102,17 @@ void DwellManager::onPoll()
     // Cursor is still within sensitivity radius
     if (!m_hovering) {
         m_hovering     = true;
-        m_hoverStartMs = QDateTime::currentMSecsSinceEpoch();
+        m_hoverStartMs = m_nowFn();
     }
 
-    qint64 elapsed = QDateTime::currentMSecsSinceEpoch() - m_hoverStartMs;
+    qint64 elapsed = m_nowFn() - m_hoverStartMs;
     float  frac    = static_cast<float>(elapsed) / static_cast<float>(m_dwellMs);
     frac = qBound(0.0f, frac, 1.0f);
     emit dwellProgress(frac);
 
     if (elapsed >= m_dwellMs) {
         emit dwellAboutToFire(cur, m_clickType);
-        ClickInjector::performClick(m_clickType, cur, m_modifiers);
+        m_clickFn(m_clickType, cur, m_modifiers);
         emit dwellFired(cur, m_clickType);
 
         // For drag (Down) events: skip the movement-wait entirely and go straight
@@ -122,24 +121,22 @@ void DwellManager::onPoll()
         // movement-based re-arm impossible.  The user drags to a destination and
         // dwells to release; if the cursor IS frozen the countdown still fires Up.
         if (m_clickType == ClickType::LeftDown) {
-            m_clickType    = ClickType::LeftUp;
-            m_dragActive   = true;
-            m_dragStartMs  = QDateTime::currentMSecsSinceEpoch();
-            m_anchorPos    = cur;
-            m_lastPos      = cur;
-            m_hovering     = false;
-            m_hoverStartMs = QDateTime::currentMSecsSinceEpoch();
+            m_clickType   = ClickType::LeftUp;
+            m_dragActive  = true;
+            m_dragStartMs = m_nowFn();
+            m_anchorPos   = cur;
+            m_lastPos     = cur;
+            m_hovering    = false;
             emit dwellProgress(0.0f);
             return;
         }
         if (m_clickType == ClickType::RightDown) {
-            m_clickType    = ClickType::RightUp;
-            m_dragActive   = true;
-            m_dragStartMs  = QDateTime::currentMSecsSinceEpoch();
-            m_anchorPos    = cur;
-            m_lastPos      = cur;
-            m_hovering     = false;
-            m_hoverStartMs = QDateTime::currentMSecsSinceEpoch();
+            m_clickType   = ClickType::RightUp;
+            m_dragActive  = true;
+            m_dragStartMs = m_nowFn();
+            m_anchorPos   = cur;
+            m_lastPos     = cur;
+            m_hovering    = false;
             emit dwellProgress(0.0f);
             return;
         }
@@ -158,7 +155,7 @@ void DwellManager::onPoll()
         m_anchorPos   = cur;
         m_waiting     = true;
         m_hovering    = false;
-        m_waitStartMs = QDateTime::currentMSecsSinceEpoch();
+        m_waitStartMs = m_nowFn();
         emit dwellProgress(0.0f);
     }
 }

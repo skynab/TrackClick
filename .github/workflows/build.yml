@@ -6,6 +6,54 @@ on:
   pull_request:
 
 jobs:
+  test:
+    name: Unit Tests (${{ matrix.name }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            name: Linux
+          - os: macos-14
+            name: macOS
+          - os: windows-latest
+            name: Windows
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Qt (Linux)
+        if: matrix.name == 'Linux'
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y qt6-base-dev libx11-dev libxtst-dev
+
+      - name: Install Qt (macOS)
+        if: matrix.name == 'macOS'
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: 1
+          HOMEBREW_NO_REQUIRE_TAP_TRUST: 1
+        run: |
+          brew install qt
+          echo "$(brew --prefix qt)/bin" >> "$GITHUB_PATH"
+
+      - name: Install Qt (Windows)
+        if: matrix.name == 'Windows'
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.7.*'
+          arch: win64_msvc2019_64
+          cache: true
+
+      - name: Configure
+        run: cmake -B build-tests -DBUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug
+
+      - name: Build tests
+        run: cmake --build build-tests --config Debug --parallel
+
+      - name: Run tests
+        run: ctest --test-dir build-tests -C Debug --output-on-failure
+
   build:
     strategy:
       fail-fast: false

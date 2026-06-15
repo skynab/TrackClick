@@ -1,7 +1,9 @@
 #pragma once
+#include <QDateTime>
 #include <QObject>
 #include <QTimer>
 #include <QPoint>
+#include <functional>
 #include "clickinjector.h"
 
 // DwellManager polls the cursor position and fires a click after the cursor
@@ -62,4 +64,18 @@ private:
     qint64    m_hoverStartMs   = 0;
     qint64    m_waitStartMs    = 0; // when m_waiting began (for timeout fallback)
     qint64    m_dragStartMs    = 0; // when LeftDown/RightDown fired (for safety release)
+
+    // Injectable seams — default to real implementations; tests override these
+    // to drive the state machine without a display or platform input layer.
+    std::function<QPoint()>                    m_cursorPosFn = &ClickInjector::cursorPos;
+    std::function<void(ClickType, QPoint, int)> m_clickFn    = &ClickInjector::performClick;
+    std::function<qint64()>                    m_nowFn       = []{ return QDateTime::currentMSecsSinceEpoch(); };
+
+#ifdef TRACKCLICK_TESTING
+public:
+    void setTestCursorPosFn(std::function<QPoint()> fn)                    { m_cursorPosFn = std::move(fn); }
+    void setTestClickFn(std::function<void(ClickType, QPoint, int)> fn)    { m_clickFn     = std::move(fn); }
+    void setTestNowFn(std::function<qint64()> fn)                          { m_nowFn       = std::move(fn); }
+    void triggerPoll()                                                      { onPoll(); }
+#endif
 };

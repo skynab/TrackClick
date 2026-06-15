@@ -95,6 +95,12 @@ endif()
 
 install(TARGETS TrackClick DESTINATION bin)
 
+option(BUILD_TESTS "Build unit tests" OFF)
+if(BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
+
 # ── Translations ──────────────────────────────────────────────────────────────
 set(TS_FILES
     translations/trackclick_cs.ts

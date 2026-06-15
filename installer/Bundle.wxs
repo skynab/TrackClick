@@ -11,7 +11,8 @@
 
     <BootstrapperApplication>
       <bal:WixStandardBootstrapperApplication Theme="hyperlinkLicense"
-                                              LicenseUrl="" />
+                                              LicenseUrl=""
+                                              LogoFile="icons\TrackClick-logo.png" />
     </BootstrapperApplication>
 
     <Chain>

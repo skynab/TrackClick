@@ -1008,7 +1008,8 @@ static void setLaunchOnStartup(bool) {}
 
 void MainWindow::applySettings(const AppSettings& s)
 {
-    const QString oldLanguage = m_settings.language;
+    const QString oldLanguage        = m_settings.language;
+    const bool   oldLaunchOnStartup = m_settings.launchOnStartup;
     m_settings = s;
 
     m_dwell->setDwellMs(s.dwellMs);
@@ -1038,7 +1039,7 @@ void MainWindow::applySettings(const AppSettings& s)
     m_persist.setValue("window/alwaysOnTop", s.alwaysOnTop);
     m_persist.setValue("window/startMin",    s.startMinimized);
     m_persist.setValue("window/launchOnStartup", s.launchOnStartup);
-    if (s.launchOnStartup != m_settings.launchOnStartup)
+    if (s.launchOnStartup != oldLaunchOnStartup)
         setLaunchOnStartup(s.launchOnStartup);
     m_persist.setValue("audio/enabled",      s.audioFeedback);
     m_persist.setValue("show/leftClick",     s.showLeftClick);

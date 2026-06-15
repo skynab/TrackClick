@@ -126,10 +126,12 @@ private slots:
     }
 
     // -----------------------------------------------------------------------
-    // 5. Waiting times out after dwellMs even without cursor movement.
-    //    (Mimics Wayland compositor pointer grabs freezing cursor reports.)
+    // 5. If the cursor appears frozen during the wait (e.g. XQueryPointer
+    //    returning stale data on Wayland when the pointer is outside the
+    //    XWayland session), the manager disarms to prevent repeated
+    //    unintended clicks.  The user must re-arm by hovering over a button.
     // -----------------------------------------------------------------------
-    void test_waitingTimeoutRearms()
+    void test_waitingTimeoutDisarms()
     {
         auto dm = make(500);
         dm->arm(ClickType::LeftClick);
@@ -138,11 +140,14 @@ private slots:
         poll(dm.get(), 500);  // first click fires; enters waiting
         QCOMPARE(m_clicks.size(), 1);
 
-        // Cursor stays put; waiting times out after dwellMs
-        poll(dm.get(), 500);  // waiting cleared by timeout
-        poll(dm.get());       // new hover starts
-        poll(dm.get(), 500);  // second click fires
-        QCOMPARE(m_clicks.size(), 2);
+        // Cursor stays put; waiting times out — manager disarms
+        poll(dm.get(), 500);
+        QVERIFY(!dm->isArmed());
+
+        // No second click fires even with further polling
+        poll(dm.get());
+        poll(dm.get(), 500);
+        QCOMPARE(m_clicks.size(), 1);
     }
 
     // -----------------------------------------------------------------------

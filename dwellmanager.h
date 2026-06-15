@@ -48,6 +48,7 @@ private:
     bool      m_armed        = false;
     bool      m_waiting      = false; // waiting for cursor to move before re-arming
     bool      m_hovering     = false; // cursor has been still long enough to start countdown
+    bool      m_dragActive   = false; // LeftDown/RightDown was fired; next fire should be the Up
 
     ClickType m_clickType    = ClickType::LeftClick;
     int       m_modifiers    = ModNone;

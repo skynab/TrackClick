@@ -14,11 +14,19 @@ DwellManager::DwellManager(QObject* parent)
 
 void DwellManager::arm(ClickType type, int modifiers)
 {
+    // If a drag Down was fired but not yet released, release it now before
+    // switching to a different action — otherwise the button stays held.
+    if (m_dragActive) {
+        ClickInjector::performClick(m_clickType, ClickInjector::cursorPos(), m_modifiers);
+        m_dragActive = false;
+    }
+
     m_clickType  = type;
     m_modifiers  = modifiers;
     m_armed      = true;
     m_waiting    = false;
     m_hovering   = false;
+    m_dragActive = false;
     m_anchorPos  = ClickInjector::cursorPos();
     m_lastPos    = m_anchorPos;
     m_hoverStartMs = QDateTime::currentMSecsSinceEpoch();
@@ -26,6 +34,11 @@ void DwellManager::arm(ClickType type, int modifiers)
 
 void DwellManager::disarm()
 {
+    // If a drag Down was fired but not released, release it to avoid stuck buttons.
+    if (m_dragActive) {
+        ClickInjector::performClick(m_clickType, ClickInjector::cursorPos(), m_modifiers);
+        m_dragActive = false;
+    }
     m_armed    = false;
     m_waiting  = false;
     m_hovering = false;
@@ -85,6 +98,22 @@ void DwellManager::onPoll()
         emit dwellAboutToFire(cur, m_clickType);
         ClickInjector::performClick(m_clickType, cur, m_modifiers);
         emit dwellFired(cur, m_clickType);
+
+        // For drag actions (Down/Up toggle): alternate between Down and Up so the
+        // second dwell releases rather than pressing again (which locks up Linux).
+        if (m_clickType == ClickType::LeftDown) {
+            m_clickType  = ClickType::LeftUp;
+            m_dragActive = true;
+        } else if (m_clickType == ClickType::LeftUp && m_dragActive) {
+            m_clickType  = ClickType::LeftDown;
+            m_dragActive = false;
+        } else if (m_clickType == ClickType::RightDown) {
+            m_clickType  = ClickType::RightUp;
+            m_dragActive = true;
+        } else if (m_clickType == ClickType::RightUp && m_dragActive) {
+            m_clickType  = ClickType::RightDown;
+            m_dragActive = false;
+        }
 
         // After firing, wait for cursor to move away before allowing next dwell
         m_anchorPos   = cur;

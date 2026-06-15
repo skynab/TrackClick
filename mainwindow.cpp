@@ -447,7 +447,7 @@ void MainWindow::rebuildButtons()
         connect(btn, &ClickButton::clickTypePressed, this, &MainWindow::onClickButtonPressed);
         connect(btn, &ClickButton::clickTypeHovered, this, [this](ClickType type){
             m_hoveredType = type;
-            m_hoverTimer->start(m_settings.dwellMs);
+            m_hoverTimer->start(m_settings.dwellMs * 6 / 10);
         });
         connect(btn, &ClickButton::clickTypeLeft, this, [this](){
             m_hoverTimer->stop();

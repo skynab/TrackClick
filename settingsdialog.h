@@ -17,6 +17,7 @@ struct AppSettings {
     // Dwell / AutoMouse
     int  dwellMs        = 1000;
     int  sensitivityPx  = 5;
+    int  scrollRepeat   = 3;
     bool autoSelectEnabled = false;  // start with AutoSelect on
 
     // Which buttons are visible on the toolbar
@@ -90,8 +91,9 @@ private:
     QGroupBox* m_grpWin   = nullptr;
 
     // ── Form-row labels (need retranslation) ──────────────────
-    QLabel* m_lblDwellTime   = nullptr;
-    QLabel* m_lblSensitivity = nullptr;
+    QLabel* m_lblDwellTime    = nullptr;
+    QLabel* m_lblSensitivity  = nullptr;
+    QLabel* m_lblScrollRepeat = nullptr;
     QLabel* m_lblOpacity     = nullptr;
     QLabel* m_lblBtnLayout   = nullptr;
     QLabel* m_lblLanguage    = nullptr;
@@ -103,6 +105,7 @@ private:
     // Dwell
     QSpinBox*    m_dwellMs;
     QSpinBox*    m_sensitivPx;
+    QSpinBox*    m_scrollRepeat;
 
     // Buttons visibility
     QCheckBox*   m_chkLeftClick;

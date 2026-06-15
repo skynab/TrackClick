@@ -9,13 +9,13 @@
     <message><source>Show / Hide</source><translation>표시 / 숨기기</translation></message>
     <message><source>Quit TrackClick</source><translation>TrackClick 종료</translation></message>
     <message><source>L Click</source><translation>좌 클릭</translation></message>
-    <message><source>L Dbl</source><translation>좌 더블</translation></message>
+    <message><source>L Dbl</source><translation>좌 더블 클릭</translation></message>
     <message><source>L Drag</source><translation>좌 드래그</translation></message>
     <message><source>R Click</source><translation>우 클릭</translation></message>
-    <message><source>R Dbl</source><translation>우 더블</translation></message>
+    <message><source>R Dbl</source><translation>우 더블 클릭</translation></message>
     <message><source>R Drag</source><translation>우 드래그</translation></message>
     <message><source>M Click</source><translation>중 클릭</translation></message>
-    <message><source>M Dbl</source><translation>중 더블</translation></message>
+    <message><source>M Dbl</source><translation>중 더블 클릭</translation></message>
     <message><source>Scroll ▲</source><translation>스크롤 ▲</translation></message>
     <message><source>Scroll ▼</source><translation>스크롤 ▼</translation></message>
     <message><source>Scroll ◄</source><translation>스크롤 ◄</translation></message>
@@ -45,9 +45,9 @@
     <message><source>TrackClick — Settings</source><translation>TrackClick — 설정</translation></message>
     <message><source>AutoMouse / Dwell Clicking</source><translation>자동 마우스 / 머물기 클릭</translation></message>
     <message><source>Dwell time:</source><translation>머물기 시간:</translation></message>
-    <message><source>Sensitivity:</source><translation>감도:</translation></message>
+    <message><source>Sensitivity:</source><translation>머물기 감도:</translation></message>
     <message><source>Permissions:</source><translation>권한:</translation></message>
-    <message><source>Open Accessibility Settings…</source><translation>손쉬운 사용 설정 열기…</translation></message>
+    <message><source>Open Accessibility Settings…</source><translation>접근성 설정 열기…</translation></message>
     <message><source>Visible Buttons</source><translation>표시 버튼</translation></message>
     <message><source>Left Click</source><translation>왼쪽 클릭</translation></message>
     <message><source>Left Double</source><translation>왼쪽 더블 클릭</translation></message>
@@ -60,9 +60,9 @@
     <message><source>Scroll Up</source><translation>위로 스크롤</translation></message>
     <message><source>Scroll Down</source><translation>아래로 스크롤</translation></message>
     <message><source>Scroll Left/Right</source><translation>좌/우 스크롤</translation></message>
-    <message><source>Ctrl modifier</source><translation>Ctrl 수정자</translation></message>
-    <message><source>Alt modifier</source><translation>Alt 수정자</translation></message>
-    <message><source>Shift modifier</source><translation>Shift 수정자</translation></message>
+    <message><source>Ctrl modifier</source><translation>Ctrl 조합키</translation></message>
+    <message><source>Alt modifier</source><translation>Alt 조합키</translation></message>
+    <message><source>Shift modifier</source><translation>Shift 조합키</translation></message>
     <message><source>Exit button</source><translation>종료 버튼</translation></message>
     <message><source>Quit button</source><translation>프로그램 종료 버튼</translation></message>
     <message><source>Window</source><translation>창</translation></message>
@@ -72,11 +72,13 @@
     <message><source>Audio feedback on click</source><translation>클릭 시 오디오 피드백</translation></message>
     <message><source>Icons only (hide button labels)</source><translation>아이콘만 (버튼 레이블 숨기기)</translation></message>
     <message><source>Large buttons</source><translation>큰 버튼</translation></message>
-    <message><source>Button layout:</source><translation>버튼 레이아웃:</translation></message>
-    <message><source>Rectangle (grid)</source><translation>직사각형 (그리드)</translation></message>
+    <message><source>Button layout:</source><translation>버튼 정열:</translation></message>
+    <message><source>Rectangle (grid)</source><translation>직사각형 (바둑판)</translation></message>
     <message><source>Horizontal (one row)</source><translation>가로 (한 줄)</translation></message>
     <message><source>Vertical (two columns)</source><translation>세로 (두 열)</translation></message>
     <message><source>Vertical (one column)</source><translation>세로 (한 열)</translation></message>
     <message><source>Language:</source><translation>언어:</translation></message>
+    <message><source>Scroll repeat:</source><translation>스크롤 반복:</translation></message>
+    <message><source>Launch on system startup</source><translation>시스템 시작 시 실행</translation></message>
 </context>
 </TS>

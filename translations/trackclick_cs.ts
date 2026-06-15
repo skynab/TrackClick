@@ -80,5 +80,7 @@
     <message><source>Vertical (one column)</source><translation>Svisle (jeden sloupec)</translation></message>
     <message><source>Vertical (two columns)</source><translation>Svisle (dva sloupce)</translation></message>
     <message><source>Language:</source><translation>Jazyk:</translation></message>
+    <message><source>Scroll repeat:</source><translation>Opakování rolování:</translation></message>
+    <message><source>Launch on system startup</source><translation>Spustit při startu systému</translation></message>
 </context>
 </TS>

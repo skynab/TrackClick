@@ -78,5 +78,7 @@
     <message><source>Vertical (two columns)</source><translation>Vertical (deux colonnes)</translation></message>
     <message><source>Vertical (one column)</source><translation>Vertical (une colonne)</translation></message>
     <message><source>Language:</source><translation>Langue :</translation></message>
+    <message><source>Scroll repeat:</source><translation>Répétition du défilement :</translation></message>
+    <message><source>Launch on system startup</source><translation>Lancer au démarrage du système</translation></message>
 </context>
 </TS>

@@ -925,13 +925,11 @@ static void setLaunchOnStartup(bool enable)
             RegCloseKey(hKey);
         }
 
-        // Write 12-byte REG_BINARY so the entry appears in Settings > Apps > Startup.
-        // Byte 0 = 0x02 means "enabled"; bytes 1-11 are zero (timestamp unused).
-        if (RegCreateKeyExW(HKEY_CURRENT_USER, approvedKey, 0, nullptr,
-                            REG_OPTION_NON_VOLATILE, KEY_SET_VALUE,
-                            nullptr, &hKey, nullptr) == ERROR_SUCCESS) {
-            BYTE state[12] = {0x02};
-            RegSetValueExW(hKey, name, 0, REG_BINARY, state, sizeof(state));
+        // Remove any stale "disabled" entry from StartupApproved so Windows
+        // treats the Run key entry as approved (absent = enabled by default).
+        if (RegOpenKeyExW(HKEY_CURRENT_USER, approvedKey, 0,
+                          KEY_SET_VALUE, &hKey) == ERROR_SUCCESS) {
+            RegDeleteValueW(hKey, name);
             RegCloseKey(hKey);
         }
     } else {

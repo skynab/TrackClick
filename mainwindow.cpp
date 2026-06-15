@@ -830,27 +830,54 @@ void MainWindow::onSettingsClicked()
 // ── Launch-on-startup helpers (platform-specific) ─────────────────────────
 
 #if defined(Q_OS_WIN)
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
 static void setLaunchOnStartup(bool enable)
 {
-    QSettings reg(
-        "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
-        QSettings::NativeFormat);
-    // Windows Settings > Apps > Startup reads toggle state from StartupApproved\Run.
-    // Without this entry the app may not appear in the Settings list at all.
-    QSettings approved(
-        "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StartupApproved\\Run",
-        QSettings::NativeFormat);
+    const wchar_t* runKey =
+        L"Software\\Microsoft\\Windows\\CurrentVersion\\Run";
+    const wchar_t* approvedKey =
+        L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StartupApproved\\Run";
+    const wchar_t* name = L"TrackClick";
+
+    HKEY hKey;
 
     if (enable) {
-        const QString exe = QDir::toNativeSeparators(QCoreApplication::applicationFilePath());
-        reg.setValue("TrackClick", QString("\"%1\"").arg(exe));
-        // 12-byte REG_BINARY: bytes 0-3 = 0x00000002 (enabled), rest = 0
-        QByteArray state(12, '\0');
-        state[0] = 0x02;
-        approved.setValue("TrackClick", state);
+        // Write quoted exe path as REG_SZ under the Run key
+        const std::wstring exe = QString("\"%1\"")
+            .arg(QDir::toNativeSeparators(QCoreApplication::applicationFilePath()))
+            .toStdWString();
+
+        if (RegCreateKeyExW(HKEY_CURRENT_USER, runKey, 0, nullptr,
+                            REG_OPTION_NON_VOLATILE, KEY_SET_VALUE,
+                            nullptr, &hKey, nullptr) == ERROR_SUCCESS) {
+            RegSetValueExW(hKey, name, 0, REG_SZ,
+                           reinterpret_cast<const BYTE*>(exe.c_str()),
+                           static_cast<DWORD>((exe.size() + 1) * sizeof(wchar_t)));
+            RegCloseKey(hKey);
+        }
+
+        // Write 12-byte REG_BINARY so the entry appears in Settings > Apps > Startup.
+        // Byte 0 = 0x02 means "enabled"; bytes 1-11 are zero (timestamp unused).
+        if (RegCreateKeyExW(HKEY_CURRENT_USER, approvedKey, 0, nullptr,
+                            REG_OPTION_NON_VOLATILE, KEY_SET_VALUE,
+                            nullptr, &hKey, nullptr) == ERROR_SUCCESS) {
+            BYTE state[12] = {0x02};
+            RegSetValueExW(hKey, name, 0, REG_BINARY, state, sizeof(state));
+            RegCloseKey(hKey);
+        }
     } else {
-        reg.remove("TrackClick");
-        approved.remove("TrackClick");
+        if (RegOpenKeyExW(HKEY_CURRENT_USER, runKey, 0,
+                          KEY_SET_VALUE, &hKey) == ERROR_SUCCESS) {
+            RegDeleteValueW(hKey, name);
+            RegCloseKey(hKey);
+        }
+        if (RegOpenKeyExW(HKEY_CURRENT_USER, approvedKey, 0,
+                          KEY_SET_VALUE, &hKey) == ERROR_SUCCESS) {
+            RegDeleteValueW(hKey, name);
+            RegCloseKey(hKey);
+        }
     }
 }
 

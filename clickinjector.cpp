@@ -282,8 +282,7 @@ struct UInputDev {
 
         for (int b : {REL_X, REL_Y, REL_WHEEL, REL_HWHEEL})
             ioctl(fd, UI_SET_RELBIT, b);
-        for (int b : {BTN_LEFT, BTN_RIGHT, BTN_MIDDLE,
-                      KEY_LEFTCTRL, KEY_LEFTALT, KEY_LEFTSHIFT})
+        for (int b : {BTN_LEFT, BTN_RIGHT, BTN_MIDDLE})
             ioctl(fd, UI_SET_KEYBIT, b);
 
         struct uinput_setup us{};
@@ -294,9 +293,6 @@ struct UInputDev {
 
         if (ioctl(fd, UI_DEV_SETUP, &us) < 0) { destroy(); return false; }
         if (ioctl(fd, UI_DEV_CREATE)     < 0) { destroy(); return false; }
-
-        // Give the compositor time to recognise the new device.
-        usleep(200'000);
         return true;
     }
 
@@ -319,12 +315,78 @@ struct UInputDev {
     void syn() const { send(EV_SYN, SYN_REPORT, 0); }
 };
 
+// Separate keyboard-only device so libinput classifies it as a keyboard and
+// routes KEY_LEFTCTRL/ALT/SHIFT to the compositor's modifier state.  A pointer
+// device (EV_REL) is NOT classified as a keyboard by libinput even if it
+// declares EV_KEY modifier keys, so modifier events from the mouse device are
+// silently ignored on Wayland.
+struct UInputKeyDev {
+    int fd = -1;
+
+    bool tryOpen()
+    {
+        fd = ::open("/dev/uinput", O_WRONLY | O_NONBLOCK);
+        if (fd < 0) return false;
+
+        ioctl(fd, UI_SET_EVBIT, EV_KEY);
+        ioctl(fd, UI_SET_EVBIT, EV_SYN);
+        for (int k : {KEY_LEFTCTRL, KEY_LEFTALT, KEY_LEFTSHIFT})
+            ioctl(fd, UI_SET_KEYBIT, k);
+
+        struct uinput_setup us{};
+        us.id.bustype = BUS_USB;
+        us.id.vendor  = 0x1234;
+        us.id.product = 0x5679;
+        std::strncpy(us.name, "TrackClick Keyboard", UINPUT_MAX_NAME_SIZE - 1);
+        if (ioctl(fd, UI_DEV_SETUP, &us) < 0) { destroy(); return false; }
+        if (ioctl(fd, UI_DEV_CREATE)     < 0) { destroy(); return false; }
+        // No extra sleep — the mouse device's 200 ms window covers both.
+        return true;
+    }
+
+    void destroy()
+    {
+        if (fd >= 0) { ioctl(fd, UI_DEV_DESTROY); ::close(fd); fd = -1; }
+    }
+
+    bool isOpen() const { return fd >= 0; }
+
+    void sendKey(int code, bool down) const
+    {
+        struct input_event ev{};
+        ev.type  = EV_KEY;
+        ev.code  = static_cast<uint16_t>(code);
+        ev.value = down ? 1 : 0;
+        ::write(fd, &ev, sizeof(ev));
+        struct input_event syn{};
+        syn.type  = EV_SYN;
+        syn.code  = SYN_REPORT;
+        ::write(fd, &syn, sizeof(syn));
+    }
+};
+
+UInputKeyDev& ukeydev()
+{
+    static UInputKeyDev dev;
+    static bool tried = false;
+    if (!tried) { tried = true; dev.tryOpen(); }
+    return dev;
+}
+
 // Initialised on first use — tries uinput, falls back to XTest if denied.
+// Both the mouse and keyboard devices are created before sleeping so one
+// 200 ms compositor window covers both.
 UInputDev& udev()
 {
     static UInputDev dev;
     static bool tried = false;
-    if (!tried) { tried = true; dev.tryOpen(); }
+    if (!tried) {
+        tried = true;
+        if (dev.tryOpen()) {
+            ukeydev();  // create keyboard device in the same wake-up window
+            usleep(200'000);
+        }
+    }
     return dev;
 }
 
@@ -417,8 +479,15 @@ void ClickInjector::performClick(ClickType type, QPoint pos, int mods)
     if (udev().isOpen()) {
         auto& d = udev();
 
+        // Route modifier keys through the separate keyboard device so libinput
+        // classifies them correctly on Wayland.  Each modifier gets its own
+        // SYN_REPORT so the compositor sees it before the mouse button event.
         auto key = [&](int code, bool down) {
-            d.send(EV_KEY, static_cast<uint16_t>(code), down ? 1 : 0);
+            if (ukeydev().isOpen()) {
+                ukeydev().sendKey(code, down);
+            } else {
+                d.send(EV_KEY, static_cast<uint16_t>(code), down ? 1 : 0);
+            }
         };
         auto btn = [&](int code, bool down) {
             if (down && (mods & ModCtrl))  key(KEY_LEFTCTRL,  true);
@@ -429,7 +498,7 @@ void ClickInjector::performClick(ClickType type, QPoint pos, int mods)
             if (!down && (mods & ModShift)) key(KEY_LEFTSHIFT, false);
             if (!down && (mods & ModAlt))   key(KEY_LEFTALT,   false);
             if (!down && (mods & ModCtrl))  key(KEY_LEFTCTRL,  false);
-            if (!down) d.syn();
+            if (!down && !ukeydev().isOpen()) d.syn();
         };
         auto click = [&](int code) { btn(code, true); btn(code, false); };
         auto dbl   = [&](int code) { click(code); click(code); };

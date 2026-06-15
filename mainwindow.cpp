@@ -521,6 +521,7 @@ void MainWindow::rebuildButtons()
         connect(m_ctrlBtn, &QPushButton::toggled, this, [this, modStyle](bool on){
             if (on) m_modifiers |= ModCtrl; else m_modifiers &= ~ModCtrl;
             m_ctrlBtn->setStyleSheet(modStyle(on));
+            if (m_autoEnabled) m_dwell->setModifiers(m_modifiers);
         });
         new ModHoverFilter(m_ctrlBtn, &m_settings.dwellMs);
         addMod(m_ctrlBtn);
@@ -534,6 +535,7 @@ void MainWindow::rebuildButtons()
         connect(m_altBtn, &QPushButton::toggled, this, [this, modStyle](bool on){
             if (on) m_modifiers |= ModAlt; else m_modifiers &= ~ModAlt;
             m_altBtn->setStyleSheet(modStyle(on));
+            if (m_autoEnabled) m_dwell->setModifiers(m_modifiers);
         });
         new ModHoverFilter(m_altBtn, &m_settings.dwellMs);
         addMod(m_altBtn);
@@ -548,6 +550,7 @@ void MainWindow::rebuildButtons()
         connect(m_shiftBtn, &QPushButton::toggled, this, [this, modStyle](bool on){
             if (on) m_modifiers |= ModShift; else m_modifiers &= ~ModShift;
             m_shiftBtn->setStyleSheet(modStyle(on));
+            if (m_autoEnabled) m_dwell->setModifiers(m_modifiers);
         });
         new ModHoverFilter(m_shiftBtn, &m_settings.dwellMs);
         shiftRow = row; shiftCol = col;

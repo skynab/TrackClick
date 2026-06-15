@@ -29,6 +29,8 @@ public:
     void setSensitivityPx(int px)    { m_sensitivityPx = px; }
     void setScrollRepeat(int n)      { m_scrollRepeat = n; }
     void setPollIntervalMs(int ms)   { m_pollTimer.setInterval(ms); }
+    // Update modifier mask without resetting the current dwell countdown.
+    void setModifiers(int mods)      { m_modifiers = mods; }
 
     int  dwellMs()       const { return m_dwellMs; }
     int  sensitivityPx() const { return m_sensitivityPx; }

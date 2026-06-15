@@ -73,6 +73,23 @@ void DwellManager::onPoll()
         return;
     }
 
+    // Safety release: if a drag button has been held for more than 10 seconds
+    // (e.g. XQueryPointer glitches keep resetting the hover countdown), force
+    // the Up event so the user is never permanently locked out.
+    if (m_dragActive) {
+        qint64 heldMs = QDateTime::currentMSecsSinceEpoch() - m_dragStartMs;
+        if (heldMs >= 10000) {
+            ClickInjector::performClick(m_clickType, cur, m_modifiers);
+            m_clickType  = (m_clickType == ClickType::LeftUp) ? ClickType::LeftDown : ClickType::RightDown;
+            m_dragActive = false;
+            m_waiting    = true;
+            m_hovering   = false;
+            m_waitStartMs = QDateTime::currentMSecsSinceEpoch();
+            emit dwellProgress(0.0f);
+            return;
+        }
+    }
+
     if (dist(cur, m_anchorPos) > m_sensitivityPx) {
         // Cursor moved — reset hover countdown
         m_anchorPos    = cur;
@@ -107,6 +124,7 @@ void DwellManager::onPoll()
         if (m_clickType == ClickType::LeftDown) {
             m_clickType    = ClickType::LeftUp;
             m_dragActive   = true;
+            m_dragStartMs  = QDateTime::currentMSecsSinceEpoch();
             m_anchorPos    = cur;
             m_lastPos      = cur;
             m_hovering     = false;
@@ -117,6 +135,7 @@ void DwellManager::onPoll()
         if (m_clickType == ClickType::RightDown) {
             m_clickType    = ClickType::RightUp;
             m_dragActive   = true;
+            m_dragStartMs  = QDateTime::currentMSecsSinceEpoch();
             m_anchorPos    = cur;
             m_lastPos      = cur;
             m_hovering     = false;

@@ -61,4 +61,5 @@ private:
 
     qint64    m_hoverStartMs   = 0;
     qint64    m_waitStartMs    = 0; // when m_waiting began (for timeout fallback)
+    qint64    m_dragStartMs    = 0; // when LeftDown/RightDown fired (for safety release)
 };

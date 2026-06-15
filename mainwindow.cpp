@@ -461,10 +461,10 @@ void MainWindow::rebuildButtons()
 
     addIf(m_settings.showLeftClick,   tr("L Click"),  tr("Left Click"),         ClickType::LeftClick,        "left_click");
     addIf(m_settings.showLeftDouble,  tr("L Dbl"),    tr("Left Double-Click"),  ClickType::LeftDoubleClick,  "left_double");
-    addIf(m_settings.showLeftDrag,    tr("L Drag"),   tr("Left Drag (hold)"),   ClickType::LeftDown,         "left_drag");
+    addIf(m_settings.showLeftDrag,    tr("L Drag"),   tr("Left Drag — dwell to grab, dwell again to release"),   ClickType::LeftDown,         "left_drag");
     addIf(m_settings.showRightClick,  tr("R Click"),  tr("Right Click"),        ClickType::RightClick,       "right_click");
     addIf(m_settings.showRightDouble, tr("R Dbl"),    tr("Right Double-Click"), ClickType::RightDoubleClick, "right_double");
-    addIf(m_settings.showRightDrag,   tr("R Drag"),   tr("Right Drag (hold)"),  ClickType::RightDown,        "right_drag");
+    addIf(m_settings.showRightDrag,   tr("R Drag"),   tr("Right Drag — dwell to grab, dwell again to release"),  ClickType::RightDown,        "right_drag");
     addIf(m_settings.showMiddleClick, tr("M Click"),  tr("Middle Click"),       ClickType::MiddleClick,      "middle_click");
     addIf(m_settings.showMiddleDouble,tr("M Dbl"),    tr("Middle Double-Click"),ClickType::MiddleDoubleClick,"middle_double");
     addIf(m_settings.showScrollUp,    tr("Scroll ▲"), tr("Scroll Up"),          ClickType::ScrollUp,         "scroll_up");
@@ -769,10 +769,10 @@ void MainWindow::setClickType(ClickType t)
     const QHash<ClickType,QString> names{
         {ClickType::LeftClick,        tr("Left Click")},
         {ClickType::LeftDoubleClick,  tr("Left Double-Click")},
-        {ClickType::LeftDown,         tr("Left Drag (hold)")},
+        {ClickType::LeftDown,         tr("Left Drag")},
         {ClickType::RightClick,       tr("Right Click")},
         {ClickType::RightDoubleClick, tr("Right Double-Click")},
-        {ClickType::RightDown,        tr("Right Drag (hold)")},
+        {ClickType::RightDown,        tr("Right Drag")},
         {ClickType::MiddleClick,      tr("Middle Click")},
         {ClickType::MiddleDoubleClick,tr("Middle Double-Click")},
         {ClickType::ScrollUp,         tr("Scroll Up")},

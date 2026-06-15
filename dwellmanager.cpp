@@ -112,7 +112,13 @@ void DwellManager::onPoll()
 
     if (elapsed >= m_dwellMs) {
         emit dwellAboutToFire(cur, m_clickType);
-        m_clickFn(m_clickType, cur, m_modifiers);
+        bool isScroll = (m_clickType == ClickType::ScrollUp   ||
+                         m_clickType == ClickType::ScrollDown  ||
+                         m_clickType == ClickType::ScrollLeft  ||
+                         m_clickType == ClickType::ScrollRight);
+        int reps = isScroll ? m_scrollRepeat : 1;
+        for (int i = 0; i < reps; ++i)
+            m_clickFn(m_clickType, cur, m_modifiers);
         emit dwellFired(cur, m_clickType);
 
         // For drag (Down) events: skip the movement-wait entirely and go straight

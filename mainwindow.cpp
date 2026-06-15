@@ -205,6 +205,7 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     m_settings.largeButtons    = m_persist.value("show/largeButtons", false).toBool();
     m_settings.buttonLayout    = static_cast<ButtonLayout>(m_persist.value("show/buttonLayout", static_cast<int>(ButtonLayout::Vertical)).toInt());
     m_settings.language        = m_persist.value("language",          "en").toString();
+    m_settings.scrollRepeat    = m_persist.value("scroll/repeat",      3).toInt();
 
     // Adopt any translator already installed at startup so installLanguage()
     // can remove it when the user later switches languages (e.g. back to English).
@@ -234,6 +235,7 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     m_dwell = new DwellManager(this);
     m_dwell->setDwellMs(m_settings.dwellMs);
     m_dwell->setSensitivityPx(m_settings.sensitivityPx);
+    m_dwell->setScrollRepeat(m_settings.scrollRepeat);
 
 #ifdef HAVE_MULTIMEDIA
     m_clickSound = new QSoundEffect(this);
@@ -786,7 +788,11 @@ void MainWindow::onClickButtonPressed(ClickType type)
     } else {
         // Manual mode: inject the click at the current cursor position
         QPoint pos = QCursor::pos();
-        ClickInjector::performClick(type, pos, m_modifiers);
+        bool isScroll = (type == ClickType::ScrollUp   || type == ClickType::ScrollDown ||
+                         type == ClickType::ScrollLeft  || type == ClickType::ScrollRight);
+        int reps = isScroll ? m_settings.scrollRepeat : 1;
+        for (int i = 0; i < reps; ++i)
+            ClickInjector::performClick(type, pos, m_modifiers);
 #ifdef HAVE_MULTIMEDIA
         if (m_settings.audioFeedback) m_clickSound->play();
 #endif
@@ -1009,6 +1015,7 @@ void MainWindow::applySettings(const AppSettings& s)
 
     m_dwell->setDwellMs(s.dwellMs);
     m_dwell->setSensitivityPx(s.sensitivityPx);
+    m_dwell->setScrollRepeat(s.scrollRepeat);
     setWindowOpacity(s.windowOpacity);
 
     Qt::WindowFlags flags = Qt::Window | Qt::FramelessWindowHint | Qt::Tool;
@@ -1057,6 +1064,7 @@ void MainWindow::applySettings(const AppSettings& s)
     m_persist.setValue("show/largeButtons",  s.largeButtons);
     m_persist.setValue("show/buttonLayout",  static_cast<int>(s.buttonLayout));
     m_persist.setValue("language",           s.language);
+    m_persist.setValue("scroll/repeat",      s.scrollRepeat);
 }
 
 void MainWindow::onExitClicked()

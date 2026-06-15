@@ -197,6 +197,7 @@ void SettingsDialog::retranslateUi()
     m_grpDwell->setTitle(tr("AutoMouse / Dwell Clicking"));
     m_lblDwellTime->setText(tr("Dwell time:"));
     m_lblSensitivity->setText(tr("Sensitivity:"));
+    m_lblScrollRepeat->setText(tr("Scroll repeat:"));
 #ifdef Q_OS_MAC
     m_lblPermissions->setText(tr("Permissions:"));
     m_btnAccessibility->setText(tr("Open Accessibility Settings…"));
@@ -304,13 +305,16 @@ void SettingsDialog::buildUi()
     auto* fl     = new QFormLayout(m_grpDwell);
     fl->setSpacing(6);
 
-    m_dwellMs    = new QSpinBox; m_dwellMs->setRange(100, 10000); m_dwellMs->setSuffix(" ms");
-    m_sensitivPx = new QSpinBox; m_sensitivPx->setRange(1, 100);  m_sensitivPx->setSuffix(" px");
+    m_dwellMs      = new QSpinBox; m_dwellMs->setRange(100, 10000); m_dwellMs->setSuffix(" ms");
+    m_sensitivPx   = new QSpinBox; m_sensitivPx->setRange(1, 100);  m_sensitivPx->setSuffix(" px");
+    m_scrollRepeat = new QSpinBox; m_scrollRepeat->setRange(1, 20);
 
-    m_lblDwellTime   = new QLabel(tr("Dwell time:"));
-    m_lblSensitivity = new QLabel(tr("Sensitivity:"));
-    fl->addRow(m_lblDwellTime,   m_dwellMs);
-    fl->addRow(m_lblSensitivity, m_sensitivPx);
+    m_lblDwellTime    = new QLabel(tr("Dwell time:"));
+    m_lblSensitivity  = new QLabel(tr("Sensitivity:"));
+    m_lblScrollRepeat = new QLabel(tr("Scroll repeat:"));
+    fl->addRow(m_lblDwellTime,    m_dwellMs);
+    fl->addRow(m_lblSensitivity,  m_sensitivPx);
+    fl->addRow(m_lblScrollRepeat, m_scrollRepeat);
 
 #ifdef Q_OS_MAC
     m_lblPermissions   = new QLabel(tr("Permissions:"));
@@ -434,6 +438,7 @@ void SettingsDialog::loadFrom(const AppSettings& s)
 {
     m_dwellMs->setValue(s.dwellMs);
     m_sensitivPx->setValue(s.sensitivityPx);
+    m_scrollRepeat->setValue(s.scrollRepeat);
 
     m_chkLeftClick->setChecked(s.showLeftClick);
     m_chkLeftDouble->setChecked(s.showLeftDouble);
@@ -474,6 +479,7 @@ AppSettings SettingsDialog::readUi() const
     AppSettings s;
     s.dwellMs       = m_dwellMs->value();
     s.sensitivityPx = m_sensitivPx->value();
+    s.scrollRepeat  = m_scrollRepeat->value();
 
     s.showLeftClick   = m_chkLeftClick->isChecked();
     s.showLeftDouble  = m_chkLeftDouble->isChecked();

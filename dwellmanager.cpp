@@ -99,23 +99,43 @@ void DwellManager::onPoll()
         ClickInjector::performClick(m_clickType, cur, m_modifiers);
         emit dwellFired(cur, m_clickType);
 
-        // For drag actions (Down/Up toggle): alternate between Down and Up so the
-        // second dwell releases rather than pressing again (which locks up Linux).
+        // For drag (Down) events: skip the movement-wait entirely and go straight
+        // into the next hover countdown for the paired Up event.  This is critical
+        // on Linux where the OS button grab can freeze the cursor position, making
+        // movement-based re-arm impossible.  The user drags to a destination and
+        // dwells to release; if the cursor IS frozen the countdown still fires Up.
         if (m_clickType == ClickType::LeftDown) {
-            m_clickType  = ClickType::LeftUp;
-            m_dragActive = true;
-        } else if (m_clickType == ClickType::LeftUp && m_dragActive) {
+            m_clickType    = ClickType::LeftUp;
+            m_dragActive   = true;
+            m_anchorPos    = cur;
+            m_lastPos      = cur;
+            m_hovering     = false;
+            m_hoverStartMs = QDateTime::currentMSecsSinceEpoch();
+            emit dwellProgress(0.0f);
+            return;
+        }
+        if (m_clickType == ClickType::RightDown) {
+            m_clickType    = ClickType::RightUp;
+            m_dragActive   = true;
+            m_anchorPos    = cur;
+            m_lastPos      = cur;
+            m_hovering     = false;
+            m_hoverStartMs = QDateTime::currentMSecsSinceEpoch();
+            emit dwellProgress(0.0f);
+            return;
+        }
+
+        // For Up events (completing a drag), restore the original Down type and
+        // use normal waiting so an accidental re-trigger is prevented.
+        if (m_clickType == ClickType::LeftUp && m_dragActive) {
             m_clickType  = ClickType::LeftDown;
             m_dragActive = false;
-        } else if (m_clickType == ClickType::RightDown) {
-            m_clickType  = ClickType::RightUp;
-            m_dragActive = true;
         } else if (m_clickType == ClickType::RightUp && m_dragActive) {
             m_clickType  = ClickType::RightDown;
             m_dragActive = false;
         }
 
-        // After firing, wait for cursor to move away before allowing next dwell
+        // Normal post-fire: wait for cursor to move before allowing next dwell.
         m_anchorPos   = cur;
         m_waiting     = true;
         m_hovering    = false;

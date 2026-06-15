@@ -868,16 +868,11 @@ void MainWindow::onDwellProgress(float frac)
     }
 }
 
-void MainWindow::onDwellFired(QPoint /*pos*/, ClickType type)
+void MainWindow::onDwellFired(QPoint /*pos*/, ClickType /*type*/)
 {
 #ifdef HAVE_MULTIMEDIA
     if (m_settings.audioFeedback) m_clickSound->play();
 #endif
-
-    // Re-arm for continuous clicking
-    if (m_autoEnabled) {
-        m_dwell->arm(type, m_modifiers);
-    }
 }
 
 void MainWindow::onSettingsClicked()

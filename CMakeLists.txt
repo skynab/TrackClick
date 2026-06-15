@@ -44,7 +44,11 @@ set(HEADERS
 )
 
 if(WIN32)
-    add_executable(TrackClick WIN32 ${SOURCES} ${HEADERS} app.rc)
+    if(NOT DEFINED BUILD_NUMBER)
+        set(BUILD_NUMBER 0)
+    endif()
+    configure_file(app.rc.in "${CMAKE_CURRENT_BINARY_DIR}/app.rc" @ONLY)
+    add_executable(TrackClick WIN32 ${SOURCES} ${HEADERS} "${CMAKE_CURRENT_BINARY_DIR}/app.rc")
 elseif(APPLE)
     set(MACOSX_ICON icons/TrackClick.icns)
     set_source_files_properties(${MACOSX_ICON} PROPERTIES

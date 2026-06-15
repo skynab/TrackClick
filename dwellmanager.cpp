@@ -61,13 +61,26 @@ void DwellManager::onPoll()
         // OR after one full dwell period — whichever comes first.  The timeout
         // handles Wayland compositor pointer grabs (e.g. right-click context menus)
         // that freeze XQueryPointer so movement is never detected.
-        qint64 waitedMs = m_nowFn() - m_waitStartMs;
-        if (dist(cur, m_anchorPos) > m_sensitivityPx * 2 || waitedMs >= m_dwellMs) {
+        qint64 waitedMs  = m_nowFn() - m_waitStartMs;
+        bool   movedAway = dist(cur, m_anchorPos) > m_sensitivityPx * 2;
+        bool   timedOut  = waitedMs >= m_dwellMs;
+
+        if (movedAway || timedOut) {
             m_waiting      = false;
             m_hovering     = false;
             m_anchorPos    = cur;
             m_lastPos      = cur;
             m_hoverStartMs = m_nowFn();
+
+            if (timedOut && !movedAway) {
+                // Cursor position appeared frozen throughout the entire wait —
+                // most likely the pointer is outside the XWayland session on
+                // Wayland, so XQueryPointer returns stale data and movement
+                // cannot be detected.  Disarm to prevent repeated unintended
+                // clicks; the user re-arms by hovering over a button again.
+                m_armed = false;
+                emit dwellProgress(0.0f);
+            }
         }
         return;
     }

@@ -80,9 +80,10 @@ private:
     QList<ClickButton*> m_clickButtons;
 
     // Modifier toggles
-    QPushButton*  m_ctrlBtn  = nullptr;
-    QPushButton*  m_altBtn   = nullptr;
-    QPushButton*  m_shiftBtn = nullptr;
+    QPushButton*  m_ctrlBtn        = nullptr;
+    QPushButton*  m_altBtn         = nullptr;
+    QPushButton*  m_shiftBtn       = nullptr;
+    QPushButton*  m_dwellActiveBtn = nullptr;
 
     // ── State ─────────────────────────────────────────────────
     ClickType   m_selectedType = ClickType::LeftClick;

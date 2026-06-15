@@ -219,6 +219,7 @@ void SettingsDialog::retranslateUi()
     m_chkModShift->setText(tr("Shift modifier"));
     m_chkExitButton->setText(tr("Exit button"));
     m_chkQuitButton->setText(tr("Quit button"));
+    m_chkDwellActiveBtn->setText(tr("Dwell Active button"));
 
     m_grpWin->setTitle(tr("Window"));
     m_chkAlwaysOnTop->setText(tr("Always on top"));
@@ -344,8 +345,9 @@ void SettingsDialog::buildUi()
     m_chkModCtrl     = new QCheckBox(tr("Ctrl modifier"));
     m_chkModAlt      = new QCheckBox(tr("Alt modifier"));
     m_chkModShift    = new QCheckBox(tr("Shift modifier"));
-    m_chkExitButton  = new QCheckBox(tr("Exit button"));
-    m_chkQuitButton  = new QCheckBox(tr("Quit button"));
+    m_chkExitButton      = new QCheckBox(tr("Exit button"));
+    m_chkQuitButton      = new QCheckBox(tr("Quit button"));
+    m_chkDwellActiveBtn  = new QCheckBox(tr("Dwell Active button"));
 
     int row = 0, col = 0;
     auto addChk = [&](QCheckBox* c){
@@ -358,7 +360,7 @@ void SettingsDialog::buildUi()
     addChk(m_chkMiddleClick); addChk(m_chkMiddleDouble);addChk(m_chkScrollUp);
     addChk(m_chkScrollDown);  addChk(m_chkScrollHoriz); addChk(m_chkModCtrl);
     addChk(m_chkModAlt);      addChk(m_chkModShift);    addChk(m_chkExitButton);
-    addChk(m_chkQuitButton);
+    addChk(m_chkQuitButton);  addChk(m_chkDwellActiveBtn);
 
     root->addWidget(m_grpBtns);
 
@@ -449,6 +451,7 @@ void SettingsDialog::loadFrom(const AppSettings& s)
     m_chkModShift->setChecked(s.showModShift);
     m_chkExitButton->setChecked(s.showExitButton);
     m_chkQuitButton->setChecked(s.showQuitButton);
+    m_chkDwellActiveBtn->setChecked(s.showDwellActiveBtn);
 
     m_opacitySlider->setValue(static_cast<int>(s.windowOpacity * 100));
     m_chkAlwaysOnTop->setChecked(s.alwaysOnTop);
@@ -486,8 +489,9 @@ AppSettings SettingsDialog::readUi() const
     s.showModCtrl     = m_chkModCtrl->isChecked();
     s.showModAlt      = m_chkModAlt->isChecked();
     s.showModShift    = m_chkModShift->isChecked();
-    s.showExitButton  = m_chkExitButton->isChecked();
-    s.showQuitButton  = m_chkQuitButton->isChecked();
+    s.showExitButton     = m_chkExitButton->isChecked();
+    s.showQuitButton     = m_chkQuitButton->isChecked();
+    s.showDwellActiveBtn = m_chkDwellActiveBtn->isChecked();
 
     s.windowOpacity   = m_opacitySlider->value() / 100.0;
     s.alwaysOnTop      = m_chkAlwaysOnTop->isChecked();

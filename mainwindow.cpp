@@ -195,8 +195,9 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     m_settings.showModCtrl     = m_persist.value("show/modCtrl",     true).toBool();
     m_settings.showModAlt      = m_persist.value("show/modAlt",      true).toBool();
     m_settings.showModShift    = m_persist.value("show/modShift",    true).toBool();
-    m_settings.showExitButton  = m_persist.value("show/exit",        true).toBool();
-    m_settings.showQuitButton  = m_persist.value("show/quitButton",  true).toBool();
+    m_settings.showExitButton    = m_persist.value("show/exit",           true).toBool();
+    m_settings.showQuitButton    = m_persist.value("show/quitButton",     true).toBool();
+    m_settings.showDwellActiveBtn= m_persist.value("show/dwellActiveBtn", false).toBool();
     m_settings.startMinimized   = m_persist.value("window/startMin",        false).toBool();
     m_settings.launchOnStartup  = m_persist.value("window/launchOnStartup", false).toBool();
     m_settings.audioFeedback   = m_persist.value("audio/enabled",    false).toBool();
@@ -406,7 +407,7 @@ void MainWindow::rebuildButtons()
         delete m_btnArea->layout();
     }
     m_clickButtons.clear();
-    m_ctrlBtn = m_altBtn = m_shiftBtn = nullptr;
+    m_ctrlBtn = m_altBtn = m_shiftBtn = m_dwellActiveBtn = nullptr;
 
     auto* grid = new QGridLayout(m_btnArea);
     grid->setSpacing(4);
@@ -535,6 +536,7 @@ void MainWindow::rebuildButtons()
         new ModHoverFilter(m_altBtn, &m_settings.dwellMs);
         addMod(m_altBtn);
     }
+    int shiftRow = -1, shiftCol = -1;
     if (m_settings.showModShift) {
         m_shiftBtn = new QPushButton("Shift");
         m_shiftBtn->setCheckable(true);
@@ -546,7 +548,46 @@ void MainWindow::rebuildButtons()
             m_shiftBtn->setStyleSheet(modStyle(on));
         });
         new ModHoverFilter(m_shiftBtn, &m_settings.dwellMs);
+        shiftRow = row; shiftCol = col;
         addMod(m_shiftBtn);
+    }
+
+    // ── Dwell Active button ───────────────────────────────────
+    // Placed directly below the Shift button; same size and style.
+    // Acts as an in-panel alias for the Auto button in the title bar.
+    if (m_settings.showDwellActiveBtn && shiftRow >= 0) {
+        auto dwellActiveStyle = [large](bool on) -> QString {
+            const char* fs  = large ? "14px" : "11px";
+            const char* pad = large ? "4px"  : "2px";
+            return on
+                ? QString("QPushButton { background:#00AA55; color:#FFF; border:2px solid #00CC66; "
+                          "border-radius:4px; font-weight:bold; font-size:%1; padding:%2; }"
+                          "QPushButton:hover { background:#00CC66; }").arg(fs).arg(pad)
+                : QString("QPushButton { background:#3A3A3A; color:#AAA; border:1px solid #555; "
+                          "border-radius:4px; font-size:%1; padding:%2; }"
+                          "QPushButton:hover { background:#4A4A4A; border:1px solid #00AA55; color:#00AA55; }").arg(fs).arg(pad);
+        };
+
+        m_dwellActiveBtn = new QPushButton(tr("Dwell Active"), m_btnArea);
+        m_dwellActiveBtn->setCheckable(true);
+        m_dwellActiveBtn->setMinimumSize(modSize);
+        m_dwellActiveBtn->setToolTip(tr("Enable dwell-clicking (same as the Auto button)"));
+        m_dwellActiveBtn->setChecked(m_autoEnabled);
+        m_dwellActiveBtn->setStyleSheet(dwellActiveStyle(m_autoEnabled));
+
+        connect(m_dwellActiveBtn, &QPushButton::toggled, this, [this, dwellActiveStyle](bool on){
+            m_dwellActiveBtn->setStyleSheet(dwellActiveStyle(on));
+            // Drive the canonical Auto button; onAutoToggled() handles the rest.
+            m_autoBtn->setChecked(on);
+        });
+
+        new ModHoverFilter(m_dwellActiveBtn, &m_settings.dwellMs);
+
+        grid->addWidget(m_dwellActiveBtn, shiftRow + 1, shiftCol);
+        // Advance row/col past the new button so the Quit button lands correctly.
+        if (shiftRow + 1 >= row) row = shiftRow + 1;
+        col = shiftCol + 1;
+        if (col >= COLS) { col = 0; row++; }
     }
 
     // ── Quit button ───────────────────────────────────────────
@@ -786,6 +827,26 @@ void MainWindow::setClickType(ClickType t)
 void MainWindow::onAutoToggled(bool on)
 {
     m_autoEnabled = on;
+
+    // Keep the in-panel Dwell Active button in sync without re-triggering this slot.
+    if (m_dwellActiveBtn && m_dwellActiveBtn->isChecked() != on) {
+        QSignalBlocker b(m_dwellActiveBtn);
+        m_dwellActiveBtn->setChecked(on);
+        // Re-apply style by toggling the stylesheet manually.
+        // The style lambda lives inside rebuildButtons so we reproduce the
+        // active/inactive colours here.
+        const bool large = m_settings.largeButtons;
+        const char* fs  = large ? "14px" : "11px";
+        const char* pad = large ? "4px"  : "2px";
+        m_dwellActiveBtn->setStyleSheet(on
+            ? QString("QPushButton { background:#00AA55; color:#FFF; border:2px solid #00CC66; "
+                      "border-radius:4px; font-weight:bold; font-size:%1; padding:%2; }"
+                      "QPushButton:hover { background:#00CC66; }").arg(fs).arg(pad)
+            : QString("QPushButton { background:#3A3A3A; color:#AAA; border:1px solid #555; "
+                      "border-radius:4px; font-size:%1; padding:%2; }"
+                      "QPushButton:hover { background:#4A4A4A; border:1px solid #00AA55; color:#00AA55; }").arg(fs).arg(pad));
+    }
+
     m_dwellBar->setVisible(on);
     m_statusLabel->setVisible(on);
 
@@ -989,8 +1050,9 @@ void MainWindow::applySettings(const AppSettings& s)
     m_persist.setValue("show/modCtrl",       s.showModCtrl);
     m_persist.setValue("show/modAlt",        s.showModAlt);
     m_persist.setValue("show/modShift",      s.showModShift);
-    m_persist.setValue("show/exit",          s.showExitButton);
-    m_persist.setValue("show/quitButton",    s.showQuitButton);
+    m_persist.setValue("show/exit",           s.showExitButton);
+    m_persist.setValue("show/quitButton",     s.showQuitButton);
+    m_persist.setValue("show/dwellActiveBtn", s.showDwellActiveBtn);
     m_persist.setValue("show/iconsOnly",     s.iconsOnly);
     m_persist.setValue("show/largeButtons",  s.largeButtons);
     m_persist.setValue("show/buttonLayout",  static_cast<int>(s.buttonLayout));

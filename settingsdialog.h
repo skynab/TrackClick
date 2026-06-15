@@ -36,6 +36,7 @@ struct AppSettings {
     bool showModShift         = true;
     bool showExitButton       = true;
     bool showQuitButton       = true;
+    bool showDwellActiveBtn   = false;
 
     // Window
     double windowOpacity  = 1.0;
@@ -120,6 +121,7 @@ private:
     QCheckBox*   m_chkModShift;
     QCheckBox*   m_chkExitButton;
     QCheckBox*   m_chkQuitButton;
+    QCheckBox*   m_chkDwellActiveBtn;
 
     // Window
     QSlider*     m_opacitySlider;

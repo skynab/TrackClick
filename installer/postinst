@@ -1,0 +1,10 @@
+#!/bin/sh
+# Reload udev so the TrackClick input-access rule takes effect immediately,
+# without requiring a reboot.  All failures are non-fatal (e.g. no udev daemon
+# in a container/build environment) so package installation always succeeds.
+set -e
+if command -v udevadm >/dev/null 2>&1; then
+    udevadm control --reload-rules >/dev/null 2>&1 || true
+    udevadm trigger --subsystem-match=input --action=change >/dev/null 2>&1 || true
+fi
+exit 0

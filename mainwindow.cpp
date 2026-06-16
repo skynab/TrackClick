@@ -23,6 +23,8 @@
 #include <QToolButton>
 #include <QIcon>
 #include <QSize>
+#include <QProcess>
+#include <QTemporaryFile>
 #include "translations/tsparser.h"
 #ifdef Q_OS_MAC
 #  include "macos_utils.h"
@@ -270,6 +272,103 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     loadWindowSettings();
 
 
+}
+
+void MainWindow::promptForInputAccessIfNeeded()
+{
+#ifdef Q_OS_LINUX
+    if (ClickInjector::hasInputDeviceAccess())
+        return;
+
+    // Respect a previous "Don't ask again" choice.
+    if (m_persist.value("linux/skipInputAccessPrompt", false).toBool())
+        return;
+
+    QMessageBox box(this);
+    box.setIcon(QMessageBox::Question);
+    box.setWindowTitle(tr("Enable cursor tracking"));
+    box.setText(tr("TrackClick needs permission to read mouse movement."));
+    box.setInformativeText(tr(
+        "Without it, dwell-clicking only works while the cursor is over the "
+        "TrackClick window. Granting permission installs a small system rule "
+        "and shows a password prompt — no terminal required."));
+    QPushButton* grant = box.addButton(tr("Grant Permission…"), QMessageBox::AcceptRole);
+    box.addButton(tr("Not Now"), QMessageBox::RejectRole);
+    QPushButton* never = box.addButton(tr("Don't Ask Again"), QMessageBox::ActionRole);
+    box.setDefaultButton(grant);
+    box.exec();
+
+    if (box.clickedButton() == never)
+        m_persist.setValue("linux/skipInputAccessPrompt", true);
+    // Only proceed on an explicit Grant; "Not Now", "Don't Ask Again" and
+    // dismissing the dialog all leave permissions unchanged.
+    if (box.clickedButton() != grant)
+        return;
+
+    // Grant: extract the bundled udev rule, then install it as root via pkexec
+    // (graphical polkit auth), reload the rules and re-tag input devices so the
+    // uaccess ACL applies to the current session.
+    QString ruleText;
+    {
+        QFile res(":/linux/71-trackclick-input.rules");
+        if (res.open(QIODevice::ReadOnly | QIODevice::Text))
+            ruleText = QString::fromUtf8(res.readAll());
+    }
+    if (ruleText.isEmpty()) {
+        QMessageBox::warning(this, tr("TrackClick"),
+            tr("Internal error: the permission rule could not be loaded."));
+        return;
+    }
+
+    QString tmpPath;
+    {
+        QTemporaryFile tmp(QDir::tempPath() + "/trackclick-XXXXXX.rules");
+        tmp.setAutoRemove(false);
+        if (!tmp.open()) {
+            QMessageBox::warning(this, tr("TrackClick"),
+                tr("Could not create a temporary file for the permission rule."));
+            return;
+        }
+        tmp.write(ruleText.toUtf8());
+        tmp.flush();
+        tmpPath = tmp.fileName();
+    }
+
+    const QString dest = QStringLiteral("/etc/udev/rules.d/71-trackclick-input.rules");
+    const QString script = QStringLiteral(
+        "cp '%1' '%2' && chmod 0644 '%2' && "
+        "udevadm control --reload-rules && "
+        "udevadm trigger --subsystem-match=input --action=change")
+        .arg(tmpPath, dest);
+
+    QProcess proc;
+    proc.start(QStringLiteral("pkexec"), {QStringLiteral("/bin/sh"),
+                                          QStringLiteral("-c"), script});
+    const bool started = proc.waitForStarted(5000);
+    bool finished = false;
+    if (started)
+        finished = proc.waitForFinished(120000);  // allow time at the password prompt
+
+    QFile::remove(tmpPath);
+
+    if (!started) {
+        // pkexec unavailable — fall back to copyable manual instructions.
+        QMessageBox::information(this, tr("TrackClick"),
+            tr("Could not launch the graphical authentication helper (pkexec).\n\n"
+               "To enable full cursor tracking, install this file as root:\n  %1\n\n"
+               "with the following contents:\n\n%2").arg(dest, ruleText));
+        return;
+    }
+    if (finished && proc.exitStatus() == QProcess::NormalExit && proc.exitCode() == 0) {
+        QMessageBox::information(this, tr("TrackClick"),
+            tr("Permission granted. Please restart TrackClick to enable cursor "
+               "tracking across all windows."));
+    } else {
+        QMessageBox::warning(this, tr("TrackClick"),
+            tr("Permission was not granted. TrackClick will ask again next time "
+               "it starts. (On an X11/Xorg session this permission is not needed.)"));
+    }
+#endif
 }
 
 void MainWindow::buildUi()

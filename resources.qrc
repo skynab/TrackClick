@@ -41,6 +41,9 @@
     <qresource prefix="/sounds">
         <file alias="click-noise.wav">sounds/click-noise.wav</file>
     </qresource>
+    <qresource prefix="/linux">
+        <file alias="71-trackclick-input.rules">installer/71-trackclick-input.rules</file>
+    </qresource>
     <qresource prefix="/translations">
         <file alias="trackclick_cs.ts">translations/trackclick_cs.ts</file>
         <file alias="trackclick_fr.ts">translations/trackclick_fr.ts</file>

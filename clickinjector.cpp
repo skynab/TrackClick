@@ -53,6 +53,8 @@ QPoint ClickInjector::cursorPos()
     return QPoint(p.x, p.y);
 }
 
+bool ClickInjector::hasInputDeviceAccess() { return true; }
+
 void ClickInjector::performClick(ClickType type, QPoint pos, int mods)
 {
     // Move first
@@ -164,6 +166,8 @@ QPoint ClickInjector::cursorPos()
 {
     return QCursor::pos();
 }
+
+bool ClickInjector::hasInputDeviceAccess() { return true; }
 
 void ClickInjector::moveCursor(QPoint pos)
 {
@@ -653,6 +657,8 @@ QPoint ClickInjector::cursorPos()
     return estPos;
 }
 
+bool ClickInjector::hasInputDeviceAccess() { return evdev().isOpen(); }
+
 void ClickInjector::moveCursor(QPoint pos)
 {
     if (udev().isOpen()) {
@@ -763,6 +769,7 @@ void ClickInjector::pressModifiers(int) {}
 void ClickInjector::releaseModifiers(int) {}
 void ClickInjector::moveCursor(QPoint) {}
 QPoint ClickInjector::cursorPos() { return QCursor::pos(); }
+bool ClickInjector::hasInputDeviceAccess() { return true; }
 
 void ClickInjector::performClick(ClickType, QPoint, int)
 {

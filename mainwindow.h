@@ -26,6 +26,12 @@ public:
     explicit MainWindow(QTranslator* startupTranslator = nullptr, QWidget* parent = nullptr);
     ~MainWindow() override = default;
 
+    // On Linux/Wayland, if TrackClick cannot read pointer-motion devices, offer
+    // a one-time GUI prompt to install the udev rule that grants access (via a
+    // graphical polkit password dialog — no terminal required).  No-op on other
+    // platforms and when access is already available.
+    void promptForInputAccessIfNeeded();
+
 protected:
     void mousePressEvent(QMouseEvent*) override;
     void mouseMoveEvent(QMouseEvent*)  override;

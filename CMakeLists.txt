@@ -106,6 +106,19 @@ endif()
 
 install(TARGETS TrackClick DESTINATION bin)
 
+# ── Linux: desktop integration + input-device access rule ─────────────────────
+if(UNIX AND NOT APPLE)
+    # udev rule granting the active session read access to pointer devices, so
+    # the dwell timer can track the cursor over every window on Wayland.
+    install(FILES installer/71-trackclick-input.rules
+            DESTINATION lib/udev/rules.d)
+    install(FILES installer/TrackClick.desktop
+            DESTINATION share/applications)
+    install(FILES icons/app.svg
+            DESTINATION share/icons/hicolor/scalable/apps
+            RENAME TrackClick.svg)
+endif()
+
 option(BUILD_TESTS "Build unit tests" OFF)
 if(BUILD_TESTS)
     enable_testing()
@@ -150,4 +163,33 @@ if(LINGUIST_FOUND)
         )
     endforeach()
     install(FILES ${QM_FILES} DESTINATION bin/translations)
+endif()
+
+# ── Packaging: Linux .deb / .rpm ──────────────────────────────────────────────
+# Native packages install to /usr and ship the udev rule, so input-device access
+# is set up automatically (the postinst reloads udev) with no terminal steps.
+if(UNIX AND NOT APPLE)
+    set(CPACK_PACKAGE_NAME "trackclick")
+    set(CPACK_PACKAGE_VENDOR "TrackClick")
+    set(CPACK_PACKAGE_CONTACT "TrackClick <noreply@trackclick.app>")
+    set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Dwell-click accessibility tool")
+    set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
+    set(CPACK_PACKAGING_INSTALL_PREFIX "/usr")
+    set(CPACK_GENERATOR "DEB;RPM")
+
+    # Reload udev after install so the input-access rule applies immediately.
+    set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA
+        "${CMAKE_CURRENT_SOURCE_DIR}/installer/postinst")
+    set(CPACK_RPM_POST_INSTALL_SCRIPT_FILE
+        "${CMAKE_CURRENT_SOURCE_DIR}/installer/postinst")
+
+    # Auto-derive library dependencies from the linked binary; add the runtime
+    # tools we shell out to (pkexec) that are not captured by shlib scanning.
+    set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "policykit-1")
+    set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
+    set(CPACK_RPM_PACKAGE_REQUIRES "polkit")
+    set(CPACK_RPM_PACKAGE_LICENSE "Proprietary")
+
+    include(CPack)
 endif()

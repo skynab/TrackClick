@@ -1,5 +1,9 @@
 #include "mainwindow.h"
 #include <QApplication>
+#include <QDir>
+#include <QFile>
+#include <QStandardPaths>
+#include <QTextStream>
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #  define GLOBAL_POS(ev) (ev)->globalPosition().toPoint()
 #else
@@ -19,6 +23,8 @@
 #include <QToolButton>
 #include <QIcon>
 #include <QSize>
+#include <QProcess>
+#include <QTemporaryFile>
 #include "translations/tsparser.h"
 #ifdef Q_OS_MAC
 #  include "macos_utils.h"
@@ -73,6 +79,12 @@ ClickButton::ClickButton(const QString& label, ClickType type, QWidget* parent)
     setMinimumSize(32, 44);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     setCheckable(false);
+#ifdef Q_OS_MAC
+    // macOS native style applies invisible layout-item margins around QToolButton
+    // that cause the grid to mis-align rows relative to Windows/Linux.
+    // WA_LayoutUsesWidgetRect tells the layout to use the visual rect instead.
+    setAttribute(Qt::WA_LayoutUsesWidgetRect);
+#endif
     updateStyle();
     connect(this, &QToolButton::clicked, this, [this](){
         emit clickTypePressed(m_type);
@@ -177,6 +189,7 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     m_settings.sensitivityPx = m_persist.value("dwell/sensitivity", 5).toInt();
     m_settings.windowOpacity = m_persist.value("window/opacity",  1.0).toDouble();
     m_settings.alwaysOnTop   = m_persist.value("window/alwaysOnTop", true).toBool();
+    m_settings.showNoClick     = m_persist.value("show/noClick",      true).toBool();
     m_settings.showLeftClick   = m_persist.value("show/leftClick",   true).toBool();
     m_settings.showLeftDouble  = m_persist.value("show/leftDouble",  true).toBool();
     m_settings.showLeftDrag    = m_persist.value("show/leftDrag",    true).toBool();
@@ -191,14 +204,19 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     m_settings.showModCtrl     = m_persist.value("show/modCtrl",     true).toBool();
     m_settings.showModAlt      = m_persist.value("show/modAlt",      true).toBool();
     m_settings.showModShift    = m_persist.value("show/modShift",    true).toBool();
-    m_settings.showExitButton  = m_persist.value("show/exit",        true).toBool();
-    m_settings.showQuitButton  = m_persist.value("show/quitButton",  true).toBool();
-    m_settings.startMinimized  = m_persist.value("window/startMin",  false).toBool();
+    m_settings.showExitButton    = m_persist.value("show/exit",           true).toBool();
+    m_settings.showQuitButton    = m_persist.value("show/quitButton",     true).toBool();
+    m_settings.showDwellActiveBtn= m_persist.value("show/dwellActiveBtn", false).toBool();
+    m_settings.startMinimized   = m_persist.value("window/startMin",         false).toBool();
+    m_settings.xMinimizesApp    = m_persist.value("window/xMinimizesApp",    true).toBool();
+    m_settings.launchOnStartup  = m_persist.value("window/launchOnStartup",  false).toBool();
     m_settings.audioFeedback   = m_persist.value("audio/enabled",    false).toBool();
     m_settings.iconsOnly       = m_persist.value("show/iconsOnly",    false).toBool();
     m_settings.largeButtons    = m_persist.value("show/largeButtons", false).toBool();
     m_settings.buttonLayout    = static_cast<ButtonLayout>(m_persist.value("show/buttonLayout", static_cast<int>(ButtonLayout::Vertical)).toInt());
     m_settings.language        = m_persist.value("language",          "en").toString();
+    m_settings.scrollRepeat    = m_persist.value("scroll/repeat",      3).toInt();
+    m_settings.repeatOnDwell   = m_persist.value("dwell/repeatOnDwell", false).toBool();
 
     // Adopt any translator already installed at startup so installLanguage()
     // can remove it when the user later switches languages (e.g. back to English).
@@ -228,6 +246,8 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     m_dwell = new DwellManager(this);
     m_dwell->setDwellMs(m_settings.dwellMs);
     m_dwell->setSensitivityPx(m_settings.sensitivityPx);
+    m_dwell->setScrollRepeat(m_settings.scrollRepeat);
+    m_dwell->setRepeatOnDwell(m_settings.repeatOnDwell);
 
 #ifdef HAVE_MULTIMEDIA
     m_clickSound = new QSoundEffect(this);
@@ -252,6 +272,103 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     loadWindowSettings();
 
 
+}
+
+void MainWindow::promptForInputAccessIfNeeded()
+{
+#ifdef Q_OS_LINUX
+    if (ClickInjector::hasInputDeviceAccess())
+        return;
+
+    // Respect a previous "Don't ask again" choice.
+    if (m_persist.value("linux/skipInputAccessPrompt", false).toBool())
+        return;
+
+    QMessageBox box(this);
+    box.setIcon(QMessageBox::Question);
+    box.setWindowTitle(tr("Enable cursor tracking"));
+    box.setText(tr("TrackClick needs permission to read mouse movement."));
+    box.setInformativeText(tr(
+        "Without it, dwell-clicking only works while the cursor is over the "
+        "TrackClick window. Granting permission installs a small system rule "
+        "and shows a password prompt — no terminal required."));
+    QPushButton* grant = box.addButton(tr("Grant Permission…"), QMessageBox::AcceptRole);
+    box.addButton(tr("Not Now"), QMessageBox::RejectRole);
+    QPushButton* never = box.addButton(tr("Don't Ask Again"), QMessageBox::ActionRole);
+    box.setDefaultButton(grant);
+    box.exec();
+
+    if (box.clickedButton() == never)
+        m_persist.setValue("linux/skipInputAccessPrompt", true);
+    // Only proceed on an explicit Grant; "Not Now", "Don't Ask Again" and
+    // dismissing the dialog all leave permissions unchanged.
+    if (box.clickedButton() != grant)
+        return;
+
+    // Grant: extract the bundled udev rule, then install it as root via pkexec
+    // (graphical polkit auth), reload the rules and re-tag input devices so the
+    // uaccess ACL applies to the current session.
+    QString ruleText;
+    {
+        QFile res(":/linux/71-trackclick-input.rules");
+        if (res.open(QIODevice::ReadOnly | QIODevice::Text))
+            ruleText = QString::fromUtf8(res.readAll());
+    }
+    if (ruleText.isEmpty()) {
+        QMessageBox::warning(this, tr("TrackClick"),
+            tr("Internal error: the permission rule could not be loaded."));
+        return;
+    }
+
+    QString tmpPath;
+    {
+        QTemporaryFile tmp(QDir::tempPath() + "/trackclick-XXXXXX.rules");
+        tmp.setAutoRemove(false);
+        if (!tmp.open()) {
+            QMessageBox::warning(this, tr("TrackClick"),
+                tr("Could not create a temporary file for the permission rule."));
+            return;
+        }
+        tmp.write(ruleText.toUtf8());
+        tmp.flush();
+        tmpPath = tmp.fileName();
+    }
+
+    const QString dest = QStringLiteral("/etc/udev/rules.d/71-trackclick-input.rules");
+    const QString script = QStringLiteral(
+        "cp '%1' '%2' && chmod 0644 '%2' && "
+        "udevadm control --reload-rules && "
+        "udevadm trigger --subsystem-match=input --action=change")
+        .arg(tmpPath, dest);
+
+    QProcess proc;
+    proc.start(QStringLiteral("pkexec"), {QStringLiteral("/bin/sh"),
+                                          QStringLiteral("-c"), script});
+    const bool started = proc.waitForStarted(5000);
+    bool finished = false;
+    if (started)
+        finished = proc.waitForFinished(120000);  // allow time at the password prompt
+
+    QFile::remove(tmpPath);
+
+    if (!started) {
+        // pkexec unavailable — fall back to copyable manual instructions.
+        QMessageBox::information(this, tr("TrackClick"),
+            tr("Could not launch the graphical authentication helper (pkexec).\n\n"
+               "To enable full cursor tracking, install this file as root:\n  %1\n\n"
+               "with the following contents:\n\n%2").arg(dest, ruleText));
+        return;
+    }
+    if (finished && proc.exitStatus() == QProcess::NormalExit && proc.exitCode() == 0) {
+        QMessageBox::information(this, tr("TrackClick"),
+            tr("Permission granted. Please restart TrackClick to enable cursor "
+               "tracking across all windows."));
+    } else {
+        QMessageBox::warning(this, tr("TrackClick"),
+            tr("Permission was not granted. TrackClick will ask again next time "
+               "it starts. (On an X11/Xorg session this permission is not needed.)"));
+    }
+#endif
 }
 
 void MainWindow::buildUi()
@@ -295,8 +412,8 @@ void MainWindow::buildUi()
     m_autoBtn->setToolTip(tr("Toggle AutoMouse dwell-clicking"));
     m_autoBtn->setStyleSheet(
         "QPushButton { background:#3A3A3A; color:#AAA; border:1px solid #555; border-radius:3px; font-size:10px; font-weight:bold; }"
-        "QPushButton:checked { background:#FFA600; color:#1A1A1A; border:1px solid #FFB833; }"
-        "QPushButton:hover { border:1px solid #FFA600; }"
+        "QPushButton:checked { background:#FFA028; color:#1A1A1A; border:1px solid #FFB040; }"
+        "QPushButton:hover { border:1px solid #FFA028; }"
     );
     connect(m_autoBtn, &QPushButton::toggled, this, &MainWindow::onAutoToggled);
     tbLayout->addWidget(m_autoBtn);
@@ -361,6 +478,34 @@ void MainWindow::buildUi()
     adjustSize();
 }
 
+// Attaches dwell-hover toggle behaviour to a modifier QPushButton.
+// Parented to the button so it is deleted automatically with it.
+class ModHoverFilter : public QObject {
+public:
+    explicit ModHoverFilter(QPushButton* btn, const int* dwellMs)
+        : QObject(btn), m_dwellMs(dwellMs)
+    {
+        m_timer = new QTimer(this);
+        m_timer->setSingleShot(true);
+        QObject::connect(m_timer, &QTimer::timeout, btn, [btn](){ btn->toggle(); });
+        btn->installEventFilter(this);
+    }
+
+protected:
+    bool eventFilter(QObject*, QEvent* ev) override
+    {
+        if (ev->type() == QEvent::Enter)
+            m_timer->start(*m_dwellMs);
+        else if (ev->type() == QEvent::Leave)
+            m_timer->stop();
+        return false;
+    }
+
+private:
+    QTimer*    m_timer;
+    const int* m_dwellMs;
+};
+
 void MainWindow::rebuildButtons()
 {
     // Clear existing
@@ -373,7 +518,7 @@ void MainWindow::rebuildButtons()
         delete m_btnArea->layout();
     }
     m_clickButtons.clear();
-    m_ctrlBtn = m_altBtn = m_shiftBtn = nullptr;
+    m_ctrlBtn = m_altBtn = m_shiftBtn = m_dwellActiveBtn = nullptr;
 
     auto* grid = new QGridLayout(m_btnArea);
     grid->setSpacing(4);
@@ -411,7 +556,7 @@ void MainWindow::rebuildButtons()
         connect(btn, &ClickButton::clickTypePressed, this, &MainWindow::onClickButtonPressed);
         connect(btn, &ClickButton::clickTypeHovered, this, [this](ClickType type){
             m_hoveredType = type;
-            m_hoverTimer->start(m_settings.dwellMs);
+            m_hoverTimer->start(m_settings.dwellMs * 6 / 10);
         });
         connect(btn, &ClickButton::clickTypeLeft, this, [this](){
             m_hoverTimer->stop();
@@ -426,12 +571,13 @@ void MainWindow::rebuildButtons()
         }
     };
 
+    addIf(m_settings.showNoClick,     tr("No Click"), tr("No action — dwell without clicking"), ClickType::NoClick, "no_click");
     addIf(m_settings.showLeftClick,   tr("L Click"),  tr("Left Click"),         ClickType::LeftClick,        "left_click");
     addIf(m_settings.showLeftDouble,  tr("L Dbl"),    tr("Left Double-Click"),  ClickType::LeftDoubleClick,  "left_double");
-    addIf(m_settings.showLeftDrag,    tr("L Drag"),   tr("Left Drag (hold)"),   ClickType::LeftDown,         "left_drag");
+    addIf(m_settings.showLeftDrag,    tr("L Drag"),   tr("Left Drag — dwell to grab, dwell again to release"),   ClickType::LeftDown,         "left_drag");
     addIf(m_settings.showRightClick,  tr("R Click"),  tr("Right Click"),        ClickType::RightClick,       "right_click");
     addIf(m_settings.showRightDouble, tr("R Dbl"),    tr("Right Double-Click"), ClickType::RightDoubleClick, "right_double");
-    addIf(m_settings.showRightDrag,   tr("R Drag"),   tr("Right Drag (hold)"),  ClickType::RightDown,        "right_drag");
+    addIf(m_settings.showRightDrag,   tr("R Drag"),   tr("Right Drag — dwell to grab, dwell again to release"),  ClickType::RightDown,        "right_drag");
     addIf(m_settings.showMiddleClick, tr("M Click"),  tr("Middle Click"),       ClickType::MiddleClick,      "middle_click");
     addIf(m_settings.showMiddleDouble,tr("M Dbl"),    tr("Middle Double-Click"),ClickType::MiddleDoubleClick,"middle_double");
     addIf(m_settings.showScrollUp,    tr("Scroll ▲"), tr("Scroll Up"),          ClickType::ScrollUp,         "scroll_up");
@@ -485,7 +631,9 @@ void MainWindow::rebuildButtons()
         connect(m_ctrlBtn, &QPushButton::toggled, this, [this, modStyle](bool on){
             if (on) m_modifiers |= ModCtrl; else m_modifiers &= ~ModCtrl;
             m_ctrlBtn->setStyleSheet(modStyle(on));
+            if (m_autoEnabled) m_dwell->setModifiers(m_modifiers);
         });
+        new ModHoverFilter(m_ctrlBtn, &m_settings.dwellMs);
         addMod(m_ctrlBtn);
     }
     if (m_settings.showModAlt) {
@@ -497,9 +645,12 @@ void MainWindow::rebuildButtons()
         connect(m_altBtn, &QPushButton::toggled, this, [this, modStyle](bool on){
             if (on) m_modifiers |= ModAlt; else m_modifiers &= ~ModAlt;
             m_altBtn->setStyleSheet(modStyle(on));
+            if (m_autoEnabled) m_dwell->setModifiers(m_modifiers);
         });
+        new ModHoverFilter(m_altBtn, &m_settings.dwellMs);
         addMod(m_altBtn);
     }
+    int shiftRow = -1, shiftCol = -1;
     if (m_settings.showModShift) {
         m_shiftBtn = new QPushButton("Shift");
         m_shiftBtn->setCheckable(true);
@@ -509,8 +660,49 @@ void MainWindow::rebuildButtons()
         connect(m_shiftBtn, &QPushButton::toggled, this, [this, modStyle](bool on){
             if (on) m_modifiers |= ModShift; else m_modifiers &= ~ModShift;
             m_shiftBtn->setStyleSheet(modStyle(on));
+            if (m_autoEnabled) m_dwell->setModifiers(m_modifiers);
         });
+        new ModHoverFilter(m_shiftBtn, &m_settings.dwellMs);
+        shiftRow = row; shiftCol = col;
         addMod(m_shiftBtn);
+    }
+
+    // ── Dwell Active button ───────────────────────────────────
+    // Placed directly below the Shift button; same size and style.
+    // Acts as an in-panel alias for the Auto button in the title bar.
+    if (m_settings.showDwellActiveBtn && shiftRow >= 0) {
+        auto dwellActiveStyle = [large](bool on) -> QString {
+            const char* fs  = large ? "14px" : "11px";
+            const char* pad = large ? "4px"  : "2px";
+            return on
+                ? QString("QPushButton { background:#FFA028; color:#1A1A1A; border:2px solid #FFB040; "
+                          "border-radius:4px; font-weight:bold; font-size:%1; padding:%2; }"
+                          "QPushButton:hover { background:#FFB040; }").arg(fs).arg(pad)
+                : QString("QPushButton { background:#3A3A3A; color:#AAA; border:1px solid #555; "
+                          "border-radius:4px; font-size:%1; padding:%2; }"
+                          "QPushButton:hover { background:#4A4A4A; border:1px solid #FFA028; color:#FFA028; }").arg(fs).arg(pad);
+        };
+
+        m_dwellActiveBtn = new QPushButton(tr("Dwell Active"), m_btnArea);
+        m_dwellActiveBtn->setCheckable(true);
+        m_dwellActiveBtn->setMinimumSize(modSize);
+        m_dwellActiveBtn->setToolTip(tr("Enable dwell-clicking (same as the Auto button)"));
+        m_dwellActiveBtn->setChecked(m_autoEnabled);
+        m_dwellActiveBtn->setStyleSheet(dwellActiveStyle(m_autoEnabled));
+
+        connect(m_dwellActiveBtn, &QPushButton::toggled, this, [this, dwellActiveStyle](bool on){
+            m_dwellActiveBtn->setStyleSheet(dwellActiveStyle(on));
+            // Drive the canonical Auto button; onAutoToggled() handles the rest.
+            m_autoBtn->setChecked(on);
+        });
+
+        new ModHoverFilter(m_dwellActiveBtn, &m_settings.dwellMs);
+
+        grid->addWidget(m_dwellActiveBtn, shiftRow + 1, shiftCol);
+        // Advance row/col past the new button so the Quit button lands correctly.
+        if (shiftRow + 1 >= row) row = shiftRow + 1;
+        col = shiftCol + 1;
+        if (col >= COLS) { col = 0; row++; }
     }
 
     // ── Quit button ───────────────────────────────────────────
@@ -685,9 +877,12 @@ void MainWindow::paintEvent(QPaintEvent*)
 
 void MainWindow::closeEvent(QCloseEvent* ev)
 {
-    // Hide to tray instead of quitting
-    ev->ignore();
-    hide();
+    if (m_settings.xMinimizesApp) {
+        ev->ignore();
+        hide();
+    } else {
+        ev->accept();
+    }
 }
 
 void MainWindow::changeEvent(QEvent* ev)
@@ -709,7 +904,11 @@ void MainWindow::onClickButtonPressed(ClickType type)
     } else {
         // Manual mode: inject the click at the current cursor position
         QPoint pos = QCursor::pos();
-        ClickInjector::performClick(type, pos, m_modifiers);
+        bool isScroll = (type == ClickType::ScrollUp   || type == ClickType::ScrollDown ||
+                         type == ClickType::ScrollLeft  || type == ClickType::ScrollRight);
+        int reps = isScroll ? m_settings.scrollRepeat : 1;
+        for (int i = 0; i < reps; ++i)
+            ClickInjector::performClick(type, pos, m_modifiers);
 #ifdef HAVE_MULTIMEDIA
         if (m_settings.audioFeedback) m_clickSound->play();
 #endif
@@ -731,12 +930,13 @@ void MainWindow::setClickType(ClickType t)
 
     // Update status — not static so tr() reflects the active language
     const QHash<ClickType,QString> names{
+        {ClickType::NoClick,          tr("No action")},
         {ClickType::LeftClick,        tr("Left Click")},
         {ClickType::LeftDoubleClick,  tr("Left Double-Click")},
-        {ClickType::LeftDown,         tr("Left Drag (hold)")},
+        {ClickType::LeftDown,         tr("Left Drag")},
         {ClickType::RightClick,       tr("Right Click")},
         {ClickType::RightDoubleClick, tr("Right Double-Click")},
-        {ClickType::RightDown,        tr("Right Drag (hold)")},
+        {ClickType::RightDown,        tr("Right Drag")},
         {ClickType::MiddleClick,      tr("Middle Click")},
         {ClickType::MiddleDoubleClick,tr("Middle Double-Click")},
         {ClickType::ScrollUp,         tr("Scroll Up")},
@@ -750,6 +950,26 @@ void MainWindow::setClickType(ClickType t)
 void MainWindow::onAutoToggled(bool on)
 {
     m_autoEnabled = on;
+
+    // Keep the in-panel Dwell Active button in sync without re-triggering this slot.
+    if (m_dwellActiveBtn && m_dwellActiveBtn->isChecked() != on) {
+        QSignalBlocker b(m_dwellActiveBtn);
+        m_dwellActiveBtn->setChecked(on);
+        // Re-apply style by toggling the stylesheet manually.
+        // The style lambda lives inside rebuildButtons so we reproduce the
+        // active/inactive colours here.
+        const bool large = m_settings.largeButtons;
+        const char* fs  = large ? "14px" : "11px";
+        const char* pad = large ? "4px"  : "2px";
+        m_dwellActiveBtn->setStyleSheet(on
+            ? QString("QPushButton { background:#FFA028; color:#1A1A1A; border:2px solid #FFB040; "
+                      "border-radius:4px; font-weight:bold; font-size:%1; padding:%2; }"
+                      "QPushButton:hover { background:#FFB040; }").arg(fs).arg(pad)
+            : QString("QPushButton { background:#3A3A3A; color:#AAA; border:1px solid #555; "
+                      "border-radius:4px; font-size:%1; padding:%2; }"
+                      "QPushButton:hover { background:#4A4A4A; border:1px solid #FFA028; color:#FFA028; }").arg(fs).arg(pad));
+    }
+
     m_dwellBar->setVisible(on);
     m_statusLabel->setVisible(on);
 
@@ -771,16 +991,11 @@ void MainWindow::onDwellProgress(float frac)
     }
 }
 
-void MainWindow::onDwellFired(QPoint /*pos*/, ClickType type)
+void MainWindow::onDwellFired(QPoint /*pos*/, ClickType /*type*/)
 {
 #ifdef HAVE_MULTIMEDIA
     if (m_settings.audioFeedback) m_clickSound->play();
 #endif
-
-    // Re-arm for continuous clicking
-    if (m_autoEnabled) {
-        m_dwell->arm(type, m_modifiers);
-    }
 }
 
 void MainWindow::onSettingsClicked()
@@ -791,13 +1006,128 @@ void MainWindow::onSettingsClicked()
     }
 }
 
+// ── Launch-on-startup helpers (platform-specific) ─────────────────────────
+
+#if defined(Q_OS_WIN)
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
+static void setLaunchOnStartup(bool enable)
+{
+    const wchar_t* runKey =
+        L"Software\\Microsoft\\Windows\\CurrentVersion\\Run";
+    const wchar_t* approvedKey =
+        L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StartupApproved\\Run";
+    const wchar_t* name = L"TrackClick";
+
+    HKEY hKey;
+
+    if (enable) {
+        // Write quoted exe path as REG_SZ under the Run key
+        const std::wstring exe = QString("\"%1\"")
+            .arg(QDir::toNativeSeparators(QCoreApplication::applicationFilePath()))
+            .toStdWString();
+
+        if (RegCreateKeyExW(HKEY_CURRENT_USER, runKey, 0, nullptr,
+                            REG_OPTION_NON_VOLATILE, KEY_SET_VALUE,
+                            nullptr, &hKey, nullptr) == ERROR_SUCCESS) {
+            RegSetValueExW(hKey, name, 0, REG_SZ,
+                           reinterpret_cast<const BYTE*>(exe.c_str()),
+                           static_cast<DWORD>((exe.size() + 1) * sizeof(wchar_t)));
+            RegCloseKey(hKey);
+        }
+
+        // Remove any stale "disabled" entry from StartupApproved so Windows
+        // treats the Run key entry as approved (absent = enabled by default).
+        if (RegOpenKeyExW(HKEY_CURRENT_USER, approvedKey, 0,
+                          KEY_SET_VALUE, &hKey) == ERROR_SUCCESS) {
+            RegDeleteValueW(hKey, name);
+            RegCloseKey(hKey);
+        }
+    } else {
+        if (RegOpenKeyExW(HKEY_CURRENT_USER, runKey, 0,
+                          KEY_SET_VALUE, &hKey) == ERROR_SUCCESS) {
+            RegDeleteValueW(hKey, name);
+            RegCloseKey(hKey);
+        }
+        if (RegOpenKeyExW(HKEY_CURRENT_USER, approvedKey, 0,
+                          KEY_SET_VALUE, &hKey) == ERROR_SUCCESS) {
+            RegDeleteValueW(hKey, name);
+            RegCloseKey(hKey);
+        }
+    }
+}
+
+#elif defined(Q_OS_MACOS)
+static void setLaunchOnStartup(bool enable)
+{
+    const QString plist =
+        QDir::homePath() + "/Library/LaunchAgents/com.optitrack.trackclick.plist";
+    if (enable) {
+        QDir().mkpath(QFileInfo(plist).absolutePath());
+        QFile f(plist);
+        if (f.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            QTextStream out(&f);
+            out << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                   "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\""
+                   " \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
+                   "<plist version=\"1.0\">\n"
+                   "<dict>\n"
+                   "    <key>Label</key>\n"
+                   "    <string>com.optitrack.trackclick</string>\n"
+                   "    <key>ProgramArguments</key>\n"
+                   "    <array>\n"
+                   "        <string>" << QCoreApplication::applicationFilePath() << "</string>\n"
+                   "    </array>\n"
+                   "    <key>RunAtLoad</key>\n"
+                   "    <true/>\n"
+                   "</dict>\n"
+                   "</plist>\n";
+        }
+    } else {
+        QFile::remove(plist);
+    }
+}
+
+#elif defined(Q_OS_LINUX)
+static void setLaunchOnStartup(bool enable)
+{
+    const QString dir =
+        QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + "/autostart";
+    const QString path = dir + "/trackclick.desktop";
+    if (enable) {
+        QDir().mkpath(dir);
+        QFile f(path);
+        if (f.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            QTextStream out(&f);
+            out << "[Desktop Entry]\n"
+                   "Type=Application\n"
+                   "Name=TrackClick\n"
+                   "Exec=" << QCoreApplication::applicationFilePath() << "\n"
+                   "Hidden=false\n"
+                   "X-GNOME-Autostart-enabled=true\n";
+        }
+    } else {
+        QFile::remove(path);
+    }
+}
+
+#else
+static void setLaunchOnStartup(bool) {}
+#endif
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 void MainWindow::applySettings(const AppSettings& s)
 {
-    const QString oldLanguage = m_settings.language;
+    const QString oldLanguage        = m_settings.language;
+    const bool   oldLaunchOnStartup = m_settings.launchOnStartup;
     m_settings = s;
 
     m_dwell->setDwellMs(s.dwellMs);
     m_dwell->setSensitivityPx(s.sensitivityPx);
+    m_dwell->setScrollRepeat(s.scrollRepeat);
+    m_dwell->setRepeatOnDwell(s.repeatOnDwell);
     setWindowOpacity(s.windowOpacity);
 
     Qt::WindowFlags flags = Qt::Window | Qt::FramelessWindowHint | Qt::Tool;
@@ -815,13 +1145,22 @@ void MainWindow::applySettings(const AppSettings& s)
         rebuildButtons();
     }
 
+    if (m_exitBtn) m_exitBtn->setToolTip(s.xMinimizesApp
+        ? tr("Hide to tray (right-click tray icon to quit)")
+        : tr("Close application"));
+
     // Persist
     m_persist.setValue("dwell/ms",           s.dwellMs);
     m_persist.setValue("dwell/sensitivity",  s.sensitivityPx);
     m_persist.setValue("window/opacity",     s.windowOpacity);
     m_persist.setValue("window/alwaysOnTop", s.alwaysOnTop);
-    m_persist.setValue("window/startMin",    s.startMinimized);
+    m_persist.setValue("window/startMin",      s.startMinimized);
+    m_persist.setValue("window/xMinimizesApp", s.xMinimizesApp);
+    m_persist.setValue("window/launchOnStartup", s.launchOnStartup);
+    if (s.launchOnStartup != oldLaunchOnStartup)
+        setLaunchOnStartup(s.launchOnStartup);
     m_persist.setValue("audio/enabled",      s.audioFeedback);
+    m_persist.setValue("show/noClick",        s.showNoClick);
     m_persist.setValue("show/leftClick",     s.showLeftClick);
     m_persist.setValue("show/leftDouble",    s.showLeftDouble);
     m_persist.setValue("show/leftDrag",      s.showLeftDrag);
@@ -836,21 +1175,28 @@ void MainWindow::applySettings(const AppSettings& s)
     m_persist.setValue("show/modCtrl",       s.showModCtrl);
     m_persist.setValue("show/modAlt",        s.showModAlt);
     m_persist.setValue("show/modShift",      s.showModShift);
-    m_persist.setValue("show/exit",          s.showExitButton);
-    m_persist.setValue("show/quitButton",    s.showQuitButton);
+    m_persist.setValue("show/exit",           s.showExitButton);
+    m_persist.setValue("show/quitButton",     s.showQuitButton);
+    m_persist.setValue("show/dwellActiveBtn", s.showDwellActiveBtn);
     m_persist.setValue("show/iconsOnly",     s.iconsOnly);
     m_persist.setValue("show/largeButtons",  s.largeButtons);
     m_persist.setValue("show/buttonLayout",  static_cast<int>(s.buttonLayout));
     m_persist.setValue("language",           s.language);
+    m_persist.setValue("scroll/repeat",      s.scrollRepeat);
+    m_persist.setValue("dwell/repeatOnDwell", s.repeatOnDwell);
 }
 
 void MainWindow::onExitClicked()
 {
-    hide();
-    if (m_tray) {
-        m_tray->showMessage(tr("TrackClick"),
-            tr("Running in the system tray. Right-click the tray icon to quit."),
-            QSystemTrayIcon::Information, 2000);
+    if (m_settings.xMinimizesApp) {
+        hide();
+        if (m_tray) {
+            m_tray->showMessage(tr("TrackClick"),
+                tr("Running in the system tray. Right-click the tray icon to quit."),
+                QSystemTrayIcon::Information, 2000);
+        }
+    } else {
+        qApp->quit();
     }
 }
 
@@ -905,7 +1251,9 @@ void MainWindow::retranslateUi()
     if (m_autoBtn)
         m_autoBtn->setToolTip(tr("Toggle AutoMouse dwell-clicking"));
     if (m_settingsBtn) m_settingsBtn->setToolTip(tr("Settings"));
-    if (m_exitBtn)     m_exitBtn->setToolTip(tr("Hide to tray (right-click tray icon to quit)"));
+    if (m_exitBtn)     m_exitBtn->setToolTip(m_settings.xMinimizesApp
+                           ? tr("Hide to tray (right-click tray icon to quit)")
+                           : tr("Close application"));
     if (m_tray)        m_tray->setToolTip(tr("TrackClick Virtual Mouse"));
     if (m_showAct)     m_showAct->setText(tr("Show / Hide"));
     if (m_quitAct)     m_quitAct->setText(tr("Quit TrackClick"));

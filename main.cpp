@@ -2,6 +2,7 @@
 #include <QMessageBox>
 #include <QSettings>
 #include <QSystemTrayIcon>
+#include <QTimer>
 #include "mainwindow.h"
 #include "translations/tsparser.h"
 
@@ -49,6 +50,11 @@ int main(int argc, char* argv[])
         if (!s.value("window/startMin", false).toBool())
             w.show();
     }
+
+    // Once the event loop is running, offer to fix input-device permissions on
+    // Linux/Wayland if needed so dwell-clicking works over every window.  No-op
+    // on other platforms and when access is already available.
+    QTimer::singleShot(0, &w, [&w]{ w.promptForInputAccessIfNeeded(); });
 
     return app.exec();
 }

@@ -49,6 +49,7 @@
     <message><source>Permissions:</source><translation>権限：</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>アクセシビリティ設定を開く…</translation></message>
     <message><source>Visible Buttons</source><translation>表示ボタン</translation></message>
+    <message><source>No Click</source><translation>何もしない</translation></message>
     <message><source>Left Click</source><translation>左クリック</translation></message>
     <message><source>Left Double</source><translation>左ダブルクリック</translation></message>
     <message><source>Left Drag</source><translation>左ドラッグ</translation></message>
@@ -60,15 +61,17 @@
     <message><source>Scroll Up</source><translation>上にスクロール</translation></message>
     <message><source>Scroll Down</source><translation>下にスクロール</translation></message>
     <message><source>Scroll Left/Right</source><translation>左右にスクロール</translation></message>
-    <message><source>Ctrl modifier</source><translation>Ctrl 修飾キー</translation></message>
-    <message><source>Alt modifier</source><translation>Alt 修飾キー</translation></message>
-    <message><source>Shift modifier</source><translation>Shift 修飾キー</translation></message>
+    <message><source>Ctrl modifier</source><translation>Ctrl キー</translation></message>
+    <message><source>Alt modifier</source><translation>Alt キー</translation></message>
+    <message><source>Shift modifier</source><translation>Shift キー</translation></message>
     <message><source>Exit button</source><translation>終了ボタン</translation></message>
     <message><source>Quit button</source><translation>プログラム終了ボタン</translation></message>
     <message><source>Window</source><translation>ウィンドウ</translation></message>
     <message><source>Opacity:</source><translation>不透明度：</translation></message>
     <message><source>Always on top</source><translation>常に最前面に表示</translation></message>
     <message><source>Start minimized to tray</source><translation>最小化してトレイから開始</translation></message>
+    <message><source>Top X minimizes app</source><translation>×ボタンで最小化</translation></message>
+    <message><source>Close application</source><translation>アプリを終了</translation></message>
     <message><source>Audio feedback on click</source><translation>クリック時の音声フィードバック</translation></message>
     <message><source>Icons only (hide button labels)</source><translation>アイコンのみ（ラベルを非表示）</translation></message>
     <message><source>Large buttons</source><translation>大きいボタン</translation></message>
@@ -78,5 +81,8 @@
     <message><source>Vertical (two columns)</source><translation>縦並び（2列）</translation></message>
     <message><source>Vertical (one column)</source><translation>縦並び（1列）</translation></message>
     <message><source>Language:</source><translation>言語：</translation></message>
+    <message><source>Scroll repeat:</source><translation>スクロール繰り返し：</translation></message>
+    <message><source>Repeat click:</source><translation>クリック繰り返し：</translation></message>
+    <message><source>Launch on system startup</source><translation>システム起動時に起動</translation></message>
 </context>
 </TS>

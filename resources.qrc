@@ -9,6 +9,7 @@
         <file alias="checkmark.svg">icons/checkmark.svg</file>
         <file alias="toggle_off.svg">icons/toggle_off.svg</file>
         <file alias="toggle_on.svg">icons/toggle_on.svg</file>
+        <file alias="no_click.svg">icons/no_click.svg</file>
         <file alias="left_click.svg">icons/left_click.svg</file>
         <file alias="left_double.svg">icons/left_double.svg</file>
         <file alias="left_drag.svg">icons/left_drag.svg</file>
@@ -23,6 +24,7 @@
         <file alias="scroll_right.svg">icons/scroll_right.svg</file>
     </qresource>
     <qresource prefix="/icons/selected">
+        <file alias="no_click.svg">icons/selected/no_click.svg</file>
         <file alias="left_click.svg">icons/selected/left_click.svg</file>
         <file alias="left_double.svg">icons/selected/left_double.svg</file>
         <file alias="left_drag.svg">icons/selected/left_drag.svg</file>
@@ -38,6 +40,9 @@
     </qresource>
     <qresource prefix="/sounds">
         <file alias="click-noise.wav">sounds/click-noise.wav</file>
+    </qresource>
+    <qresource prefix="/linux">
+        <file alias="71-trackclick-input.rules">installer/71-trackclick-input.rules</file>
     </qresource>
     <qresource prefix="/translations">
         <file alias="trackclick_cs.ts">translations/trackclick_cs.ts</file>

@@ -1,16 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<?define BuildNumber = "0"?>
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
      xmlns:bal="http://wixtoolset.org/schemas/v4/wxs/bal">
 
   <Bundle Name="TrackClick"
-          Version="0.9.0"
+          Version="0.9.0.$(var.BuildNumber)"
           Manufacturer="OptiTrack"
           UpgradeCode="B2C3D4E5-F6A7-8901-BCDE-F12345678901"
-          IconSourceFile="installer\TrackClick.ico">
+          IconSourceFile="icons\TrackClick.ico">
 
     <BootstrapperApplication>
       <bal:WixStandardBootstrapperApplication Theme="hyperlinkLicense"
-                                              LicenseUrl="" />
+                                              LicenseUrl=""
+                                              LogoFile="icons\TrackClick-logo.png" />
     </BootstrapperApplication>
 
     <Chain>

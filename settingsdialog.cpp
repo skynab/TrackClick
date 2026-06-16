@@ -10,6 +10,7 @@
 #include <QGroupBox>
 #include <QLabel>
 #include <QPainter>
+#include <QAbstractButton>
 #include <QPushButton>
 #include <QSvgRenderer>
 #ifdef Q_OS_MAC
@@ -197,12 +198,15 @@ void SettingsDialog::retranslateUi()
     m_grpDwell->setTitle(tr("AutoMouse / Dwell Clicking"));
     m_lblDwellTime->setText(tr("Dwell time:"));
     m_lblSensitivity->setText(tr("Sensitivity:"));
+    m_lblScrollRepeat->setText(tr("Scroll repeat:"));
+    m_lblRepeatMode->setText(tr("Repeat click:"));
 #ifdef Q_OS_MAC
     m_lblPermissions->setText(tr("Permissions:"));
     m_btnAccessibility->setText(tr("Open Accessibility Settings…"));
 #endif
 
     m_grpBtns->setTitle(tr("Visible Buttons"));
+    m_chkNoClick->setText(tr("No Click"));
     m_chkLeftClick->setText(tr("Left Click"));
     m_chkLeftDouble->setText(tr("Left Double"));
     m_chkLeftDrag->setText(tr("Left Drag"));
@@ -219,10 +223,13 @@ void SettingsDialog::retranslateUi()
     m_chkModShift->setText(tr("Shift modifier"));
     m_chkExitButton->setText(tr("Exit button"));
     m_chkQuitButton->setText(tr("Quit button"));
+    m_chkDwellActiveBtn->setText(tr("Dwell Active button"));
 
     m_grpWin->setTitle(tr("Window"));
     m_chkAlwaysOnTop->setText(tr("Always on top"));
     m_chkStartMinimized->setText(tr("Start minimized to tray"));
+    m_chkXMinimizesApp->setText(tr("Top X minimizes app"));
+    m_chkLaunchOnStartup->setText(tr("Launch on system startup"));
     m_chkAudio->setText(tr("Audio feedback on click"));
     m_chkIconsOnly->setText(tr("Icons only (hide button labels)"));
     m_chkLargeButtons->setText(tr("Large buttons"));
@@ -281,7 +288,13 @@ void SettingsDialog::buildUi()
     auto* appNameLbl = new QLabel("TrackClick");
     appNameLbl->setStyleSheet(
         "color: #FFFFFF; font-size: 16px; font-weight: bold; background: transparent;");
+#ifdef BUILD_NUMBER
+#  define TC_STR_(x) #x
+#  define TC_STR(x) TC_STR_(x)
+    auto* versionLbl = new QLabel("Version 0.9.0 (build " TC_STR(BUILD_NUMBER) ")");
+#else
     auto* versionLbl = new QLabel("Version 0.9.0");
+#endif
     versionLbl->setStyleSheet(
         "color: #666666; font-size: 11px; background: transparent;");
     nameLay->addWidget(appNameLbl);
@@ -296,13 +309,20 @@ void SettingsDialog::buildUi()
     auto* fl     = new QFormLayout(m_grpDwell);
     fl->setSpacing(6);
 
-    m_dwellMs    = new QSpinBox; m_dwellMs->setRange(100, 10000); m_dwellMs->setSuffix(" ms");
-    m_sensitivPx = new QSpinBox; m_sensitivPx->setRange(1, 100);  m_sensitivPx->setSuffix(" px");
+    m_dwellMs      = new QSpinBox; m_dwellMs->setRange(100, 10000); m_dwellMs->setSuffix(" ms");
+    m_sensitivPx   = new QSpinBox; m_sensitivPx->setRange(1, 100);  m_sensitivPx->setSuffix(" px");
+    m_scrollRepeat = new QSpinBox; m_scrollRepeat->setRange(1, 20);
 
-    m_lblDwellTime   = new QLabel(tr("Dwell time:"));
-    m_lblSensitivity = new QLabel(tr("Sensitivity:"));
-    fl->addRow(m_lblDwellTime,   m_dwellMs);
-    fl->addRow(m_lblSensitivity, m_sensitivPx);
+    m_chkRepeatMode = new QCheckBox;
+
+    m_lblDwellTime    = new QLabel(tr("Dwell time:"));
+    m_lblSensitivity  = new QLabel(tr("Sensitivity:"));
+    m_lblScrollRepeat = new QLabel(tr("Scroll repeat:"));
+    m_lblRepeatMode   = new QLabel(tr("Repeat click:"));
+    fl->addRow(m_lblDwellTime,    m_dwellMs);
+    fl->addRow(m_lblSensitivity,  m_sensitivPx);
+    fl->addRow(m_lblScrollRepeat, m_scrollRepeat);
+    fl->addRow(m_lblRepeatMode,   m_chkRepeatMode);
 
 #ifdef Q_OS_MAC
     m_lblPermissions   = new QLabel(tr("Permissions:"));
@@ -323,6 +343,7 @@ void SettingsDialog::buildUi()
     auto* grid   = new QGridLayout(m_grpBtns);
     grid->setSpacing(6);
 
+    m_chkNoClick     = new QCheckBox(tr("No Click"));
     m_chkLeftClick   = new QCheckBox(tr("Left Click"));
     m_chkLeftDouble  = new QCheckBox(tr("Left Double"));
     m_chkLeftDrag    = new QCheckBox(tr("Left Drag"));
@@ -337,8 +358,9 @@ void SettingsDialog::buildUi()
     m_chkModCtrl     = new QCheckBox(tr("Ctrl modifier"));
     m_chkModAlt      = new QCheckBox(tr("Alt modifier"));
     m_chkModShift    = new QCheckBox(tr("Shift modifier"));
-    m_chkExitButton  = new QCheckBox(tr("Exit button"));
-    m_chkQuitButton  = new QCheckBox(tr("Quit button"));
+    m_chkExitButton      = new QCheckBox(tr("Exit button"));
+    m_chkQuitButton      = new QCheckBox(tr("Quit button"));
+    m_chkDwellActiveBtn  = new QCheckBox(tr("Dwell Active button"));
 
     int row = 0, col = 0;
     auto addChk = [&](QCheckBox* c){
@@ -346,12 +368,13 @@ void SettingsDialog::buildUi()
         col++;
         if (col == 3) { col = 0; row++; }
     };
+    addChk(m_chkNoClick);
     addChk(m_chkLeftClick);   addChk(m_chkLeftDouble);  addChk(m_chkLeftDrag);
     addChk(m_chkRightClick);  addChk(m_chkRightDouble); addChk(m_chkRightDrag);
     addChk(m_chkMiddleClick); addChk(m_chkMiddleDouble);addChk(m_chkScrollUp);
     addChk(m_chkScrollDown);  addChk(m_chkScrollHoriz); addChk(m_chkModCtrl);
     addChk(m_chkModAlt);      addChk(m_chkModShift);    addChk(m_chkExitButton);
-    addChk(m_chkQuitButton);
+    addChk(m_chkQuitButton);  addChk(m_chkDwellActiveBtn);
 
     root->addWidget(m_grpBtns);
 
@@ -373,8 +396,10 @@ void SettingsDialog::buildUi()
         m_opacityLabel->setText(QString::number(v) + "%");
     });
 
-    m_chkAlwaysOnTop   = new QCheckBox(tr("Always on top"));
-    m_chkStartMinimized= new QCheckBox(tr("Start minimized to tray"));
+    m_chkAlwaysOnTop    = new QCheckBox(tr("Always on top"));
+    m_chkStartMinimized = new QCheckBox(tr("Start minimized to tray"));
+    m_chkXMinimizesApp  = new QCheckBox(tr("Top X minimizes app"));
+    m_chkLaunchOnStartup= new QCheckBox(tr("Launch on system startup"));
     m_chkAudio         = new QCheckBox(tr("Audio feedback on click"));
     m_chkIconsOnly     = new QCheckBox(tr("Icons only (hide button labels)"));
     m_chkLargeButtons  = new QCheckBox(tr("Large buttons"));
@@ -406,6 +431,8 @@ void SettingsDialog::buildUi()
     wfl->addRow(m_lblOpacity, opRow);
     wfl->addRow(m_chkAlwaysOnTop);
     wfl->addRow(m_chkStartMinimized);
+    wfl->addRow(m_chkXMinimizesApp);
+    wfl->addRow(m_chkLaunchOnStartup);
     wfl->addRow(m_chkAudio);
     wfl->addRow(m_chkIconsOnly);
     wfl->addRow(m_chkLargeButtons);
@@ -415,6 +442,11 @@ void SettingsDialog::buildUi()
 
     // ── Buttons ───────────────────────────────────────────────
     m_buttons  = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+#ifdef Q_OS_LINUX
+    // On Linux/GTK the system theme injects icons into standard buttons; remove them.
+    for (QAbstractButton* btn : m_buttons->buttons())
+        btn->setIcon(QIcon());
+#endif
     m_resetBtn = m_buttons->addButton(tr("Reset to Defaults"), QDialogButtonBox::ResetRole);
     root->addWidget(m_buttons);
 }
@@ -423,7 +455,10 @@ void SettingsDialog::loadFrom(const AppSettings& s)
 {
     m_dwellMs->setValue(s.dwellMs);
     m_sensitivPx->setValue(s.sensitivityPx);
+    m_scrollRepeat->setValue(s.scrollRepeat);
+    m_chkRepeatMode->setChecked(s.repeatOnDwell);
 
+    m_chkNoClick->setChecked(s.showNoClick);
     m_chkLeftClick->setChecked(s.showLeftClick);
     m_chkLeftDouble->setChecked(s.showLeftDouble);
     m_chkLeftDrag->setChecked(s.showLeftDrag);
@@ -440,10 +475,13 @@ void SettingsDialog::loadFrom(const AppSettings& s)
     m_chkModShift->setChecked(s.showModShift);
     m_chkExitButton->setChecked(s.showExitButton);
     m_chkQuitButton->setChecked(s.showQuitButton);
+    m_chkDwellActiveBtn->setChecked(s.showDwellActiveBtn);
 
     m_opacitySlider->setValue(static_cast<int>(s.windowOpacity * 100));
     m_chkAlwaysOnTop->setChecked(s.alwaysOnTop);
     m_chkStartMinimized->setChecked(s.startMinimized);
+    m_chkXMinimizesApp->setChecked(s.xMinimizesApp);
+    m_chkLaunchOnStartup->setChecked(s.launchOnStartup);
     m_chkAudio->setChecked(s.audioFeedback);
     m_chkIconsOnly->setChecked(s.iconsOnly);
     m_chkLargeButtons->setChecked(s.largeButtons);
@@ -461,7 +499,10 @@ AppSettings SettingsDialog::readUi() const
     AppSettings s;
     s.dwellMs       = m_dwellMs->value();
     s.sensitivityPx = m_sensitivPx->value();
+    s.scrollRepeat  = m_scrollRepeat->value();
+    s.repeatOnDwell = m_chkRepeatMode->isChecked();
 
+    s.showNoClick     = m_chkNoClick->isChecked();
     s.showLeftClick   = m_chkLeftClick->isChecked();
     s.showLeftDouble  = m_chkLeftDouble->isChecked();
     s.showLeftDrag    = m_chkLeftDrag->isChecked();
@@ -476,12 +517,15 @@ AppSettings SettingsDialog::readUi() const
     s.showModCtrl     = m_chkModCtrl->isChecked();
     s.showModAlt      = m_chkModAlt->isChecked();
     s.showModShift    = m_chkModShift->isChecked();
-    s.showExitButton  = m_chkExitButton->isChecked();
-    s.showQuitButton  = m_chkQuitButton->isChecked();
+    s.showExitButton     = m_chkExitButton->isChecked();
+    s.showQuitButton     = m_chkQuitButton->isChecked();
+    s.showDwellActiveBtn = m_chkDwellActiveBtn->isChecked();
 
     s.windowOpacity   = m_opacitySlider->value() / 100.0;
-    s.alwaysOnTop     = m_chkAlwaysOnTop->isChecked();
-    s.startMinimized  = m_chkStartMinimized->isChecked();
+    s.alwaysOnTop      = m_chkAlwaysOnTop->isChecked();
+    s.startMinimized   = m_chkStartMinimized->isChecked();
+    s.xMinimizesApp    = m_chkXMinimizesApp->isChecked();
+    s.launchOnStartup  = m_chkLaunchOnStartup->isChecked();
     s.audioFeedback   = m_chkAudio->isChecked();
     s.iconsOnly       = m_chkIconsOnly->isChecked();
     s.largeButtons    = m_chkLargeButtons->isChecked();

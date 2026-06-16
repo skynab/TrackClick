@@ -6,6 +6,61 @@ on:
   pull_request:
 
 jobs:
+  test:
+    name: Unit Tests (${{ matrix.name }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            name: Linux
+          - os: macos-14
+            name: macOS
+          - os: windows-latest
+            name: Windows
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Qt (Linux)
+        if: matrix.name == 'Linux'
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y \
+            qt6-base-dev \
+            libqt6svg6-dev \
+            libgl1-mesa-dev \
+            libx11-dev \
+            libxtst-dev
+
+      - name: Install Qt (macOS)
+        if: matrix.name == 'macOS'
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: 1
+          HOMEBREW_NO_REQUIRE_TAP_TRUST: 1
+        run: |
+          brew install qt
+          echo "$(brew --prefix qt)/bin" >> "$GITHUB_PATH"
+
+      - name: Install Qt (Windows)
+        if: matrix.name == 'Windows'
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.7.*'
+          arch: win64_msvc2019_64
+          cache: true
+
+      - name: Configure
+        run: cmake -B build-tests -DBUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug
+
+      - name: Build tests
+        run: cmake --build build-tests --config Debug --parallel
+
+      - name: Run tests
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: ctest --test-dir build-tests -C Debug --output-on-failure
+
   build:
     strategy:
       fail-fast: false
@@ -34,7 +89,9 @@ jobs:
             libqt6svg6-dev \
             libgl1-mesa-dev \
             libx11-dev \
-            libxtst-dev
+            libxtst-dev \
+            libxi-dev \
+            rpm
           sudo apt-get install -y qt6-multimedia-dev || true
           # uinput is needed at runtime on Wayland; ensure the header is present for the build
           sudo modprobe uinput || true
@@ -56,6 +113,7 @@ jobs:
         with:
           version: '6.7.*'
           arch: win64_msvc2019_64
+          modules: 'qtmultimedia'
           cache: true
 
       # ── WiX v4: Windows ──────────────────────────────────────────────────────
@@ -68,7 +126,7 @@ jobs:
 
       # ── Build ─────────────────────────────────────────────────────────────────
       - name: Configure
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_NUMBER=${{ github.run_number }}
 
       - name: Build
         run: cmake --build build --config Release --parallel
@@ -136,9 +194,9 @@ jobs:
           $lines | Set-Content installer\AppFiles.wxs -Encoding UTF8
 
           Set-Location installer
-          wix build TrackClick.wxs AppFiles.wxs -b .. -ext WixToolset.UI.wixext -o ..\TrackClick-Windows.msi
+          wix build TrackClick.wxs AppFiles.wxs -b .. -ext WixToolset.UI.wixext -d BuildNumber=${{ github.run_number }} -o ..\TrackClick-Windows.msi
           Set-Location ..
-          wix build installer\Bundle.wxs -b . -ext WixToolset.Bal.wixext -o TrackClick-Windows-Setup.exe
+          wix build installer\Bundle.wxs -b . -ext WixToolset.Bal.wixext -d BuildNumber=${{ github.run_number }} -o TrackClick-Windows-Setup.exe
 
       # ── Upload artifacts ──────────────────────────────────────────────────────
       - name: Upload (Linux)
@@ -147,6 +205,24 @@ jobs:
         with:
           name: TrackClick-Linux
           path: TrackClick-Linux.AppImage
+
+      - name: Package distro packages (Linux)
+        if: matrix.name == 'Linux'
+        run: |
+          # Generate .deb and .rpm from the CPack config produced at configure time.
+          # Runs after the AppImage upload so a packaging hiccup never costs the
+          # AppImage artifact.
+          cpack --config build/CPackConfig.cmake -G "DEB;RPM" -B dist-packages
+          ls -la dist-packages
+
+      - name: Upload (Linux packages)
+        if: matrix.name == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: TrackClick-Linux-packages
+          path: |
+            dist-packages/*.deb
+            dist-packages/*.rpm
 
       - name: Upload (macOS)
         if: matrix.name == 'macOS'

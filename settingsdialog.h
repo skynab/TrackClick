@@ -17,9 +17,12 @@ struct AppSettings {
     // Dwell / AutoMouse
     int  dwellMs        = 1000;
     int  sensitivityPx  = 5;
+    int  scrollRepeat   = 3;
+    bool repeatOnDwell  = true;      // true = repeat every dwell period; false = fire once per arm
     bool autoSelectEnabled = false;  // start with AutoSelect on
 
     // Which buttons are visible on the toolbar
+    bool showNoClick           = true;
     bool showLeftClick        = true;
     bool showLeftDouble       = true;
     bool showLeftDrag         = true;
@@ -36,11 +39,14 @@ struct AppSettings {
     bool showModShift         = true;
     bool showExitButton       = true;
     bool showQuitButton       = true;
+    bool showDwellActiveBtn   = false;
 
     // Window
-    double windowOpacity = 1.0;
-    bool   alwaysOnTop   = true;
-    bool   startMinimized = false;
+    double windowOpacity  = 1.0;
+    bool   alwaysOnTop    = true;
+    bool   startMinimized  = false;
+    bool   xMinimizesApp   = true;
+    bool   launchOnStartup = false;
 
     // Audio feedback
     bool audioFeedback   = false;
@@ -88,8 +94,9 @@ private:
     QGroupBox* m_grpWin   = nullptr;
 
     // ── Form-row labels (need retranslation) ──────────────────
-    QLabel* m_lblDwellTime   = nullptr;
-    QLabel* m_lblSensitivity = nullptr;
+    QLabel* m_lblDwellTime    = nullptr;
+    QLabel* m_lblSensitivity  = nullptr;
+    QLabel* m_lblScrollRepeat = nullptr;
     QLabel* m_lblOpacity     = nullptr;
     QLabel* m_lblBtnLayout   = nullptr;
     QLabel* m_lblLanguage    = nullptr;
@@ -101,8 +108,12 @@ private:
     // Dwell
     QSpinBox*    m_dwellMs;
     QSpinBox*    m_sensitivPx;
+    QSpinBox*    m_scrollRepeat;
+    QLabel*      m_lblRepeatMode = nullptr;
+    QCheckBox*   m_chkRepeatMode;
 
     // Buttons visibility
+    QCheckBox*   m_chkNoClick;
     QCheckBox*   m_chkLeftClick;
     QCheckBox*   m_chkLeftDouble;
     QCheckBox*   m_chkLeftDrag;
@@ -119,12 +130,15 @@ private:
     QCheckBox*   m_chkModShift;
     QCheckBox*   m_chkExitButton;
     QCheckBox*   m_chkQuitButton;
+    QCheckBox*   m_chkDwellActiveBtn;
 
     // Window
     QSlider*     m_opacitySlider;
     QLabel*      m_opacityLabel;
     QCheckBox*   m_chkAlwaysOnTop;
     QCheckBox*   m_chkStartMinimized;
+    QCheckBox*   m_chkXMinimizesApp;
+    QCheckBox*   m_chkLaunchOnStartup;
     QCheckBox*   m_chkAudio;
     QCheckBox*   m_chkIconsOnly;
     QCheckBox*   m_chkLargeButtons;

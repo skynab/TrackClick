@@ -49,6 +49,7 @@
     <message><source>Permissions:</source><translation>Permisos:</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>Abrir configuración de accesibilidad…</translation></message>
     <message><source>Visible Buttons</source><translation>Botones visibles</translation></message>
+    <message><source>No Click</source><translation>Sin acción</translation></message>
     <message><source>Left Click</source><translation>Clic izquierdo</translation></message>
     <message><source>Left Double</source><translation>Doble izquierdo</translation></message>
     <message><source>Left Drag</source><translation>Arrastrar izquierda</translation></message>
@@ -69,6 +70,8 @@
     <message><source>Opacity:</source><translation>Opacidad:</translation></message>
     <message><source>Always on top</source><translation>Siempre encima</translation></message>
     <message><source>Start minimized to tray</source><translation>Iniciar minimizado</translation></message>
+    <message><source>Top X minimizes app</source><translation>X superior minimiza la app</translation></message>
+    <message><source>Close application</source><translation>Cerrar aplicación</translation></message>
     <message><source>Audio feedback on click</source><translation>Respuesta de audio al hacer clic</translation></message>
     <message><source>Icons only (hide button labels)</source><translation>Solo iconos (ocultar etiquetas)</translation></message>
     <message><source>Large buttons</source><translation>Botones grandes</translation></message>
@@ -78,5 +81,8 @@
     <message><source>Vertical (two columns)</source><translation>Vertical (dos columnas)</translation></message>
     <message><source>Vertical (one column)</source><translation>Vertical (una columna)</translation></message>
     <message><source>Language:</source><translation>Idioma:</translation></message>
+    <message><source>Scroll repeat:</source><translation>Repetición de desplazamiento:</translation></message>
+    <message><source>Repeat click:</source><translation>Repetir clic:</translation></message>
+    <message><source>Launch on system startup</source><translation>Iniciar con el sistema</translation></message>
 </context>
 </TS>

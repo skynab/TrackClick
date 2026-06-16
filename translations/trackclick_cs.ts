@@ -51,6 +51,7 @@
     <message><source>Permissions:</source><translation>Oprávnění:</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>Otevřít nastavení zpřístupnění…</translation></message>
     <message><source>Visible Buttons</source><translation>Viditelná tlačítka</translation></message>
+    <message><source>No Click</source><translation>Žádná akce</translation></message>
     <message><source>Left Click</source><translation>Levé kliknutí</translation></message>
     <message><source>Left Double</source><translation>Levý dvojklik</translation></message>
     <message><source>Left Drag</source><translation>Levé přetažení</translation></message>
@@ -71,6 +72,8 @@
     <message><source>Opacity:</source><translation>Průhlednost:</translation></message>
     <message><source>Always on top</source><translation>Vždy nahoře</translation></message>
     <message><source>Start minimized to tray</source><translation>Spustit minimalizovaně</translation></message>
+    <message><source>Top X minimizes app</source><translation>Křížek minimalizuje aplikaci</translation></message>
+    <message><source>Close application</source><translation>Zavřít aplikaci</translation></message>
     <message><source>Audio feedback on click</source><translation>Zvuková odezva při kliknutí</translation></message>
     <message><source>Icons only (hide button labels)</source><translation>Pouze ikony (skrýt popisky)</translation></message>
     <message><source>Large buttons</source><translation>Velká tlačítka</translation></message>
@@ -80,5 +83,8 @@
     <message><source>Vertical (one column)</source><translation>Svisle (jeden sloupec)</translation></message>
     <message><source>Vertical (two columns)</source><translation>Svisle (dva sloupce)</translation></message>
     <message><source>Language:</source><translation>Jazyk:</translation></message>
+    <message><source>Scroll repeat:</source><translation>Opakování rolování:</translation></message>
+    <message><source>Repeat click:</source><translation>Opakovat kliknutí:</translation></message>
+    <message><source>Launch on system startup</source><translation>Spustit při startu systému</translation></message>
 </context>
 </TS>

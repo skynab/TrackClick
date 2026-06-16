@@ -171,17 +171,10 @@ void DwellManager::onPoll()
             m_dragActive = false;
         }
 
-        // One-shot mode: disarm after each action so the user must re-hover a
-        // toolbar button to fire again (mode 2 / "select then fire once").
-        if (!m_repeatOnDwell) {
-            m_armed   = false;
-            m_waiting = false;
-            emit dwellProgress(0.0f);
-            return;
-        }
-
-        // Repeat mode: wait for cursor to move before allowing next dwell
-        // (prevents an immediate double-fire at the same location).
+        // Wait for cursor to move before allowing next dwell (prevents an
+        // immediate double-fire at the same location).  In one-shot mode the
+        // timeout branch in the waiting block disarms to avoid repeat firing;
+        // in repeat mode it lets the next dwell proceed normally.
         m_anchorPos   = cur;
         m_waiting     = true;
         m_hovering    = false;

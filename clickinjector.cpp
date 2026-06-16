@@ -255,10 +255,12 @@ void ClickInjector::performClick(ClickType type, QPoint pos, int mods)
 #include <linux/input.h>
 #include <linux/uinput.h>
 #include <cerrno>
+#include <cstdio>
 #include <cstring>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#include <vector>
 
 // ── XTest (X11 fallback) ──────────────────────────────────────
 #include <X11/Xlib.h>
@@ -403,18 +405,87 @@ Display* getDisplay()
     return dpy;
 }
 
-// ── XInput2 raw-motion tracking (Wayland stale-position fix) ─────────────────
-// On Wayland, XQueryPointer only updates while the cursor is over an XWayland
-// surface.  When it drifts over a native Wayland surface, XQueryPointer returns
-// a frozen position and the DwellManager never sees movement.  Subscribing to
-// XI_RawMotion on the root window gives us hardware deltas regardless of which
-// surface owns the pointer, letting us maintain an accurate position estimate.
+// ── Compositor-independent pointer motion via evdev ──────────────────────────
+// XQueryPointer — and XWayland's XI2 raw motion — only report movement while the
+// cursor is over an XWayland surface.  Over native Wayland surfaces (a GTK
+// browser, the file manager, …) they freeze, so the DwellManager never sees the
+// cursor move and the dwell countdown fails to reset.  Reading relative/absolute
+// motion straight from the kernel's evdev nodes works no matter which compositor
+// owns the pointer or which surface it is over.  Requires read access to
+// /dev/input/event* — the same "input" group access class that grants
+// /dev/uinput — and falls back gracefully (to XI2, then XQueryPointer) when the
+// nodes cannot be opened.
+struct EvdevMotion {
+    struct Dev { int fd; int lastX; int lastY; bool haveLast; };
+    std::vector<Dev> devs;
+    bool opened = false;
+
+    void openAll()
+    {
+        opened = true;
+        for (int i = 0; i < 64; ++i) {
+            char path[32];
+            std::snprintf(path, sizeof(path), "/dev/input/event%d", i);
+            int fd = ::open(path, O_RDONLY | O_NONBLOCK);
+            if (fd < 0) continue;
+
+            unsigned long relBits = 0, absBits = 0;
+            ioctl(fd, EVIOCGBIT(EV_REL, sizeof(relBits)), &relBits);
+            ioctl(fd, EVIOCGBIT(EV_ABS, sizeof(absBits)), &absBits);
+            const bool hasRel = (relBits & (1UL << REL_X)) && (relBits & (1UL << REL_Y));
+            const bool hasAbs = (absBits & (1UL << ABS_X)) && (absBits & (1UL << ABS_Y));
+            if (hasRel || hasAbs)
+                devs.push_back({fd, 0, 0, false});   // mouse / trackball / touchpad / tablet
+            else
+                ::close(fd);
+        }
+    }
+
+    bool isOpen() const { return !devs.empty(); }
+
+    // Accumulated motion since the previous call, in device units.  The exact
+    // scale is irrelevant — the DwellManager only needs to know the cursor
+    // moved.  REL devices contribute their deltas directly; ABS devices
+    // contribute the change in absolute axis value.
+    QPoint drain()
+    {
+        int dx = 0, dy = 0;
+        struct input_event ev{};
+        for (auto& d : devs) {
+            while (::read(d.fd, &ev, sizeof(ev)) == static_cast<ssize_t>(sizeof(ev))) {
+                if (ev.type == EV_REL) {
+                    if      (ev.code == REL_X) dx += ev.value;
+                    else if (ev.code == REL_Y) dy += ev.value;
+                } else if (ev.type == EV_ABS) {
+                    if (ev.code == ABS_X) {
+                        if (d.haveLast) dx += ev.value - d.lastX;
+                        d.lastX = ev.value;
+                        d.haveLast = true;
+                    } else if (ev.code == ABS_Y) {
+                        if (d.haveLast) dy += ev.value - d.lastY;
+                        d.lastY = ev.value;
+                        d.haveLast = true;
+                    }
+                }
+            }
+        }
+        return QPoint(dx, dy);
+    }
+};
+
+EvdevMotion& evdev()
+{
+    static EvdevMotion m;
+    if (!m.opened) m.openAll();
+    return m;
+}
+
+// ── XInput2 raw-motion (fallback when evdev nodes are not readable) ──────────
+// Provides the same root-window hardware deltas as evdev for X11 sessions and
+// XWayland surfaces.  Only used when /dev/input/event* cannot be opened.
 #ifdef HAVE_XI2
-int    g_xi2Opcode         = -1;
-bool   g_xi2Subscribed     = false;
-bool   g_xi2GotFirst       = false;
-QPoint g_xi2LastXQueryPos;   // last value XQueryPointer actually returned
-QPoint g_xi2EstimatedPos;    // running position estimate updated by raw deltas
+int  g_xi2Opcode     = -1;
+bool g_xi2Subscribed = false;
 
 void xi2Subscribe(Display* dpy)
 {
@@ -435,9 +506,11 @@ void xi2Subscribe(Display* dpy)
     g_xi2Subscribed = true;
 }
 
-void xi2Drain(Display* dpy)
+// Accumulated raw motion (dx, dy) since the previous call.
+QPoint xi2DrainDelta(Display* dpy)
 {
-    if (!g_xi2Subscribed || g_xi2Opcode < 0 || !g_xi2GotFirst) return;
+    int dx = 0, dy = 0;
+    if (!g_xi2Subscribed || g_xi2Opcode < 0) return QPoint(0, 0);
     while (XPending(dpy) > 0) {
         XEvent ev;
         XNextEvent(dpy, &ev);
@@ -445,20 +518,18 @@ void xi2Drain(Display* dpy)
         if (!XGetEventData(dpy, &ev.xcookie)) continue;
         if (ev.xcookie.evtype == XI_RawMotion) {
             const XIRawEvent* raw = static_cast<const XIRawEvent*>(ev.xcookie.data);
-            double dx = 0.0, dy = 0.0;
             int idx = 0;
             for (int a = 0; a < raw->valuators.mask_len * 8; ++a) {
                 if (XIMaskIsSet(raw->valuators.mask, a)) {
-                    if (a == 0) dx = raw->raw_values[idx];
-                    if (a == 1) dy = raw->raw_values[idx];
+                    if (a == 0) dx += static_cast<int>(raw->raw_values[idx]);
+                    if (a == 1) dy += static_cast<int>(raw->raw_values[idx]);
                     ++idx;
                 }
             }
-            g_xi2EstimatedPos.setX(g_xi2EstimatedPos.x() + static_cast<int>(dx));
-            g_xi2EstimatedPos.setY(g_xi2EstimatedPos.y() + static_cast<int>(dy));
         }
         XFreeEventData(dpy, &ev.xcookie);
     }
+    return QPoint(dx, dy);
 }
 #endif // HAVE_XI2
 
@@ -503,35 +574,63 @@ QPoint ClickInjector::cursorPos()
 
 #ifdef HAVE_XI2
     if (!g_xi2Subscribed) xi2Subscribe(dpy);
-    xi2Drain(dpy);  // update g_xi2EstimatedPos with any new raw deltas
 #endif
+
+    // Pull any pending motion from the compositor-independent source (evdev),
+    // falling back to XInput2 raw motion when the evdev nodes are not readable.
+    // estPos tracks the cursor across native Wayland surfaces where
+    // XQueryPointer freezes; it is re-anchored to XQueryPointer whenever that
+    // reading advances (cursor over an XWayland surface, or any X11 session).
+    static bool   haveEst   = false;
+    static QPoint estPos;
+    static QPoint lastXQuery;
+    static bool   gotXQuery = false;
+
+    bool   haveMotionSrc = false;
+    QPoint delta(0, 0);
+    if (evdev().isOpen()) {
+        delta = evdev().drain();
+        haveMotionSrc = true;
+    }
+#ifdef HAVE_XI2
+    else {
+        delta = xi2DrainDelta(dpy);
+        haveMotionSrc = true;
+    }
+#endif
+    if (haveEst && haveMotionSrc)
+        estPos += delta;
 
     Window root = DefaultRootWindow(dpy);
     Window root_ret, child_ret;
     int rx, ry, wx, wy;
     unsigned int mask;
     if (!XQueryPointer(dpy, root, &root_ret, &child_ret, &rx, &ry, &wx, &wy, &mask))
-        return QCursor::pos();
+        return haveEst ? estPos : QCursor::pos();
 
-#ifdef HAVE_XI2
-    QPoint absPos(rx, ry);
-    // If XQueryPointer returned a position different from last poll, the cursor
-    // is over an XWayland surface and the data is fresh.  Anchor the estimated
-    // position to this accurate reading.
-    bool fresh = !g_xi2GotFirst || (absPos != g_xi2LastXQueryPos);
-    g_xi2LastXQueryPos = absPos;
-    g_xi2GotFirst      = true;
+    const QPoint absPos(rx, ry);
+    const bool   fresh = !gotXQuery || (absPos != lastXQuery);
+    lastXQuery = absPos;
+    gotXQuery  = true;
+
+    // Without a kernel-level motion source we can only trust XQueryPointer.  On
+    // X11 that is always accurate; on Wayland it is accurate while the cursor is
+    // over an XWayland surface — the best obtainable without evdev/XI2.
+    if (!haveMotionSrc)
+        return absPos;
+
     if (fresh) {
-        g_xi2EstimatedPos = absPos;  // re-sync; also resets any accumulated drift
+        // XQueryPointer advanced — authoritative reading (cursor over an
+        // XWayland surface, or any surface on X11).  Re-anchor, clearing drift.
+        estPos  = absPos;
+        haveEst = true;
         return absPos;
     }
-    // XQueryPointer returned the same value as last poll — cursor is likely over
-    // a native Wayland surface where XWayland position goes stale.  Return the
-    // XI2-estimated position so DwellManager sees real movement and resets.
-    return g_xi2EstimatedPos;
-#else
-    return QPoint(rx, ry);
-#endif
+
+    // XQueryPointer is frozen — cursor is over a native Wayland surface.  Use the
+    // motion-tracked estimate so the DwellManager still sees movement and resets.
+    if (!haveEst) { estPos = absPos; haveEst = true; }
+    return estPos;
 }
 
 void ClickInjector::moveCursor(QPoint pos)

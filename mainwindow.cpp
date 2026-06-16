@@ -77,6 +77,12 @@ ClickButton::ClickButton(const QString& label, ClickType type, QWidget* parent)
     setMinimumSize(32, 44);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     setCheckable(false);
+#ifdef Q_OS_MAC
+    // macOS native style applies invisible layout-item margins around QToolButton
+    // that cause the grid to mis-align rows relative to Windows/Linux.
+    // WA_LayoutUsesWidgetRect tells the layout to use the visual rect instead.
+    setAttribute(Qt::WA_LayoutUsesWidgetRect);
+#endif
     updateStyle();
     connect(this, &QToolButton::clicked, this, [this](){
         emit clickTypePressed(m_type);
@@ -181,6 +187,7 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     m_settings.sensitivityPx = m_persist.value("dwell/sensitivity", 5).toInt();
     m_settings.windowOpacity = m_persist.value("window/opacity",  1.0).toDouble();
     m_settings.alwaysOnTop   = m_persist.value("window/alwaysOnTop", true).toBool();
+    m_settings.showNoClick     = m_persist.value("show/noClick",      true).toBool();
     m_settings.showLeftClick   = m_persist.value("show/leftClick",   true).toBool();
     m_settings.showLeftDouble  = m_persist.value("show/leftDouble",  true).toBool();
     m_settings.showLeftDrag    = m_persist.value("show/leftDrag",    true).toBool();
@@ -464,6 +471,7 @@ void MainWindow::rebuildButtons()
         }
     };
 
+    addIf(m_settings.showNoClick,     tr("No Click"), tr("No action — dwell without clicking"), ClickType::NoClick, "no_click");
     addIf(m_settings.showLeftClick,   tr("L Click"),  tr("Left Click"),         ClickType::LeftClick,        "left_click");
     addIf(m_settings.showLeftDouble,  tr("L Dbl"),    tr("Left Double-Click"),  ClickType::LeftDoubleClick,  "left_double");
     addIf(m_settings.showLeftDrag,    tr("L Drag"),   tr("Left Drag — dwell to grab, dwell again to release"),   ClickType::LeftDown,         "left_drag");
@@ -819,6 +827,7 @@ void MainWindow::setClickType(ClickType t)
 
     // Update status — not static so tr() reflects the active language
     const QHash<ClickType,QString> names{
+        {ClickType::NoClick,          tr("No action")},
         {ClickType::LeftClick,        tr("Left Click")},
         {ClickType::LeftDoubleClick,  tr("Left Double-Click")},
         {ClickType::LeftDown,         tr("Left Drag")},
@@ -1043,6 +1052,7 @@ void MainWindow::applySettings(const AppSettings& s)
     if (s.launchOnStartup != oldLaunchOnStartup)
         setLaunchOnStartup(s.launchOnStartup);
     m_persist.setValue("audio/enabled",      s.audioFeedback);
+    m_persist.setValue("show/noClick",        s.showNoClick);
     m_persist.setValue("show/leftClick",     s.showLeftClick);
     m_persist.setValue("show/leftDouble",    s.showLeftDouble);
     m_persist.setValue("show/leftDrag",      s.showLeftDrag);

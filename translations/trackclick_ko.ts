@@ -49,6 +49,7 @@
     <message><source>Permissions:</source><translation>권한:</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>접근성 설정 열기…</translation></message>
     <message><source>Visible Buttons</source><translation>표시 버튼</translation></message>
+    <message><source>No Click</source><translation>동작 없음</translation></message>
     <message><source>Left Click</source><translation>왼쪽 클릭</translation></message>
     <message><source>Left Double</source><translation>왼쪽 더블 클릭</translation></message>
     <message><source>Left Drag</source><translation>왼쪽 드래그</translation></message>
@@ -79,6 +80,7 @@
     <message><source>Vertical (one column)</source><translation>세로 (한 열)</translation></message>
     <message><source>Language:</source><translation>언어:</translation></message>
     <message><source>Scroll repeat:</source><translation>스크롤 반복:</translation></message>
+    <message><source>Repeat click:</source><translation>클릭 반복:</translation></message>
     <message><source>Launch on system startup</source><translation>시스템 시작 시 실행</translation></message>
 </context>
 </TS>

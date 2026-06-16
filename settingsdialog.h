@@ -18,10 +18,11 @@ struct AppSettings {
     int  dwellMs        = 1000;
     int  sensitivityPx  = 5;
     int  scrollRepeat   = 3;
-    bool repeatOnDwell  = false;     // true = repeat every dwell period; false = fire once per arm
+    bool repeatOnDwell  = true;      // true = repeat every dwell period; false = fire once per arm
     bool autoSelectEnabled = false;  // start with AutoSelect on
 
     // Which buttons are visible on the toolbar
+    bool showNoClick           = true;
     bool showLeftClick        = true;
     bool showLeftDouble       = true;
     bool showLeftDrag         = true;
@@ -107,9 +108,11 @@ private:
     QSpinBox*    m_dwellMs;
     QSpinBox*    m_sensitivPx;
     QSpinBox*    m_scrollRepeat;
+    QLabel*      m_lblRepeatMode = nullptr;
     QCheckBox*   m_chkRepeatMode;
 
     // Buttons visibility
+    QCheckBox*   m_chkNoClick;
     QCheckBox*   m_chkLeftClick;
     QCheckBox*   m_chkLeftDouble;
     QCheckBox*   m_chkLeftDrag;

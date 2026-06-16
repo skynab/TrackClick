@@ -70,6 +70,8 @@
     <message><source>Opacity:</source><translation>不透明度：</translation></message>
     <message><source>Always on top</source><translation>常に最前面に表示</translation></message>
     <message><source>Start minimized to tray</source><translation>最小化してトレイから開始</translation></message>
+    <message><source>Top X minimizes app</source><translation>×ボタンで最小化</translation></message>
+    <message><source>Close application</source><translation>アプリを終了</translation></message>
     <message><source>Audio feedback on click</source><translation>クリック時の音声フィードバック</translation></message>
     <message><source>Icons only (hide button labels)</source><translation>アイコンのみ（ラベルを非表示）</translation></message>
     <message><source>Large buttons</source><translation>大きいボタン</translation></message>

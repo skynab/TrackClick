@@ -70,6 +70,8 @@
     <message><source>Opacity:</source><translation>透明度：</translation></message>
     <message><source>Always on top</source><translation>窗口置顶</translation></message>
     <message><source>Start minimized to tray</source><translation>启动时最小化到托盘</translation></message>
+    <message><source>Top X minimizes app</source><translation>顶部X按钮最小化应用</translation></message>
+    <message><source>Close application</source><translation>关闭应用</translation></message>
     <message><source>Audio feedback on click</source><translation>点击时有音频反馈</translation></message>
     <message><source>Icons only (hide button labels)</source><translation>仅图标（隐藏按钮标签）</translation></message>
     <message><source>Large buttons</source><translation>放大按钮</translation></message>

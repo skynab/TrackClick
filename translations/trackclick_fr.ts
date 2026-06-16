@@ -70,6 +70,8 @@
     <message><source>Opacity:</source><translation>Opacité :</translation></message>
     <message><source>Always on top</source><translation>Toujours au premier plan</translation></message>
     <message><source>Start minimized to tray</source><translation>Démarrer minimisé</translation></message>
+    <message><source>Top X minimizes app</source><translation>Le X réduit l'application</translation></message>
+    <message><source>Close application</source><translation>Fermer l'application</translation></message>
     <message><source>Audio feedback on click</source><translation>Retour audio au clic</translation></message>
     <message><source>Icons only (hide button labels)</source><translation>Icônes seules (masquer les étiquettes)</translation></message>
     <message><source>Large buttons</source><translation>Grands boutons</translation></message>

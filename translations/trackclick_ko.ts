@@ -70,6 +70,8 @@
     <message><source>Opacity:</source><translation>불투명도:</translation></message>
     <message><source>Always on top</source><translation>항상 위에</translation></message>
     <message><source>Start minimized to tray</source><translation>트레이에 최소화하여 시작</translation></message>
+    <message><source>Top X minimizes app</source><translation>X 버튼으로 최소화</translation></message>
+    <message><source>Close application</source><translation>앱 닫기</translation></message>
     <message><source>Audio feedback on click</source><translation>클릭 시 오디오 피드백</translation></message>
     <message><source>Icons only (hide button labels)</source><translation>아이콘만 (버튼 레이블 숨기기)</translation></message>
     <message><source>Large buttons</source><translation>큰 버튼</translation></message>

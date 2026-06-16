@@ -205,8 +205,9 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     m_settings.showExitButton    = m_persist.value("show/exit",           true).toBool();
     m_settings.showQuitButton    = m_persist.value("show/quitButton",     true).toBool();
     m_settings.showDwellActiveBtn= m_persist.value("show/dwellActiveBtn", false).toBool();
-    m_settings.startMinimized   = m_persist.value("window/startMin",        false).toBool();
-    m_settings.launchOnStartup  = m_persist.value("window/launchOnStartup", false).toBool();
+    m_settings.startMinimized   = m_persist.value("window/startMin",         false).toBool();
+    m_settings.xMinimizesApp    = m_persist.value("window/xMinimizesApp",    true).toBool();
+    m_settings.launchOnStartup  = m_persist.value("window/launchOnStartup",  false).toBool();
     m_settings.audioFeedback   = m_persist.value("audio/enabled",    false).toBool();
     m_settings.iconsOnly       = m_persist.value("show/iconsOnly",    false).toBool();
     m_settings.largeButtons    = m_persist.value("show/largeButtons", false).toBool();
@@ -777,9 +778,12 @@ void MainWindow::paintEvent(QPaintEvent*)
 
 void MainWindow::closeEvent(QCloseEvent* ev)
 {
-    // Hide to tray instead of quitting
-    ev->ignore();
-    hide();
+    if (m_settings.xMinimizesApp) {
+        ev->ignore();
+        hide();
+    } else {
+        ev->accept();
+    }
 }
 
 void MainWindow::changeEvent(QEvent* ev)
@@ -1042,12 +1046,17 @@ void MainWindow::applySettings(const AppSettings& s)
         rebuildButtons();
     }
 
+    if (m_exitBtn) m_exitBtn->setToolTip(s.xMinimizesApp
+        ? tr("Hide to tray (right-click tray icon to quit)")
+        : tr("Close application"));
+
     // Persist
     m_persist.setValue("dwell/ms",           s.dwellMs);
     m_persist.setValue("dwell/sensitivity",  s.sensitivityPx);
     m_persist.setValue("window/opacity",     s.windowOpacity);
     m_persist.setValue("window/alwaysOnTop", s.alwaysOnTop);
-    m_persist.setValue("window/startMin",    s.startMinimized);
+    m_persist.setValue("window/startMin",      s.startMinimized);
+    m_persist.setValue("window/xMinimizesApp", s.xMinimizesApp);
     m_persist.setValue("window/launchOnStartup", s.launchOnStartup);
     if (s.launchOnStartup != oldLaunchOnStartup)
         setLaunchOnStartup(s.launchOnStartup);
@@ -1080,11 +1089,15 @@ void MainWindow::applySettings(const AppSettings& s)
 
 void MainWindow::onExitClicked()
 {
-    hide();
-    if (m_tray) {
-        m_tray->showMessage(tr("TrackClick"),
-            tr("Running in the system tray. Right-click the tray icon to quit."),
-            QSystemTrayIcon::Information, 2000);
+    if (m_settings.xMinimizesApp) {
+        hide();
+        if (m_tray) {
+            m_tray->showMessage(tr("TrackClick"),
+                tr("Running in the system tray. Right-click the tray icon to quit."),
+                QSystemTrayIcon::Information, 2000);
+        }
+    } else {
+        qApp->quit();
     }
 }
 
@@ -1139,7 +1152,9 @@ void MainWindow::retranslateUi()
     if (m_autoBtn)
         m_autoBtn->setToolTip(tr("Toggle AutoMouse dwell-clicking"));
     if (m_settingsBtn) m_settingsBtn->setToolTip(tr("Settings"));
-    if (m_exitBtn)     m_exitBtn->setToolTip(tr("Hide to tray (right-click tray icon to quit)"));
+    if (m_exitBtn)     m_exitBtn->setToolTip(m_settings.xMinimizesApp
+                           ? tr("Hide to tray (right-click tray icon to quit)")
+                           : tr("Close application"));
     if (m_tray)        m_tray->setToolTip(tr("TrackClick Virtual Mouse"));
     if (m_showAct)     m_showAct->setText(tr("Show / Hide"));
     if (m_quitAct)     m_quitAct->setText(tr("Quit TrackClick"));

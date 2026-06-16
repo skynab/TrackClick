@@ -44,7 +44,8 @@ struct AppSettings {
     // Window
     double windowOpacity  = 1.0;
     bool   alwaysOnTop    = true;
-    bool   startMinimized = false;
+    bool   startMinimized  = false;
+    bool   xMinimizesApp   = true;
     bool   launchOnStartup = false;
 
     // Audio feedback
@@ -136,6 +137,7 @@ private:
     QLabel*      m_opacityLabel;
     QCheckBox*   m_chkAlwaysOnTop;
     QCheckBox*   m_chkStartMinimized;
+    QCheckBox*   m_chkXMinimizesApp;
     QCheckBox*   m_chkLaunchOnStartup;
     QCheckBox*   m_chkAudio;
     QCheckBox*   m_chkIconsOnly;

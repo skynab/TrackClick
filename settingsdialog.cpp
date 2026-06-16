@@ -228,6 +228,7 @@ void SettingsDialog::retranslateUi()
     m_grpWin->setTitle(tr("Window"));
     m_chkAlwaysOnTop->setText(tr("Always on top"));
     m_chkStartMinimized->setText(tr("Start minimized to tray"));
+    m_chkXMinimizesApp->setText(tr("Top X minimizes app"));
     m_chkLaunchOnStartup->setText(tr("Launch on system startup"));
     m_chkAudio->setText(tr("Audio feedback on click"));
     m_chkIconsOnly->setText(tr("Icons only (hide button labels)"));
@@ -397,6 +398,7 @@ void SettingsDialog::buildUi()
 
     m_chkAlwaysOnTop    = new QCheckBox(tr("Always on top"));
     m_chkStartMinimized = new QCheckBox(tr("Start minimized to tray"));
+    m_chkXMinimizesApp  = new QCheckBox(tr("Top X minimizes app"));
     m_chkLaunchOnStartup= new QCheckBox(tr("Launch on system startup"));
     m_chkAudio         = new QCheckBox(tr("Audio feedback on click"));
     m_chkIconsOnly     = new QCheckBox(tr("Icons only (hide button labels)"));
@@ -429,6 +431,7 @@ void SettingsDialog::buildUi()
     wfl->addRow(m_lblOpacity, opRow);
     wfl->addRow(m_chkAlwaysOnTop);
     wfl->addRow(m_chkStartMinimized);
+    wfl->addRow(m_chkXMinimizesApp);
     wfl->addRow(m_chkLaunchOnStartup);
     wfl->addRow(m_chkAudio);
     wfl->addRow(m_chkIconsOnly);
@@ -477,6 +480,7 @@ void SettingsDialog::loadFrom(const AppSettings& s)
     m_opacitySlider->setValue(static_cast<int>(s.windowOpacity * 100));
     m_chkAlwaysOnTop->setChecked(s.alwaysOnTop);
     m_chkStartMinimized->setChecked(s.startMinimized);
+    m_chkXMinimizesApp->setChecked(s.xMinimizesApp);
     m_chkLaunchOnStartup->setChecked(s.launchOnStartup);
     m_chkAudio->setChecked(s.audioFeedback);
     m_chkIconsOnly->setChecked(s.iconsOnly);
@@ -520,6 +524,7 @@ AppSettings SettingsDialog::readUi() const
     s.windowOpacity   = m_opacitySlider->value() / 100.0;
     s.alwaysOnTop      = m_chkAlwaysOnTop->isChecked();
     s.startMinimized   = m_chkStartMinimized->isChecked();
+    s.xMinimizesApp    = m_chkXMinimizesApp->isChecked();
     s.launchOnStartup  = m_chkLaunchOnStartup->isChecked();
     s.audioFeedback   = m_chkAudio->isChecked();
     s.iconsOnly       = m_chkIconsOnly->isChecked();

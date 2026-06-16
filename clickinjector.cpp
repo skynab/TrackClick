@@ -265,6 +265,11 @@ void ClickInjector::performClick(ClickType type, QPoint pos, int mods)
 #include <X11/extensions/XTest.h>
 #include <X11/keysym.h>
 
+// ── XInput2 raw-motion (Wayland stale-position fix) ──────────
+#ifdef HAVE_XI2
+#include <X11/extensions/XInput2.h>
+#endif
+
 // ── uinput virtual pointer device ────────────────────────────
 namespace {
 
@@ -398,6 +403,65 @@ Display* getDisplay()
     return dpy;
 }
 
+// ── XInput2 raw-motion tracking (Wayland stale-position fix) ─────────────────
+// On Wayland, XQueryPointer only updates while the cursor is over an XWayland
+// surface.  When it drifts over a native Wayland surface, XQueryPointer returns
+// a frozen position and the DwellManager never sees movement.  Subscribing to
+// XI_RawMotion on the root window gives us hardware deltas regardless of which
+// surface owns the pointer, letting us maintain an accurate position estimate.
+#ifdef HAVE_XI2
+int    g_xi2Opcode         = -1;
+bool   g_xi2Subscribed     = false;
+bool   g_xi2GotFirst       = false;
+QPoint g_xi2LastXQueryPos;   // last value XQueryPointer actually returned
+QPoint g_xi2EstimatedPos;    // running position estimate updated by raw deltas
+
+void xi2Subscribe(Display* dpy)
+{
+    int event, error;
+    if (!XQueryExtension(dpy, "XInputExtension", &g_xi2Opcode, &event, &error))
+        return;
+    int major = 2, minor = 0;
+    if (XIQueryVersion(dpy, &major, &minor) != Success)
+        return;
+    unsigned char bits[XIMaskLen(XI_RawMotion)] = {};
+    XIEventMask mask;
+    mask.deviceid = XIAllMasterDevices;
+    mask.mask     = bits;
+    mask.mask_len = sizeof(bits);
+    XISetMask(bits, XI_RawMotion);
+    XISelectEvents(dpy, DefaultRootWindow(dpy), &mask, 1);
+    XFlush(dpy);
+    g_xi2Subscribed = true;
+}
+
+void xi2Drain(Display* dpy)
+{
+    if (!g_xi2Subscribed || g_xi2Opcode < 0 || !g_xi2GotFirst) return;
+    while (XPending(dpy) > 0) {
+        XEvent ev;
+        XNextEvent(dpy, &ev);
+        if (ev.type != GenericEvent || ev.xcookie.extension != g_xi2Opcode) continue;
+        if (!XGetEventData(dpy, &ev.xcookie)) continue;
+        if (ev.xcookie.evtype == XI_RawMotion) {
+            const XIRawEvent* raw = static_cast<const XIRawEvent*>(ev.xcookie.data);
+            double dx = 0.0, dy = 0.0;
+            int idx = 0;
+            for (int a = 0; a < raw->valuators.mask_len * 8; ++a) {
+                if (XIMaskIsSet(raw->valuators.mask, a)) {
+                    if (a == 0) dx = raw->raw_values[idx];
+                    if (a == 1) dy = raw->raw_values[idx];
+                    ++idx;
+                }
+            }
+            g_xi2EstimatedPos.setX(g_xi2EstimatedPos.x() + static_cast<int>(dx));
+            g_xi2EstimatedPos.setY(g_xi2EstimatedPos.y() + static_cast<int>(dy));
+        }
+        XFreeEventData(dpy, &ev.xcookie);
+    }
+}
+#endif // HAVE_XI2
+
 void xtestFakeButton(int button, bool press, int mods = 0)
 {
     Display* dpy = getDisplay();
@@ -434,20 +498,40 @@ void ClickInjector::releaseModifiers(int) {}
 
 QPoint ClickInjector::cursorPos()
 {
-    // XQueryPointer gives the real global cursor position via XWayland.
-    // QCursor::pos() goes stale on Wayland as soon as the pointer leaves the
-    // application window, making DwellManager fire at the wrong location.
     Display* dpy = getDisplay();
-    if (dpy) {
-        Window root = DefaultRootWindow(dpy);
-        Window root_ret, child_ret;
-        int rx, ry, wx, wy;
-        unsigned int mask;
-        if (XQueryPointer(dpy, root, &root_ret, &child_ret,
-                          &rx, &ry, &wx, &wy, &mask))
-            return QPoint(rx, ry);
+    if (!dpy) return QCursor::pos();
+
+#ifdef HAVE_XI2
+    if (!g_xi2Subscribed) xi2Subscribe(dpy);
+    xi2Drain(dpy);  // update g_xi2EstimatedPos with any new raw deltas
+#endif
+
+    Window root = DefaultRootWindow(dpy);
+    Window root_ret, child_ret;
+    int rx, ry, wx, wy;
+    unsigned int mask;
+    if (!XQueryPointer(dpy, root, &root_ret, &child_ret, &rx, &ry, &wx, &wy, &mask))
+        return QCursor::pos();
+
+#ifdef HAVE_XI2
+    QPoint absPos(rx, ry);
+    // If XQueryPointer returned a position different from last poll, the cursor
+    // is over an XWayland surface and the data is fresh.  Anchor the estimated
+    // position to this accurate reading.
+    bool fresh = !g_xi2GotFirst || (absPos != g_xi2LastXQueryPos);
+    g_xi2LastXQueryPos = absPos;
+    g_xi2GotFirst      = true;
+    if (fresh) {
+        g_xi2EstimatedPos = absPos;  // re-sync; also resets any accumulated drift
+        return absPos;
     }
-    return QCursor::pos();
+    // XQueryPointer returned the same value as last poll — cursor is likely over
+    // a native Wayland surface where XWayland position goes stale.  Return the
+    // XI2-estimated position so DwellManager sees real movement and resets.
+    return g_xi2EstimatedPos;
+#else
+    return QPoint(rx, ry);
+#endif
 }
 
 void ClickInjector::moveCursor(QPoint pos)

@@ -107,9 +107,9 @@ private slots:
     }
 
     // -----------------------------------------------------------------------
-    // 4. After a click fires, no second click occurs while cursor stays still —
-    //    in one-shot mode (default) because the manager disarms, and in repeat
-    //    mode because the waiting phase blocks re-fire until cursor moves.
+    // 4. After a click fires, no second click occurs while the cursor stays
+    //    still — the manager enters a waiting phase that blocks re-fire until
+    //    the cursor moves, in both one-shot and repeat modes.
     // -----------------------------------------------------------------------
     void test_noReFire_CursorStill()
     {
@@ -127,21 +127,51 @@ private slots:
     }
 
     // -----------------------------------------------------------------------
-    // 5. In one-shot mode (default), the manager disarms immediately after
-    //    the click fires so no second action can occur until the user
-    //    re-arms by hovering over a toolbar button again.
+    // 5. In one-shot mode (default), the manager stays armed in a waiting
+    //    phase after firing rather than disarming.  Moving the cursor (e.g.
+    //    back over the app) resumes the dwell timer so a second click can fire
+    //    without the user re-selecting a toolbar button.
     // -----------------------------------------------------------------------
-    void test_oneShotDisarmsAfterFire()
+    void test_oneShotResumesAfterMovement()
     {
         auto dm = make(500);  // repeatOnDwell defaults to false (one-shot)
         dm->arm(ClickType::LeftClick);
 
         poll(dm.get());
-        poll(dm.get(), 500);  // first click fires; manager immediately disarms
+        poll(dm.get(), 500);  // first click fires; manager enters waiting
         QCOMPARE(m_clicks.size(), 1);
+        QVERIFY(dm->isArmed());   // stays armed (waiting), not immediately disarmed
+
+        // Move the cursor far enough to leave the waiting phase and re-arm.
+        m_cursor = {200, 200};
+        poll(dm.get(), 10);   // movement detected — waiting ends, countdown restarts
+
+        poll(dm.get());       // hover starts at the new position
+        poll(dm.get(), 500);  // dwell completes — second click fires
+        QCOMPARE(m_clicks.size(), 2);
+        QCOMPARE(m_clicks[1].pos, QPoint(200, 200));
+    }
+
+    // -----------------------------------------------------------------------
+    // 5b. In one-shot mode, if the cursor never moves after firing, the
+    //     manager disarms once a full dwell period elapses (the Wayland
+    //     frozen-cursor safeguard) so it cannot fire again on its own.
+    // -----------------------------------------------------------------------
+    void test_oneShotDisarmsWhenCursorStaysStill()
+    {
+        auto dm = make(500);  // one-shot
+        dm->arm(ClickType::LeftClick);
+
+        poll(dm.get());
+        poll(dm.get(), 500);  // first click fires; enters waiting
+        QCOMPARE(m_clicks.size(), 1);
+
+        // Cursor never moves; after a full dwell period the waiting phase
+        // times out and disarms (no movement could be detected).
+        poll(dm.get(), 500);  // waitedMs >= dwellMs, !movedAway → disarm
         QVERIFY(!dm->isArmed());
 
-        // No second click fires even with further polling
+        // No second click fires with further polling.
         poll(dm.get());
         poll(dm.get(), 500);
         QCOMPARE(m_clicks.size(), 1);

@@ -423,11 +423,16 @@ struct EvdevMotion {
     void openAll()
     {
         opened = true;
+        int denied = 0, examined = 0;
         for (int i = 0; i < 64; ++i) {
             char path[32];
             std::snprintf(path, sizeof(path), "/dev/input/event%d", i);
             int fd = ::open(path, O_RDONLY | O_NONBLOCK);
-            if (fd < 0) continue;
+            if (fd < 0) {
+                if (errno == EACCES || errno == EPERM) ++denied;
+                continue;
+            }
+            ++examined;
 
             unsigned long relBits = 0, absBits = 0;
             ioctl(fd, EVIOCGBIT(EV_REL, sizeof(relBits)), &relBits);
@@ -438,6 +443,21 @@ struct EvdevMotion {
                 devs.push_back({fd, 0, 0, false});   // mouse / trackball / touchpad / tablet
             else
                 ::close(fd);
+        }
+
+        // One-time diagnostic — without a readable pointer device the dwell
+        // timer cannot detect motion over non-XWayland surfaces and will keep
+        // counting down regardless of how the cursor moves.
+        if (devs.empty()) {
+            qWarning("TrackClick: evdev motion tracking DISABLED — no readable "
+                     "pointer device under /dev/input/event* (%d examined, %d "
+                     "permission-denied). On Wayland the dwell timer can only "
+                     "track motion while the cursor is over the TrackClick "
+                     "window. Grant read access (e.g. add your user to the "
+                     "'input' group) to track motion everywhere.", examined, denied);
+        } else {
+            qInfo("TrackClick: evdev motion tracking active on %d pointer "
+                  "device(s).", static_cast<int>(devs.size()));
         }
     }
 

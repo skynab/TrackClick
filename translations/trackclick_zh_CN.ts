@@ -49,6 +49,7 @@
     <message><source>Permissions:</source><translation>辅助功能权限：</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>打开辅助功能设置…</translation></message>
     <message><source>Visible Buttons</source><translation>可见按钮</translation></message>
+    <message><source>No Click</source><translation>无操作</translation></message>
     <message><source>Left Click</source><translation>单击左键</translation></message>
     <message><source>Left Double</source><translation>双击左键</translation></message>
     <message><source>Left Drag</source><translation>拖拽左键</translation></message>
@@ -79,6 +80,7 @@
     <message><source>Vertical (one column)</source><translation>垂直（单列）</translation></message>
     <message><source>Language:</source><translation>语言：</translation></message>
     <message><source>Scroll repeat:</source><translation>滚动重复次数：</translation></message>
+    <message><source>Repeat click:</source><translation>重复点击：</translation></message>
     <message><source>Launch on system startup</source><translation>开机自动启动</translation></message>
 </context>
 </TS>

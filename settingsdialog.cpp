@@ -199,13 +199,14 @@ void SettingsDialog::retranslateUi()
     m_lblDwellTime->setText(tr("Dwell time:"));
     m_lblSensitivity->setText(tr("Sensitivity:"));
     m_lblScrollRepeat->setText(tr("Scroll repeat:"));
-    m_chkRepeatMode->setText(tr("Repeat click while cursor stays still"));
+    m_lblRepeatMode->setText(tr("Repeat click:"));
 #ifdef Q_OS_MAC
     m_lblPermissions->setText(tr("Permissions:"));
     m_btnAccessibility->setText(tr("Open Accessibility Settings…"));
 #endif
 
     m_grpBtns->setTitle(tr("Visible Buttons"));
+    m_chkNoClick->setText(tr("No Click"));
     m_chkLeftClick->setText(tr("Left Click"));
     m_chkLeftDouble->setText(tr("Left Double"));
     m_chkLeftDrag->setText(tr("Left Drag"));
@@ -311,15 +312,16 @@ void SettingsDialog::buildUi()
     m_sensitivPx   = new QSpinBox; m_sensitivPx->setRange(1, 100);  m_sensitivPx->setSuffix(" px");
     m_scrollRepeat = new QSpinBox; m_scrollRepeat->setRange(1, 20);
 
-    m_chkRepeatMode = new QCheckBox(tr("Repeat click while cursor stays still"));
+    m_chkRepeatMode = new QCheckBox;
 
     m_lblDwellTime    = new QLabel(tr("Dwell time:"));
     m_lblSensitivity  = new QLabel(tr("Sensitivity:"));
     m_lblScrollRepeat = new QLabel(tr("Scroll repeat:"));
+    m_lblRepeatMode   = new QLabel(tr("Repeat click:"));
     fl->addRow(m_lblDwellTime,    m_dwellMs);
     fl->addRow(m_lblSensitivity,  m_sensitivPx);
     fl->addRow(m_lblScrollRepeat, m_scrollRepeat);
-    fl->addRow(m_chkRepeatMode);
+    fl->addRow(m_lblRepeatMode,   m_chkRepeatMode);
 
 #ifdef Q_OS_MAC
     m_lblPermissions   = new QLabel(tr("Permissions:"));
@@ -340,6 +342,7 @@ void SettingsDialog::buildUi()
     auto* grid   = new QGridLayout(m_grpBtns);
     grid->setSpacing(6);
 
+    m_chkNoClick     = new QCheckBox(tr("No Click"));
     m_chkLeftClick   = new QCheckBox(tr("Left Click"));
     m_chkLeftDouble  = new QCheckBox(tr("Left Double"));
     m_chkLeftDrag    = new QCheckBox(tr("Left Drag"));
@@ -364,6 +367,7 @@ void SettingsDialog::buildUi()
         col++;
         if (col == 3) { col = 0; row++; }
     };
+    addChk(m_chkNoClick);
     addChk(m_chkLeftClick);   addChk(m_chkLeftDouble);  addChk(m_chkLeftDrag);
     addChk(m_chkRightClick);  addChk(m_chkRightDouble); addChk(m_chkRightDrag);
     addChk(m_chkMiddleClick); addChk(m_chkMiddleDouble);addChk(m_chkScrollUp);
@@ -451,6 +455,7 @@ void SettingsDialog::loadFrom(const AppSettings& s)
     m_scrollRepeat->setValue(s.scrollRepeat);
     m_chkRepeatMode->setChecked(s.repeatOnDwell);
 
+    m_chkNoClick->setChecked(s.showNoClick);
     m_chkLeftClick->setChecked(s.showLeftClick);
     m_chkLeftDouble->setChecked(s.showLeftDouble);
     m_chkLeftDrag->setChecked(s.showLeftDrag);
@@ -493,6 +498,7 @@ AppSettings SettingsDialog::readUi() const
     s.scrollRepeat  = m_scrollRepeat->value();
     s.repeatOnDwell = m_chkRepeatMode->isChecked();
 
+    s.showNoClick     = m_chkNoClick->isChecked();
     s.showLeftClick   = m_chkLeftClick->isChecked();
     s.showLeftDouble  = m_chkLeftDouble->isChecked();
     s.showLeftDrag    = m_chkLeftDrag->isChecked();

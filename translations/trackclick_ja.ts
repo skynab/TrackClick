@@ -49,6 +49,7 @@
     <message><source>Permissions:</source><translation>権限：</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>アクセシビリティ設定を開く…</translation></message>
     <message><source>Visible Buttons</source><translation>表示ボタン</translation></message>
+    <message><source>No Click</source><translation>何もしない</translation></message>
     <message><source>Left Click</source><translation>左クリック</translation></message>
     <message><source>Left Double</source><translation>左ダブルクリック</translation></message>
     <message><source>Left Drag</source><translation>左ドラッグ</translation></message>
@@ -79,6 +80,7 @@
     <message><source>Vertical (one column)</source><translation>縦並び（1列）</translation></message>
     <message><source>Language:</source><translation>言語：</translation></message>
     <message><source>Scroll repeat:</source><translation>スクロール繰り返し：</translation></message>
+    <message><source>Repeat click:</source><translation>クリック繰り返し：</translation></message>
     <message><source>Launch on system startup</source><translation>システム起動時に起動</translation></message>
 </context>
 </TS>

@@ -51,6 +51,7 @@
     <message><source>Permissions:</source><translation>Oprávnění:</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>Otevřít nastavení zpřístupnění…</translation></message>
     <message><source>Visible Buttons</source><translation>Viditelná tlačítka</translation></message>
+    <message><source>No Click</source><translation>Žádná akce</translation></message>
     <message><source>Left Click</source><translation>Levé kliknutí</translation></message>
     <message><source>Left Double</source><translation>Levý dvojklik</translation></message>
     <message><source>Left Drag</source><translation>Levé přetažení</translation></message>
@@ -81,6 +82,7 @@
     <message><source>Vertical (two columns)</source><translation>Svisle (dva sloupce)</translation></message>
     <message><source>Language:</source><translation>Jazyk:</translation></message>
     <message><source>Scroll repeat:</source><translation>Opakování rolování:</translation></message>
+    <message><source>Repeat click:</source><translation>Opakovat kliknutí:</translation></message>
     <message><source>Launch on system startup</source><translation>Spustit při startu systému</translation></message>
 </context>
 </TS>

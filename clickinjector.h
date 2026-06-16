@@ -4,6 +4,7 @@
 // All click types supported by TrackClick
 enum class ClickType {
     None,
+    NoClick,         // selected but performs no action
     LeftClick,
     LeftDoubleClick,
     LeftDown,       // begin drag

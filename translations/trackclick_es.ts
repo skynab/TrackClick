@@ -49,6 +49,7 @@
     <message><source>Permissions:</source><translation>Permisos:</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>Abrir configuración de accesibilidad…</translation></message>
     <message><source>Visible Buttons</source><translation>Botones visibles</translation></message>
+    <message><source>No Click</source><translation>Sin acción</translation></message>
     <message><source>Left Click</source><translation>Clic izquierdo</translation></message>
     <message><source>Left Double</source><translation>Doble izquierdo</translation></message>
     <message><source>Left Drag</source><translation>Arrastrar izquierda</translation></message>
@@ -79,6 +80,7 @@
     <message><source>Vertical (one column)</source><translation>Vertical (una columna)</translation></message>
     <message><source>Language:</source><translation>Idioma:</translation></message>
     <message><source>Scroll repeat:</source><translation>Repetición de desplazamiento:</translation></message>
+    <message><source>Repeat click:</source><translation>Repetir clic:</translation></message>
     <message><source>Launch on system startup</source><translation>Iniciar con el sistema</translation></message>
 </context>
 </TS>

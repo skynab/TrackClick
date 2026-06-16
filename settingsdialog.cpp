@@ -10,6 +10,7 @@
 #include <QGroupBox>
 #include <QLabel>
 #include <QPainter>
+#include <QAbstractButton>
 #include <QPushButton>
 #include <QSvgRenderer>
 #ifdef Q_OS_MAC
@@ -434,6 +435,11 @@ void SettingsDialog::buildUi()
 
     // ── Buttons ───────────────────────────────────────────────
     m_buttons  = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+#ifdef Q_OS_LINUX
+    // On Linux/GTK the system theme injects icons into standard buttons; remove them.
+    for (QAbstractButton* btn : m_buttons->buttons())
+        btn->setIcon(QIcon());
+#endif
     m_resetBtn = m_buttons->addButton(tr("Reset to Defaults"), QDialogButtonBox::ResetRole);
     root->addWidget(m_buttons);
 }

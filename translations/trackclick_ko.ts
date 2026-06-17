@@ -39,6 +39,9 @@
     <message><source>Selected: </source><translation>선택됨: </translation></message>
     <message><source>Running in the system tray. Right-click the tray icon to quit.</source><translation>시스템 트레이에서 실행 중. 트레이 아이콘을 오른쪽 클릭하여 종료.</translation></message>
     <message><source>Quit Program</source><translation>프로그램 종료</translation></message>
+    <message><source>No Click</source><translation>동작 없음</translation></message>
+    <message><source>No action — dwell without clicking</source><translation>동작 없음 — 클릭 없이 머물기</translation></message>
+    <message><source>No action</source><translation>동작 없음</translation></message>
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -61,11 +64,11 @@
     <message><source>Scroll Up</source><translation>위로 스크롤</translation></message>
     <message><source>Scroll Down</source><translation>아래로 스크롤</translation></message>
     <message><source>Scroll Left/Right</source><translation>좌/우 스크롤</translation></message>
-    <message><source>Ctrl modifier</source><translation>Ctrl 조합키</translation></message>
-    <message><source>Alt modifier</source><translation>Alt 조합키</translation></message>
-    <message><source>Shift modifier</source><translation>Shift 조합키</translation></message>
-    <message><source>Exit button</source><translation>종료 버튼</translation></message>
-    <message><source>Quit button</source><translation>프로그램 종료 버튼</translation></message>
+    <message><source>Ctrl Modifier</source><translation>Ctrl 조합키</translation></message>
+    <message><source>Alt Modifier</source><translation>Alt 조합키</translation></message>
+    <message><source>Shift Modifier</source><translation>Shift 조합키</translation></message>
+    <message><source>Exit Button</source><translation>종료 버튼</translation></message>
+    <message><source>Quit Button</source><translation>프로그램 종료 버튼</translation></message>
     <message><source>Window</source><translation>창</translation></message>
     <message><source>Opacity:</source><translation>불투명도:</translation></message>
     <message><source>Always on top</source><translation>항상 위에</translation></message>

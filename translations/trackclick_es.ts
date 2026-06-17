@@ -39,6 +39,9 @@
     <message><source>Selected: </source><translation>Seleccionado: </translation></message>
     <message><source>Running in the system tray. Right-click the tray icon to quit.</source><translation>Ejecutándose en la bandeja. Clic derecho en el icono para salir.</translation></message>
     <message><source>Quit Program</source><translation>Salir del programa</translation></message>
+    <message><source>No Click</source><translation>Sin acción</translation></message>
+    <message><source>No action — dwell without clicking</source><translation>Sin acción — permanecer sin hacer clic</translation></message>
+    <message><source>No action</source><translation>Sin acción</translation></message>
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -61,11 +64,11 @@
     <message><source>Scroll Up</source><translation>Desplazar arriba</translation></message>
     <message><source>Scroll Down</source><translation>Desplazar abajo</translation></message>
     <message><source>Scroll Left/Right</source><translation>Desplazar izq/dch</translation></message>
-    <message><source>Ctrl modifier</source><translation>Modificador Ctrl</translation></message>
-    <message><source>Alt modifier</source><translation>Modificador Alt</translation></message>
-    <message><source>Shift modifier</source><translation>Modificador Mayús</translation></message>
-    <message><source>Exit button</source><translation>Botón salir</translation></message>
-    <message><source>Quit button</source><translation>Botón salir del programa</translation></message>
+    <message><source>Ctrl Modifier</source><translation>Modificador Ctrl</translation></message>
+    <message><source>Alt Modifier</source><translation>Modificador Alt</translation></message>
+    <message><source>Shift Modifier</source><translation>Modificador Mayús</translation></message>
+    <message><source>Exit Button</source><translation>Botón salir</translation></message>
+    <message><source>Quit Button</source><translation>Botón salir del programa</translation></message>
     <message><source>Window</source><translation>Ventana</translation></message>
     <message><source>Opacity:</source><translation>Opacidad:</translation></message>
     <message><source>Always on top</source><translation>Siempre encima</translation></message>

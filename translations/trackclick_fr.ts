@@ -39,6 +39,9 @@
     <message><source>Selected: </source><translation>Sélectionné : </translation></message>
     <message><source>Running in the system tray. Right-click the tray icon to quit.</source><translation>En cours d&apos;exécution dans la zone de notification. Clic droit pour quitter.</translation></message>
     <message><source>Quit Program</source><translation>Quitter le programme</translation></message>
+    <message><source>No Click</source><translation>Aucune action</translation></message>
+    <message><source>No action — dwell without clicking</source><translation>Aucune action — survol sans clic</translation></message>
+    <message><source>No action</source><translation>Aucune action</translation></message>
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -61,11 +64,11 @@
     <message><source>Scroll Up</source><translation>Défiler haut</translation></message>
     <message><source>Scroll Down</source><translation>Défiler bas</translation></message>
     <message><source>Scroll Left/Right</source><translation>Défiler gauche/droite</translation></message>
-    <message><source>Ctrl modifier</source><translation>Modificateur Ctrl</translation></message>
-    <message><source>Alt modifier</source><translation>Modificateur Alt</translation></message>
-    <message><source>Shift modifier</source><translation>Modificateur Maj</translation></message>
-    <message><source>Exit button</source><translation>Bouton quitter</translation></message>
-    <message><source>Quit button</source><translation>Bouton quitter le programme</translation></message>
+    <message><source>Ctrl Modifier</source><translation>Modificateur Ctrl</translation></message>
+    <message><source>Alt Modifier</source><translation>Modificateur Alt</translation></message>
+    <message><source>Shift Modifier</source><translation>Modificateur Maj</translation></message>
+    <message><source>Exit Button</source><translation>Bouton quitter</translation></message>
+    <message><source>Quit Button</source><translation>Bouton quitter le programme</translation></message>
     <message><source>Window</source><translation>Fenêtre</translation></message>
     <message><source>Opacity:</source><translation>Opacité :</translation></message>
     <message><source>Always on top</source><translation>Toujours au premier plan</translation></message>

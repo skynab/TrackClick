@@ -429,12 +429,12 @@ void SettingsDialog::retranslateUi()
     m_chkScrollUp->setText(tr("Scroll Up"));
     m_chkScrollDown->setText(tr("Scroll Down"));
     m_chkScrollHoriz->setText(tr("Scroll Left/Right"));
-    m_chkModCtrl->setText(tr("Ctrl modifier"));
-    m_chkModAlt->setText(tr("Alt modifier"));
-    m_chkModShift->setText(tr("Shift modifier"));
-    m_chkExitButton->setText(tr("Exit button"));
-    m_chkQuitButton->setText(tr("Quit button"));
-    m_chkDwellActiveBtn->setText(tr("Dwell Active button"));
+    m_chkModCtrl->setText(tr("Ctrl Modifier"));
+    m_chkModAlt->setText(tr("Alt Modifier"));
+    m_chkModShift->setText(tr("Shift Modifier"));
+    m_chkExitButton->setText(tr("Exit Button"));
+    m_chkQuitButton->setText(tr("Quit Button"));
+    m_chkDwellActiveBtn->setText(tr("Dwell Active Button"));
 
     m_grpWin->setTitle(tr("Window"));
     m_lblEdgeLock->setText(tr("Lock to screen edge:"));
@@ -582,12 +582,12 @@ void SettingsDialog::buildUi()
     m_chkScrollUp    = new QCheckBox(tr("Scroll Up"));
     m_chkScrollDown  = new QCheckBox(tr("Scroll Down"));
     m_chkScrollHoriz = new QCheckBox(tr("Scroll Left/Right"));
-    m_chkModCtrl     = new QCheckBox(tr("Ctrl modifier"));
-    m_chkModAlt      = new QCheckBox(tr("Alt modifier"));
-    m_chkModShift    = new QCheckBox(tr("Shift modifier"));
-    m_chkExitButton      = new QCheckBox(tr("Exit button"));
-    m_chkQuitButton      = new QCheckBox(tr("Quit button"));
-    m_chkDwellActiveBtn  = new QCheckBox(tr("Dwell Active button"));
+    m_chkModCtrl     = new QCheckBox(tr("Ctrl Modifier"));
+    m_chkModAlt      = new QCheckBox(tr("Alt Modifier"));
+    m_chkModShift    = new QCheckBox(tr("Shift Modifier"));
+    m_chkExitButton      = new QCheckBox(tr("Exit Button"));
+    m_chkQuitButton      = new QCheckBox(tr("Quit Button"));
+    m_chkDwellActiveBtn  = new QCheckBox(tr("Dwell Active Button"));
 
     int row = 0, col = 0;
     auto addChk = [&](QCheckBox* c){

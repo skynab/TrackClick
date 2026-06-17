@@ -18,7 +18,7 @@ struct AppSettings {
     // Dwell / AutoMouse
     int  dwellMs        = 1000;
     int  sensitivityPx  = 5;
-    int  scrollRepeat   = 3;
+    int  scrollRepeat   = 7;
     bool repeatOnDwell  = true;      // true = repeat every dwell period; false = fire once per arm
     bool autoSelectEnabled = false;  // start with AutoSelect on
 
@@ -40,13 +40,13 @@ struct AppSettings {
     bool showModShift         = true;
     bool showExitButton       = true;
     bool showQuitButton       = true;
-    bool showDwellActiveBtn   = false;
+    bool showDwellActiveBtn   = true;
 
     // Window
     double windowOpacity  = 1.0;
     bool   alwaysOnTop    = true;
     bool   startMinimized  = false;
-    bool   xMinimizesApp   = true;
+    bool   xMinimizesApp   = false;
     bool   launchOnStartup = false;
 
     // Audio feedback

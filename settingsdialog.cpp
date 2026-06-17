@@ -437,6 +437,11 @@ void SettingsDialog::retranslateUi()
     m_chkDwellActiveBtn->setText(tr("Dwell Active button"));
 
     m_grpWin->setTitle(tr("Window"));
+    m_lblEdgeLock->setText(tr("Lock to screen edge:"));
+    m_cmbEdgeLock->setItemText(0, tr("None"));
+    m_cmbEdgeLock->setItemText(1, tr("Left edge"));
+    m_cmbEdgeLock->setItemText(2, tr("Right edge"));
+    m_chkEdgeHide->setText(tr("Slide off screen when idle"));
     m_chkAlwaysOnTop->setText(tr("Always on top"));
     m_chkStartMinimized->setText(tr("Start minimized to tray"));
     m_chkXMinimizesApp->setText(tr("Top X minimizes app"));
@@ -618,6 +623,19 @@ void SettingsDialog::buildUi()
         m_opacityLabel->setText(QString::number(v) + "%");
     });
 
+    m_lblEdgeLock = new QLabel(tr("Lock to screen edge:"));
+    m_cmbEdgeLock = new QComboBox;
+    m_cmbEdgeLock->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+    m_cmbEdgeLock->setMinimumWidth(110);
+    m_cmbEdgeLock->addItem(tr("None"),       static_cast<int>(EdgeLock::None));
+    m_cmbEdgeLock->addItem(tr("Left edge"),  static_cast<int>(EdgeLock::Left));
+    m_cmbEdgeLock->addItem(tr("Right edge"), static_cast<int>(EdgeLock::Right));
+    m_chkEdgeHide = new QCheckBox(tr("Slide off screen when idle"));
+    connect(m_cmbEdgeLock, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, [this](int idx){ m_chkEdgeHide->setEnabled(idx != 0); });
+    wfl->addRow(m_lblEdgeLock, m_cmbEdgeLock);
+    wfl->addRow(m_chkEdgeHide);
+
     m_chkAlwaysOnTop    = new QCheckBox(tr("Always on top"));
     m_chkStartMinimized = new QCheckBox(tr("Start minimized to tray"));
     m_chkXMinimizesApp  = new QCheckBox(tr("Top X minimizes app"));
@@ -699,6 +717,10 @@ void SettingsDialog::loadFrom(const AppSettings& s)
     m_chkQuitButton->setChecked(s.showQuitButton);
     m_chkDwellActiveBtn->setChecked(s.showDwellActiveBtn);
 
+    m_cmbEdgeLock->setCurrentIndex(static_cast<int>(s.edgeLock));
+    m_chkEdgeHide->setChecked(s.edgeHide);
+    m_chkEdgeHide->setEnabled(s.edgeLock != EdgeLock::None);
+
     m_opacitySlider->setValue(static_cast<int>(s.windowOpacity * 100));
     m_chkAlwaysOnTop->setChecked(s.alwaysOnTop);
     m_chkStartMinimized->setChecked(s.startMinimized);
@@ -742,6 +764,9 @@ AppSettings SettingsDialog::readUi() const
     s.showExitButton     = m_chkExitButton->isChecked();
     s.showQuitButton     = m_chkQuitButton->isChecked();
     s.showDwellActiveBtn = m_chkDwellActiveBtn->isChecked();
+
+    s.edgeLock = static_cast<EdgeLock>(m_cmbEdgeLock->currentIndex());
+    s.edgeHide = m_chkEdgeHide->isChecked() && (s.edgeLock != EdgeLock::None);
 
     s.windowOpacity   = m_opacitySlider->value() / 100.0;
     s.alwaysOnTop      = m_chkAlwaysOnTop->isChecked();

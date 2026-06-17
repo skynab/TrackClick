@@ -12,6 +12,7 @@
 #include <QTranslator>
 
 enum class ButtonLayout { Rectangle, Horizontal, Vertical, VerticalTwo };
+enum class EdgeLock    { None, Left, Right };
 
 struct AppSettings {
     // Dwell / AutoMouse
@@ -58,6 +59,10 @@ struct AppSettings {
 
     // Language (ISO code: "en", "fr", "es", "zh_CN", "ja", "ko")
     QString language         = "en";
+
+    // Edge lock / hide
+    EdgeLock edgeLock = EdgeLock::None;
+    bool     edgeHide = false;
 };
 
 class SettingsDialog : public QDialog
@@ -144,6 +149,11 @@ private:
     QCheckBox*   m_chkLargeButtons;
     QComboBox*   m_cmbLayout;
     QComboBox*   m_cmbLanguage;
+
+    // Edge lock
+    QLabel*    m_lblEdgeLock = nullptr;
+    QComboBox* m_cmbEdgeLock = nullptr;
+    QCheckBox* m_chkEdgeHide = nullptr;
 
     QDialogButtonBox* m_buttons;
     QPushButton*      m_resetBtn      = nullptr;

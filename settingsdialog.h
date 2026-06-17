@@ -146,5 +146,6 @@ private:
     QComboBox*   m_cmbLanguage;
 
     QDialogButtonBox* m_buttons;
-    QPushButton*      m_resetBtn = nullptr;
+    QPushButton*      m_resetBtn      = nullptr;
+    QPushButton*      m_btnSensTester = nullptr;
 };

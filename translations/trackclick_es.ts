@@ -42,6 +42,8 @@
     <message><source>No Click</source><translation>Sin acción</translation></message>
     <message><source>No action — dwell without clicking</source><translation>Sin acción — permanecer sin hacer clic</translation></message>
     <message><source>No action</source><translation>Sin acción</translation></message>
+    <message><source>Dwell Active</source><translation>Permanencia activa</translation></message>
+    <message><source>Enable dwell-clicking (same as the Auto button)</source><translation>Activar clic por permanencia (igual que el botón Auto)</translation></message>
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -69,6 +71,7 @@
     <message><source>Shift Modifier</source><translation>Modificador Mayús</translation></message>
     <message><source>Exit Button</source><translation>Botón salir</translation></message>
     <message><source>Quit Button</source><translation>Botón salir del programa</translation></message>
+    <message><source>Dwell Active Button</source><translation>Botón Permanencia activa</translation></message>
     <message><source>Window</source><translation>Ventana</translation></message>
     <message><source>Opacity:</source><translation>Opacidad:</translation></message>
     <message><source>Always on top</source><translation>Siempre encima</translation></message>

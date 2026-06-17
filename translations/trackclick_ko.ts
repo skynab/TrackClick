@@ -42,6 +42,8 @@
     <message><source>No Click</source><translation>동작 없음</translation></message>
     <message><source>No action — dwell without clicking</source><translation>동작 없음 — 클릭 없이 머물기</translation></message>
     <message><source>No action</source><translation>동작 없음</translation></message>
+    <message><source>Dwell Active</source><translation>머물기 활성</translation></message>
+    <message><source>Enable dwell-clicking (same as the Auto button)</source><translation>머물기 클릭 활성화 (자동 버튼과 동일)</translation></message>
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -69,6 +71,7 @@
     <message><source>Shift Modifier</source><translation>Shift 조합키</translation></message>
     <message><source>Exit Button</source><translation>종료 버튼</translation></message>
     <message><source>Quit Button</source><translation>프로그램 종료 버튼</translation></message>
+    <message><source>Dwell Active Button</source><translation>머물기 활성 버튼</translation></message>
     <message><source>Window</source><translation>창</translation></message>
     <message><source>Opacity:</source><translation>불투명도:</translation></message>
     <message><source>Always on top</source><translation>항상 위에</translation></message>

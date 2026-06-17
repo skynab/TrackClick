@@ -42,6 +42,8 @@
     <message><source>No Click</source><translation>Aucune action</translation></message>
     <message><source>No action — dwell without clicking</source><translation>Aucune action — survol sans clic</translation></message>
     <message><source>No action</source><translation>Aucune action</translation></message>
+    <message><source>Dwell Active</source><translation>Survol actif</translation></message>
+    <message><source>Enable dwell-clicking (same as the Auto button)</source><translation>Activer le clic par survol (même que le bouton Auto)</translation></message>
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -69,6 +71,7 @@
     <message><source>Shift Modifier</source><translation>Modificateur Maj</translation></message>
     <message><source>Exit Button</source><translation>Bouton quitter</translation></message>
     <message><source>Quit Button</source><translation>Bouton quitter le programme</translation></message>
+    <message><source>Dwell Active Button</source><translation>Bouton Survol actif</translation></message>
     <message><source>Window</source><translation>Fenêtre</translation></message>
     <message><source>Opacity:</source><translation>Opacité :</translation></message>
     <message><source>Always on top</source><translation>Toujours au premier plan</translation></message>

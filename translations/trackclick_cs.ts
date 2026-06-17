@@ -44,6 +44,8 @@
     <message><source>No Click</source><translation>Žádná akce</translation></message>
     <message><source>No action — dwell without clicking</source><translation>Žádná akce — najetí bez kliknutí</translation></message>
     <message><source>No action</source><translation>Žádná akce</translation></message>
+    <message><source>Dwell Active</source><translation>Najetí aktivní</translation></message>
+    <message><source>Enable dwell-clicking (same as the Auto button)</source><translation>Povolit klikání při najetí (stejné jako tlačítko Auto)</translation></message>
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -71,6 +73,7 @@
     <message><source>Shift Modifier</source><translation>Modifikátor Shift</translation></message>
     <message><source>Exit Button</source><translation>Tlačítko ukončit</translation></message>
     <message><source>Quit Button</source><translation>Tlačítko ukončit program</translation></message>
+    <message><source>Dwell Active Button</source><translation>Tlačítko Najetí aktivní</translation></message>
     <message><source>Window</source><translation>Okno</translation></message>
     <message><source>Opacity:</source><translation>Průhlednost:</translation></message>
     <message><source>Always on top</source><translation>Vždy nahoře</translation></message>

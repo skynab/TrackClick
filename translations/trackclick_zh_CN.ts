@@ -42,6 +42,8 @@
     <message><source>No Click</source><translation>无操作</translation></message>
     <message><source>No action — dwell without clicking</source><translation>无操作 — 悬停不点击</translation></message>
     <message><source>No action</source><translation>无操作</translation></message>
+    <message><source>Dwell Active</source><translation>悬停激活</translation></message>
+    <message><source>Enable dwell-clicking (same as the Auto button)</source><translation>启用悬停点击（与自动按钮相同）</translation></message>
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -69,6 +71,7 @@
     <message><source>Shift Modifier</source><translation>Shift修饰键</translation></message>
     <message><source>Exit Button</source><translation>退出按钮</translation></message>
     <message><source>Quit Button</source><translation>退出程序按钮</translation></message>
+    <message><source>Dwell Active Button</source><translation>悬停激活按钮</translation></message>
     <message><source>Window</source><translation>窗口</translation></message>
     <message><source>Opacity:</source><translation>透明度：</translation></message>
     <message><source>Always on top</source><translation>窗口置顶</translation></message>

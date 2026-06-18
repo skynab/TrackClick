@@ -656,13 +656,19 @@ void SettingsDialog::buildUi()
     m_cmbLanguage = new QComboBox;
     m_cmbLanguage->setSizeAdjustPolicy(QComboBox::AdjustToContents);
     m_cmbLanguage->setMinimumWidth(130);
-    m_cmbLanguage->addItem("English",  "en");
-    m_cmbLanguage->addItem("Čeština",  "cs");
-    m_cmbLanguage->addItem("Français", "fr");
-    m_cmbLanguage->addItem("Español",  "es");
-    m_cmbLanguage->addItem("中文简体",  "zh_CN");
-    m_cmbLanguage->addItem("日本語",    "ja");
-    m_cmbLanguage->addItem("한국어",    "ko");
+    m_cmbLanguage->addItem("English",   "en");
+    m_cmbLanguage->addItem("Čeština",   "cs");
+    m_cmbLanguage->addItem("Français",  "fr");
+    m_cmbLanguage->addItem("Español",   "es");
+    m_cmbLanguage->addItem("中文简体",   "zh_CN");
+    m_cmbLanguage->addItem("日本語",     "ja");
+    m_cmbLanguage->addItem("한국어",     "ko");
+    m_cmbLanguage->addItem("हिन्दी",    "hi");
+    m_cmbLanguage->addItem("العربية",   "ar");
+    m_cmbLanguage->addItem("বাংলা",     "bn");
+    m_cmbLanguage->addItem("Português", "pt");
+    m_cmbLanguage->addItem("Русский",   "ru");
+    m_cmbLanguage->addItem("اردو",      "ur");
 
     m_lblOpacity   = new QLabel(tr("Opacity:"));
     m_lblBtnLayout = new QLabel(tr("Button layout:"));

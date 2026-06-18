@@ -18,6 +18,7 @@
 #include <QSvgRenderer>
 #include <QMessageBox>
 #include <QProcess>
+#include <QSysInfo>
 #include <cmath>
 #ifdef Q_OS_MAC
 #  include <QDesktopServices>
@@ -695,8 +696,20 @@ void SettingsDialog::buildUi()
 #if defined(Q_OS_WIN)
         QProcess::startDetached("osk.exe", {});
 #elif defined(Q_OS_MAC)
-        QProcess::startDetached("/usr/bin/open",
-            {"-b", "com.apple.accessibility.AccessibilityViewer"});
+        // The macOS Accessibility Keyboard is a system service, not a standalone app.
+        // Navigate to Accessibility > Keyboard in System Settings so the user can
+        // enable it — once enabled it appears as a persistent floating keyboard.
+        const int macMajor = QSysInfo::productVersion().split('.').value(0).toInt();
+        if (macMajor >= 13) {
+            // macOS 13 Ventura+ uses the new System Settings URL scheme
+            QDesktopServices::openUrl(QUrl(
+                "x-apple.systempreferences:"
+                "com.apple.Accessibility-Settings.extension?Keyboard"));
+        } else {
+            QDesktopServices::openUrl(QUrl(
+                "x-apple.systempreferences:"
+                "com.apple.preference.universalaccess?Keyboard"));
+        }
 #else
         static const QStringList kbs =
             {"onboard", "florence", "xvkbd", "kvkbd", "matchbox-keyboard"};

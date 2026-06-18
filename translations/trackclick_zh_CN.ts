@@ -90,5 +90,6 @@
     <message><source>Scroll repeat:</source><translation>滚动重复次数：</translation></message>
     <message><source>Repeat click:</source><translation>重复点击：</translation></message>
     <message><source>Launch on system startup</source><translation>开机自动启动</translation></message>
+    <message><source>Open On-Screen Keyboard</source><translation>打开屏幕键盘</translation></message>
 </context>
 </TS>

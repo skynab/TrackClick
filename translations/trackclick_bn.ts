@@ -102,5 +102,6 @@
     <message><source>Vertical (two columns)</source><translation>উল্লম্ব (দুই কলাম)</translation></message>
     <message><source>Language:</source><translation>ভাষা:</translation></message>
     <message><source>Reset to Defaults</source><translation>ডিফল্টে রিসেট করুন</translation></message>
+    <message><source>Open On-Screen Keyboard</source><translation>অন-স্ক্রিন কীবোর্ড খুলুন</translation></message>
 </context>
 </TS>

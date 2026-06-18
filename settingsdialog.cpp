@@ -16,6 +16,8 @@
 #include <QAbstractButton>
 #include <QPushButton>
 #include <QSvgRenderer>
+#include <QMessageBox>
+#include <QProcess>
 #include <cmath>
 #ifdef Q_OS_MAC
 #  include <QDesktopServices>
@@ -457,6 +459,7 @@ void SettingsDialog::retranslateUi()
     m_cmbLayout->setItemText(3, tr("Vertical (two columns)"));
     m_lblLanguage->setText(tr("Language:"));
     m_resetBtn->setText(tr("Reset to Defaults"));
+    m_btnOnScreenKbd->setText(tr("Open On-Screen Keyboard"));
 }
 
 // ── UI construction ───────────────────────────────────────────────────────────
@@ -684,6 +687,28 @@ void SettingsDialog::buildUi()
     wfl->addRow(m_chkLargeButtons);
     wfl->addRow(m_lblBtnLayout, m_cmbLayout);
     wfl->addRow(m_lblLanguage,  m_cmbLanguage);
+
+    m_btnOnScreenKbd = new QPushButton(tr("Open On-Screen Keyboard"));
+    m_btnOnScreenKbd->setFlat(true);
+    wfl->addRow(m_btnOnScreenKbd);
+    connect(m_btnOnScreenKbd, &QPushButton::clicked, this, []() {
+#if defined(Q_OS_WIN)
+        QProcess::startDetached("osk.exe", {});
+#elif defined(Q_OS_MAC)
+        QProcess::startDetached("/usr/bin/open",
+            {"-b", "com.apple.accessibility.AccessibilityViewer"});
+#else
+        static const QStringList kbs =
+            {"onboard", "florence", "xvkbd", "kvkbd", "matchbox-keyboard"};
+        for (const QString& kb : kbs) {
+            if (QProcess::startDetached(kb, {}))
+                return;
+        }
+        QMessageBox::information(nullptr, "On-Screen Keyboard",
+            "No on-screen keyboard found.\nPlease install 'onboard' or 'florence'.");
+#endif
+    });
+
     root->addWidget(m_grpWin);
 
     // ── Buttons ───────────────────────────────────────────────

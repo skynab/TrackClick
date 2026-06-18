@@ -102,5 +102,6 @@
     <message><source>Vertical (two columns)</source><translation>عمودی (دو کالم)</translation></message>
     <message><source>Language:</source><translation>زبان:</translation></message>
     <message><source>Reset to Defaults</source><translation>ڈیفالٹ پر ری سیٹ کریں</translation></message>
+    <message><source>Open On-Screen Keyboard</source><translation>آن-اسکرین کی بورڈ کھولیں</translation></message>
 </context>
 </TS>

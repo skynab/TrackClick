@@ -102,5 +102,6 @@
     <message><source>Vertical (two columns)</source><translation>عمودي (عمودان)</translation></message>
     <message><source>Language:</source><translation>اللغة:</translation></message>
     <message><source>Reset to Defaults</source><translation>إعادة التعيين إلى الافتراضي</translation></message>
+    <message><source>Open On-Screen Keyboard</source><translation>فتح لوحة المفاتيح على الشاشة</translation></message>
 </context>
 </TS>

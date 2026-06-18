@@ -102,5 +102,6 @@
     <message><source>Vertical (two columns)</source><translation>लंबवत (दो कॉलम)</translation></message>
     <message><source>Language:</source><translation>भाषा:</translation></message>
     <message><source>Reset to Defaults</source><translation>डिफ़ॉल्ट पर रीसेट करें</translation></message>
+    <message><source>Open On-Screen Keyboard</source><translation>ऑन-स्क्रीन कीबोर्ड खोलें</translation></message>
 </context>
 </TS>

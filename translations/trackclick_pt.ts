@@ -102,5 +102,6 @@
     <message><source>Vertical (two columns)</source><translation>Vertical (duas colunas)</translation></message>
     <message><source>Language:</source><translation>Idioma:</translation></message>
     <message><source>Reset to Defaults</source><translation>Redefinir para padrões</translation></message>
+    <message><source>Open On-Screen Keyboard</source><translation>Abrir teclado virtual</translation></message>
 </context>
 </TS>

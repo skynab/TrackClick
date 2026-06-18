@@ -92,5 +92,6 @@
     <message><source>Scroll repeat:</source><translation>Opakování rolování:</translation></message>
     <message><source>Repeat click:</source><translation>Opakovat kliknutí:</translation></message>
     <message><source>Launch on system startup</source><translation>Spustit při startu systému</translation></message>
+    <message><source>Open On-Screen Keyboard</source><translation>Otevřít klávesnici na obrazovce</translation></message>
 </context>
 </TS>

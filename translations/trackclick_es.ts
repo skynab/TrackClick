@@ -90,5 +90,6 @@
     <message><source>Scroll repeat:</source><translation>Repetición de desplazamiento:</translation></message>
     <message><source>Repeat click:</source><translation>Repetir clic:</translation></message>
     <message><source>Launch on system startup</source><translation>Iniciar con el sistema</translation></message>
+    <message><source>Open On-Screen Keyboard</source><translation>Abrir teclado en pantalla</translation></message>
 </context>
 </TS>

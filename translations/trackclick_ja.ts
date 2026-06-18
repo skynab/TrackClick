@@ -90,5 +90,6 @@
     <message><source>Scroll repeat:</source><translation>スクロール繰り返し：</translation></message>
     <message><source>Repeat click:</source><translation>クリック繰り返し：</translation></message>
     <message><source>Launch on system startup</source><translation>システム起動時に起動</translation></message>
+    <message><source>Open On-Screen Keyboard</source><translation>スクリーンキーボードを開く</translation></message>
 </context>
 </TS>

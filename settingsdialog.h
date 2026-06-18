@@ -158,4 +158,5 @@ private:
     QDialogButtonBox* m_buttons;
     QPushButton*      m_resetBtn      = nullptr;
     QPushButton*      m_btnSensTester = nullptr;
+    QPushButton*      m_btnOnScreenKbd = nullptr;
 };

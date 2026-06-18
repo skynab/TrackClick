@@ -102,5 +102,6 @@
     <message><source>Vertical (two columns)</source><translation>Вертикально (два столбца)</translation></message>
     <message><source>Language:</source><translation>Язык:</translation></message>
     <message><source>Reset to Defaults</source><translation>Сбросить настройки</translation></message>
+    <message><source>Open On-Screen Keyboard</source><translation>Открыть экранную клавиатуру</translation></message>
 </context>
 </TS>

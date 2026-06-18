@@ -12,12 +12,13 @@
 #include <QTranslator>
 
 enum class ButtonLayout { Rectangle, Horizontal, Vertical, VerticalTwo };
+enum class EdgeLock    { None, Left, Right };
 
 struct AppSettings {
     // Dwell / AutoMouse
     int  dwellMs        = 1000;
     int  sensitivityPx  = 5;
-    int  scrollRepeat   = 3;
+    int  scrollRepeat   = 7;
     bool repeatOnDwell  = true;      // true = repeat every dwell period; false = fire once per arm
     bool autoSelectEnabled = false;  // start with AutoSelect on
 
@@ -39,13 +40,13 @@ struct AppSettings {
     bool showModShift         = true;
     bool showExitButton       = true;
     bool showQuitButton       = true;
-    bool showDwellActiveBtn   = false;
+    bool showDwellActiveBtn   = true;
 
     // Window
     double windowOpacity  = 1.0;
     bool   alwaysOnTop    = true;
     bool   startMinimized  = false;
-    bool   xMinimizesApp   = true;
+    bool   xMinimizesApp   = false;
     bool   launchOnStartup = false;
 
     // Audio feedback
@@ -58,6 +59,10 @@ struct AppSettings {
 
     // Language (ISO code: "en", "fr", "es", "zh_CN", "ja", "ko")
     QString language         = "en";
+
+    // Edge lock / hide
+    EdgeLock edgeLock = EdgeLock::None;
+    bool     edgeHide = false;
 };
 
 class SettingsDialog : public QDialog
@@ -145,6 +150,12 @@ private:
     QComboBox*   m_cmbLayout;
     QComboBox*   m_cmbLanguage;
 
+    // Edge lock
+    QLabel*    m_lblEdgeLock = nullptr;
+    QComboBox* m_cmbEdgeLock = nullptr;
+    QCheckBox* m_chkEdgeHide = nullptr;
+
     QDialogButtonBox* m_buttons;
-    QPushButton*      m_resetBtn = nullptr;
+    QPushButton*      m_resetBtn      = nullptr;
+    QPushButton*      m_btnSensTester = nullptr;
 };

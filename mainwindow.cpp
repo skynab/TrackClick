@@ -206,17 +206,19 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     m_settings.showModShift    = m_persist.value("show/modShift",    true).toBool();
     m_settings.showExitButton    = m_persist.value("show/exit",           true).toBool();
     m_settings.showQuitButton    = m_persist.value("show/quitButton",     true).toBool();
-    m_settings.showDwellActiveBtn= m_persist.value("show/dwellActiveBtn", false).toBool();
+    m_settings.showDwellActiveBtn= m_persist.value("show/dwellActiveBtn", true).toBool();
     m_settings.startMinimized   = m_persist.value("window/startMin",         false).toBool();
-    m_settings.xMinimizesApp    = m_persist.value("window/xMinimizesApp",    true).toBool();
+    m_settings.xMinimizesApp    = m_persist.value("window/xMinimizesApp",    false).toBool();
     m_settings.launchOnStartup  = m_persist.value("window/launchOnStartup",  false).toBool();
     m_settings.audioFeedback   = m_persist.value("audio/enabled",    false).toBool();
     m_settings.iconsOnly       = m_persist.value("show/iconsOnly",    false).toBool();
     m_settings.largeButtons    = m_persist.value("show/largeButtons", false).toBool();
     m_settings.buttonLayout    = static_cast<ButtonLayout>(m_persist.value("show/buttonLayout", static_cast<int>(ButtonLayout::Vertical)).toInt());
     m_settings.language        = m_persist.value("language",          "en").toString();
-    m_settings.scrollRepeat    = m_persist.value("scroll/repeat",      3).toInt();
+    m_settings.scrollRepeat    = m_persist.value("scroll/repeat",      7).toInt();
     m_settings.repeatOnDwell   = m_persist.value("dwell/repeatOnDwell", false).toBool();
+    m_settings.edgeLock = static_cast<EdgeLock>(m_persist.value("window/edgeLock", 0).toInt());
+    m_settings.edgeHide = m_persist.value("window/edgeHide", false).toBool();
 
     // Adopt any translator already installed at startup so installLanguage()
     // can remove it when the user later switches languages (e.g. back to English).
@@ -849,7 +851,14 @@ void MainWindow::mouseMoveEvent(QMouseEvent* ev)
     }
 
     if (m_dragging) {
-        move(GLOBAL_POS(ev) - m_dragOffset);
+        QPoint newPos = GLOBAL_POS(ev) - m_dragOffset;
+        if (m_settings.edgeLock != EdgeLock::None) {
+            QRect avail = QGuiApplication::primaryScreen()->availableGeometry();
+            newPos.setX(m_settings.edgeLock == EdgeLock::Left
+                ? avail.left()
+                : avail.right() - width() + 1);
+        }
+        move(newPos);
         return;
     }
 
@@ -891,6 +900,119 @@ void MainWindow::changeEvent(QEvent* ev)
         hide();
     }
     QWidget::changeEvent(ev);
+}
+
+void MainWindow::showEvent(QShowEvent* ev)
+{
+    QWidget::showEvent(ev);
+    // When restored from tray (or any show), always snap to the visible edge position
+    // so the window never appears in its partially-hidden state.
+    if (m_settings.edgeLock != EdgeLock::None) {
+        if (m_edgeAnim) m_edgeAnim->stop();
+        QRect avail = QGuiApplication::primaryScreen()->availableGeometry();
+        int shownX = (m_settings.edgeLock == EdgeLock::Left)
+            ? avail.left()
+            : avail.right() - width() + 1;
+        if (x() != shownX)
+            move(shownX, y());
+        m_edgeShown       = true;
+        m_edgeHideCountMs = 0;
+    }
+}
+
+// ── Edge lock / slide-hide ────────────────────────────────────────────────────
+
+static constexpr int k_edgePeekPx      = 8;   // pixels visible when hidden
+static constexpr int k_edgeHideDelayMs = 800;  // idle time before sliding away
+static constexpr int k_edgePollMs      = 80;   // poll interval
+static constexpr int k_edgeAnimMs      = 180;  // slide animation duration
+
+void MainWindow::applyEdgeLock()
+{
+    if (m_edgePollTimer) m_edgePollTimer->stop();
+    if (m_edgeAnim)      m_edgeAnim->stop();
+
+    m_edgeShown       = true;
+    m_edgeHideCountMs = 0;
+
+    const EdgeLock lock = m_settings.edgeLock;
+    if (lock == EdgeLock::None) return;
+
+    QRect avail = QGuiApplication::primaryScreen()->availableGeometry();
+    int shownX  = (lock == EdgeLock::Left)
+        ? avail.left()
+        : avail.right() - width() + 1;
+    move(shownX, qBound(avail.top(), y(), avail.bottom() - height()));
+
+    if (m_settings.edgeHide) {
+        if (!m_edgePollTimer) {
+            m_edgePollTimer = new QTimer(this);
+            connect(m_edgePollTimer, &QTimer::timeout, this, &MainWindow::onEdgePoll);
+        }
+        m_edgePollTimer->start(k_edgePollMs);
+    }
+}
+
+void MainWindow::onEdgePoll()
+{
+    if (!isVisible()) {
+        m_edgeShown = true;
+        m_edgeHideCountMs = 0;
+        return;
+    }
+
+    const EdgeLock lock = m_settings.edgeLock;
+    if (lock == EdgeLock::None) return;
+
+    QRect  avail  = QGuiApplication::primaryScreen()->availableGeometry();
+    QPoint cursor = QCursor::pos();
+
+    const int shownX  = (lock == EdgeLock::Left)
+        ? avail.left()
+        : avail.right() - width() + 1;
+    const int hiddenX = (lock == EdgeLock::Left)
+        ? avail.left() - width() + k_edgePeekPx
+        : avail.right() - k_edgePeekPx + 1;
+
+    if (m_edgeShown) {
+        bool over = geometry().contains(cursor);
+        if (over) {
+            m_edgeHideCountMs = 0;
+        } else {
+            m_edgeHideCountMs += k_edgePollMs;
+            if (m_edgeHideCountMs >= k_edgeHideDelayMs) {
+                m_edgeShown       = false;
+                m_edgeHideCountMs = 0;
+                animateEdgeTo(QPoint(hiddenX, y()));
+            }
+        }
+    } else {
+        // Show when cursor enters the visible sliver at the screen edge
+        bool inPeek = (lock == EdgeLock::Left)
+            ? (cursor.x() <= avail.left() + k_edgePeekPx - 1
+               && cursor.y() >= y() && cursor.y() < y() + height())
+            : (cursor.x() >= avail.right() - k_edgePeekPx + 1
+               && cursor.y() >= y() && cursor.y() < y() + height());
+
+        if (inPeek) {
+            m_edgeShown       = true;
+            m_edgeHideCountMs = 0;
+            animateEdgeTo(QPoint(shownX, y()));
+        }
+    }
+}
+
+void MainWindow::animateEdgeTo(QPoint target)
+{
+    if (!m_edgeAnim) {
+        m_edgeAnim = new QPropertyAnimation(this, "pos", this);
+        m_edgeAnim->setEasingCurve(QEasingCurve::OutCubic);
+        m_edgeAnim->setDuration(k_edgeAnimMs);
+    }
+    m_edgeAnim->stop();
+    m_edgeAnim->setStartValue(pos());
+    m_edgeAnim->setEndValue(target);
+    m_edgeAnim->start();
 }
 
 // ─── Slots ────────────────────────────────────────────────────────────────
@@ -1184,6 +1306,9 @@ void MainWindow::applySettings(const AppSettings& s)
     m_persist.setValue("language",           s.language);
     m_persist.setValue("scroll/repeat",      s.scrollRepeat);
     m_persist.setValue("dwell/repeatOnDwell", s.repeatOnDwell);
+    m_persist.setValue("window/edgeLock",    static_cast<int>(s.edgeLock));
+    m_persist.setValue("window/edgeHide",    s.edgeHide);
+    applyEdgeLock();
 }
 
 void MainWindow::onExitClicked()
@@ -1223,6 +1348,7 @@ void MainWindow::loadWindowSettings()
         QRect screen = QGuiApplication::primaryScreen()->availableGeometry();
         move(screen.right() - width() - 20, screen.top() + 40);
     }
+    applyEdgeLock();
 }
 
 // ─── Translation ──────────────────────────────────────────────────────────────

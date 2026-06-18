@@ -1,8 +1,11 @@
 #include "settingsdialog.h"
 #include "translations/tsparser.h"
 #include <QApplication>
+#include <QCursor>
 #include <QEvent>
 #include <QFrame>
+#include <QProgressBar>
+#include <QTimer>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QGridLayout>
@@ -13,6 +16,7 @@
 #include <QAbstractButton>
 #include <QPushButton>
 #include <QSvgRenderer>
+#include <cmath>
 #ifdef Q_OS_MAC
 #  include <QDesktopServices>
 #  include <QUrl>
@@ -93,6 +97,212 @@ QPushButton[flat=true] {
 }
 QPushButton[flat=true]:hover { background: #4D4D4D; }
 )";
+
+// ── Sensitivity Tester ────────────────────────────────────────────────────────
+
+class CrosshairWidget : public QWidget
+{
+public:
+    explicit CrosshairWidget(QWidget* parent = nullptr) : QWidget(parent)
+    {
+        setFixedSize(120, 120);
+    }
+
+    void setHighlighted(bool h) { if (m_hl != h) { m_hl = h; update(); } }
+
+    QPoint centerInScreen() const
+    {
+        return mapToGlobal(QPoint(width() / 2, height() / 2));
+    }
+
+protected:
+    void paintEvent(QPaintEvent*) override
+    {
+        QPainter p(this);
+        p.setRenderHint(QPainter::Antialiasing);
+        p.fillRect(rect(), QColor(0x1A, 0x1A, 0x1A));
+
+        p.setPen(QPen(QColor("#555555"), 1));
+        p.drawRect(rect().adjusted(0, 0, -1, -1));
+
+        int cx = width() / 2, cy = height() / 2;
+        QColor col = m_hl ? QColor("#FFD000") : QColor("#FFA600");
+
+        p.setPen(QPen(col, 1));
+        p.drawLine(0, cy, width() - 1, cy);
+        p.drawLine(cx, 0, cx, height() - 1);
+
+        p.setBrush(Qt::NoBrush);
+        p.drawEllipse(QPoint(cx, cy), 8, 8);
+
+        p.setPen(Qt::NoPen);
+        p.setBrush(col);
+        p.drawEllipse(QPoint(cx, cy), 2, 2);
+    }
+
+private:
+    bool m_hl = false;
+};
+
+class SensitivityTesterDialog : public QDialog
+{
+    Q_OBJECT
+public:
+    explicit SensitivityTesterDialog(QWidget* parent = nullptr);
+
+signals:
+    void sensitivityChosen(int px);
+
+private slots:
+    void onStart();
+    void onPoll();
+
+private:
+    void finishMeasurement();
+
+    enum class Phase { Idle, Waiting, Measuring, Done };
+
+    CrosshairWidget* m_crosshair;
+    QLabel*          m_infoLbl;
+    QProgressBar*    m_bar;
+    QLabel*          m_resultLbl;
+    QPushButton*     m_startBtn;
+    QTimer           m_timer;
+
+    Phase  m_phase     = Phase::Idle;
+    QPoint m_lastPos;
+    double m_sumDelta  = 0.0;
+    int    m_samples   = 0;
+    int    m_elapsedMs = 0;
+
+    static constexpr int k_durationMs = 8000;
+    static constexpr int k_hoverPx   = 30;
+    static constexpr int k_pollMs    = 50;
+};
+
+SensitivityTesterDialog::SensitivityTesterDialog(QWidget* parent)
+    : QDialog(parent)
+{
+    setWindowTitle(tr("Sensitivity Tester"));
+    setModal(true);
+    setStyleSheet(STYLE);
+    setFixedWidth(280);
+
+    auto* root = new QVBoxLayout(this);
+    root->setSpacing(10);
+    root->setContentsMargins(16, 16, 16, 16);
+
+    m_infoLbl = new QLabel(
+        tr("Click Start, then move your mouse over\nthe crosshairs and keep it still."));
+    m_infoLbl->setAlignment(Qt::AlignCenter);
+    m_infoLbl->setWordWrap(true);
+    root->addWidget(m_infoLbl);
+
+    auto* crossRow = new QHBoxLayout;
+    m_crosshair = new CrosshairWidget;
+    crossRow->addStretch();
+    crossRow->addWidget(m_crosshair);
+    crossRow->addStretch();
+    root->addLayout(crossRow);
+
+    m_bar = new QProgressBar;
+    m_bar->setRange(0, 100);
+    m_bar->setValue(0);
+    m_bar->setTextVisible(false);
+    m_bar->setFixedHeight(8);
+    m_bar->setStyleSheet(
+        "QProgressBar{background:#1A1A1A;border:1px solid #555;border-radius:3px;}"
+        "QProgressBar::chunk{background:#FFA600;border-radius:2px;}");
+    root->addWidget(m_bar);
+
+    m_resultLbl = new QLabel;
+    m_resultLbl->setAlignment(Qt::AlignCenter);
+    m_resultLbl->setStyleSheet("color:#FFA600; font-weight:bold;");
+    m_resultLbl->hide();
+    root->addWidget(m_resultLbl);
+
+    auto* btnRow = new QHBoxLayout;
+    m_startBtn   = new QPushButton(tr("Start"));
+    auto* closeBtn = new QPushButton(tr("Close"));
+    closeBtn->setProperty("flat", true);
+    btnRow->addStretch();
+    btnRow->addWidget(m_startBtn);
+    btnRow->addWidget(closeBtn);
+    btnRow->addStretch();
+    root->addLayout(btnRow);
+
+    connect(m_startBtn, &QPushButton::clicked, this, &SensitivityTesterDialog::onStart);
+    connect(closeBtn,   &QPushButton::clicked, this, &QDialog::accept);
+
+    m_timer.setInterval(k_pollMs);
+    connect(&m_timer, &QTimer::timeout, this, &SensitivityTesterDialog::onPoll);
+}
+
+void SensitivityTesterDialog::onStart()
+{
+    m_phase     = Phase::Waiting;
+    m_sumDelta  = 0.0;
+    m_samples   = 0;
+    m_elapsedMs = 0;
+    m_lastPos   = QCursor::pos();
+
+    m_startBtn->setEnabled(false);
+    m_resultLbl->hide();
+    m_bar->setValue(0);
+    m_infoLbl->setText(tr("Move your mouse over the crosshairs\nand keep it still."));
+    m_timer.start();
+}
+
+void SensitivityTesterDialog::onPoll()
+{
+    QPoint cur    = QCursor::pos();
+    QPoint center = m_crosshair->centerInScreen();
+    double dist   = std::hypot(double(cur.x() - center.x()),
+                               double(cur.y() - center.y()));
+    bool nearCenter = dist <= k_hoverPx;
+    m_crosshair->setHighlighted(nearCenter);
+
+    if (m_phase == Phase::Waiting) {
+        if (nearCenter) {
+            m_phase     = Phase::Measuring;
+            m_lastPos   = cur;
+            m_sumDelta  = 0.0;
+            m_samples   = 0;
+            m_elapsedMs = 0;
+            m_infoLbl->setText(tr("Measuring — keep your mouse still…"));
+        }
+    } else if (m_phase == Phase::Measuring) {
+        double d = std::hypot(double(cur.x() - m_lastPos.x()),
+                              double(cur.y() - m_lastPos.y()));
+        m_sumDelta  += d;
+        m_samples++;
+        m_lastPos    = cur;
+        m_elapsedMs += k_pollMs;
+        m_bar->setValue(m_elapsedMs * 100 / k_durationMs);
+        if (m_elapsedMs >= k_durationMs)
+            finishMeasurement();
+    }
+}
+
+void SensitivityTesterDialog::finishMeasurement()
+{
+    m_timer.stop();
+    m_phase = Phase::Done;
+    m_crosshair->setHighlighted(false);
+    m_bar->setValue(100);
+
+    double avg     = m_samples > 0 ? m_sumDelta / m_samples : 1.0;
+    int recommended = qBound(1, static_cast<int>(std::ceil(avg * 2.0)), 100);
+
+    m_resultLbl->setText(tr("Sensitivity set to %1 px").arg(recommended));
+    m_resultLbl->show();
+    m_startBtn->setText(tr("Retest"));
+    m_startBtn->setEnabled(true);
+
+    emit sensitivityChosen(recommended);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 SettingsDialog::SettingsDialog(const AppSettings& current,
                                QTranslator* appTranslator,
@@ -198,6 +408,7 @@ void SettingsDialog::retranslateUi()
     m_grpDwell->setTitle(tr("AutoMouse / Dwell Clicking"));
     m_lblDwellTime->setText(tr("Dwell time:"));
     m_lblSensitivity->setText(tr("Sensitivity:"));
+    m_btnSensTester->setText(tr("Sensitivity Tester…"));
     m_lblScrollRepeat->setText(tr("Scroll repeat:"));
     m_lblRepeatMode->setText(tr("Repeat click:"));
 #ifdef Q_OS_MAC
@@ -218,14 +429,19 @@ void SettingsDialog::retranslateUi()
     m_chkScrollUp->setText(tr("Scroll Up"));
     m_chkScrollDown->setText(tr("Scroll Down"));
     m_chkScrollHoriz->setText(tr("Scroll Left/Right"));
-    m_chkModCtrl->setText(tr("Ctrl modifier"));
-    m_chkModAlt->setText(tr("Alt modifier"));
-    m_chkModShift->setText(tr("Shift modifier"));
-    m_chkExitButton->setText(tr("Exit button"));
-    m_chkQuitButton->setText(tr("Quit button"));
-    m_chkDwellActiveBtn->setText(tr("Dwell Active button"));
+    m_chkModCtrl->setText(tr("Ctrl Modifier"));
+    m_chkModAlt->setText(tr("Alt Modifier"));
+    m_chkModShift->setText(tr("Shift Modifier"));
+    m_chkExitButton->setText(tr("Exit Button"));
+    m_chkQuitButton->setText(tr("Quit Button"));
+    m_chkDwellActiveBtn->setText(tr("Dwell Active Button"));
 
     m_grpWin->setTitle(tr("Window"));
+    m_lblEdgeLock->setText(tr("Lock to screen edge:"));
+    m_cmbEdgeLock->setItemText(0, tr("None"));
+    m_cmbEdgeLock->setItemText(1, tr("Left edge"));
+    m_cmbEdgeLock->setItemText(2, tr("Right edge"));
+    m_chkEdgeHide->setText(tr("Slide off screen when idle"));
     m_chkAlwaysOnTop->setText(tr("Always on top"));
     m_chkStartMinimized->setText(tr("Start minimized to tray"));
     m_chkXMinimizesApp->setText(tr("Top X minimizes app"));
@@ -319,8 +535,19 @@ void SettingsDialog::buildUi()
     m_lblSensitivity  = new QLabel(tr("Sensitivity:"));
     m_lblScrollRepeat = new QLabel(tr("Scroll repeat:"));
     m_lblRepeatMode   = new QLabel(tr("Repeat click:"));
+    m_btnSensTester = new QPushButton(tr("Sensitivity Tester…"));
+    m_btnSensTester->setProperty("flat", true);
+    connect(m_btnSensTester, &QPushButton::clicked, this, [this](){
+        auto* dlg = new SensitivityTesterDialog(this);
+        connect(dlg, &SensitivityTesterDialog::sensitivityChosen,
+                this, [this](int px){ m_sensitivPx->setValue(px); });
+        dlg->setAttribute(Qt::WA_DeleteOnClose);
+        dlg->exec();
+    });
+
     fl->addRow(m_lblDwellTime,    m_dwellMs);
     fl->addRow(m_lblSensitivity,  m_sensitivPx);
+    fl->addRow(m_btnSensTester);
     fl->addRow(m_lblScrollRepeat, m_scrollRepeat);
     fl->addRow(m_lblRepeatMode,   m_chkRepeatMode);
 
@@ -355,12 +582,12 @@ void SettingsDialog::buildUi()
     m_chkScrollUp    = new QCheckBox(tr("Scroll Up"));
     m_chkScrollDown  = new QCheckBox(tr("Scroll Down"));
     m_chkScrollHoriz = new QCheckBox(tr("Scroll Left/Right"));
-    m_chkModCtrl     = new QCheckBox(tr("Ctrl modifier"));
-    m_chkModAlt      = new QCheckBox(tr("Alt modifier"));
-    m_chkModShift    = new QCheckBox(tr("Shift modifier"));
-    m_chkExitButton      = new QCheckBox(tr("Exit button"));
-    m_chkQuitButton      = new QCheckBox(tr("Quit button"));
-    m_chkDwellActiveBtn  = new QCheckBox(tr("Dwell Active button"));
+    m_chkModCtrl     = new QCheckBox(tr("Ctrl Modifier"));
+    m_chkModAlt      = new QCheckBox(tr("Alt Modifier"));
+    m_chkModShift    = new QCheckBox(tr("Shift Modifier"));
+    m_chkExitButton      = new QCheckBox(tr("Exit Button"));
+    m_chkQuitButton      = new QCheckBox(tr("Quit Button"));
+    m_chkDwellActiveBtn  = new QCheckBox(tr("Dwell Active Button"));
 
     int row = 0, col = 0;
     auto addChk = [&](QCheckBox* c){
@@ -396,6 +623,19 @@ void SettingsDialog::buildUi()
         m_opacityLabel->setText(QString::number(v) + "%");
     });
 
+    m_lblEdgeLock = new QLabel(tr("Lock to screen edge:"));
+    m_cmbEdgeLock = new QComboBox;
+    m_cmbEdgeLock->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+    m_cmbEdgeLock->setMinimumWidth(110);
+    m_cmbEdgeLock->addItem(tr("None"),       static_cast<int>(EdgeLock::None));
+    m_cmbEdgeLock->addItem(tr("Left edge"),  static_cast<int>(EdgeLock::Left));
+    m_cmbEdgeLock->addItem(tr("Right edge"), static_cast<int>(EdgeLock::Right));
+    m_chkEdgeHide = new QCheckBox(tr("Slide off screen when idle"));
+    connect(m_cmbEdgeLock, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, [this](int idx){ m_chkEdgeHide->setEnabled(idx != 0); });
+    wfl->addRow(m_lblEdgeLock, m_cmbEdgeLock);
+    wfl->addRow(m_chkEdgeHide);
+
     m_chkAlwaysOnTop    = new QCheckBox(tr("Always on top"));
     m_chkStartMinimized = new QCheckBox(tr("Start minimized to tray"));
     m_chkXMinimizesApp  = new QCheckBox(tr("Top X minimizes app"));
@@ -416,13 +656,19 @@ void SettingsDialog::buildUi()
     m_cmbLanguage = new QComboBox;
     m_cmbLanguage->setSizeAdjustPolicy(QComboBox::AdjustToContents);
     m_cmbLanguage->setMinimumWidth(130);
-    m_cmbLanguage->addItem("English",  "en");
-    m_cmbLanguage->addItem("Čeština",  "cs");
-    m_cmbLanguage->addItem("Français", "fr");
-    m_cmbLanguage->addItem("Español",  "es");
-    m_cmbLanguage->addItem("中文简体",  "zh_CN");
-    m_cmbLanguage->addItem("日本語",    "ja");
-    m_cmbLanguage->addItem("한국어",    "ko");
+    m_cmbLanguage->addItem("English",   "en");
+    m_cmbLanguage->addItem("Čeština",   "cs");
+    m_cmbLanguage->addItem("Français",  "fr");
+    m_cmbLanguage->addItem("Español",   "es");
+    m_cmbLanguage->addItem("中文简体",   "zh_CN");
+    m_cmbLanguage->addItem("日本語",     "ja");
+    m_cmbLanguage->addItem("한국어",     "ko");
+    m_cmbLanguage->addItem("हिन्दी",    "hi");
+    m_cmbLanguage->addItem("العربية",   "ar");
+    m_cmbLanguage->addItem("বাংলা",     "bn");
+    m_cmbLanguage->addItem("Português", "pt");
+    m_cmbLanguage->addItem("Русский",   "ru");
+    m_cmbLanguage->addItem("اردو",      "ur");
 
     m_lblOpacity   = new QLabel(tr("Opacity:"));
     m_lblBtnLayout = new QLabel(tr("Button layout:"));
@@ -477,6 +723,10 @@ void SettingsDialog::loadFrom(const AppSettings& s)
     m_chkQuitButton->setChecked(s.showQuitButton);
     m_chkDwellActiveBtn->setChecked(s.showDwellActiveBtn);
 
+    m_cmbEdgeLock->setCurrentIndex(static_cast<int>(s.edgeLock));
+    m_chkEdgeHide->setChecked(s.edgeHide);
+    m_chkEdgeHide->setEnabled(s.edgeLock != EdgeLock::None);
+
     m_opacitySlider->setValue(static_cast<int>(s.windowOpacity * 100));
     m_chkAlwaysOnTop->setChecked(s.alwaysOnTop);
     m_chkStartMinimized->setChecked(s.startMinimized);
@@ -521,6 +771,9 @@ AppSettings SettingsDialog::readUi() const
     s.showQuitButton     = m_chkQuitButton->isChecked();
     s.showDwellActiveBtn = m_chkDwellActiveBtn->isChecked();
 
+    s.edgeLock = static_cast<EdgeLock>(m_cmbEdgeLock->currentIndex());
+    s.edgeHide = m_chkEdgeHide->isChecked() && (s.edgeLock != EdgeLock::None);
+
     s.windowOpacity   = m_opacitySlider->value() / 100.0;
     s.alwaysOnTop      = m_chkAlwaysOnTop->isChecked();
     s.startMinimized   = m_chkStartMinimized->isChecked();
@@ -533,3 +786,5 @@ AppSettings SettingsDialog::readUi() const
     s.language        = m_cmbLanguage->currentData().toString();
     return s;
 }
+
+#include "settingsdialog.moc"

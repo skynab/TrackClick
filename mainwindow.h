@@ -7,6 +7,7 @@
 #include <QMenu>
 #include <QTimer>
 #include <QProgressBar>
+#include <QPropertyAnimation>
 #include <QAction>
 #include <QSettings>
 #ifdef HAVE_MULTIMEDIA
@@ -39,6 +40,7 @@ protected:
     void paintEvent(QPaintEvent*)      override;
     void closeEvent(QCloseEvent*)      override;
     void changeEvent(QEvent*)          override;
+    void showEvent(QShowEvent*)        override;
 
 private slots:
     void onClickButtonPressed(ClickType type);
@@ -49,6 +51,7 @@ private slots:
     void onDwellProgress(float frac);
     void onDwellFired(QPoint pos, ClickType type);
     void applySettings(const AppSettings& s);
+    void onEdgePoll();
 
 private:
     void buildUi();
@@ -60,6 +63,8 @@ private:
     void retranslateUi();
     void installLanguage(const QString& lang);
     ClickButton* makeButton(const QString& label, const QString& tooltip, ClickType type, const QString& iconName);
+    void applyEdgeLock();
+    void animateEdgeTo(QPoint target);
 
     // ── Resize helpers ────────────────────────────────────────────
     enum class ResizeEdge {
@@ -104,6 +109,12 @@ private:
     // ── Hover-select timer ────────────────────────────────────
     QTimer*    m_hoverTimer  = nullptr;
     ClickType  m_hoveredType = ClickType::None;
+
+    // ── Edge lock / slide-hide ─────────────────────────────────
+    QTimer*             m_edgePollTimer   = nullptr;
+    QPropertyAnimation* m_edgeAnim        = nullptr;
+    bool                m_edgeShown       = true;
+    int                 m_edgeHideCountMs = 0;
 
     // ── Sub-objects ───────────────────────────────────────────
     DwellManager*     m_dwell      = nullptr;

@@ -39,6 +39,11 @@
     <message><source>Selected: </source><translation>已选择：</translation></message>
     <message><source>Running in the system tray. Right-click the tray icon to quit.</source><translation>正在系统托盘中运行。右键单击托盘图标退出。</translation></message>
     <message><source>Quit Program</source><translation>退出程序</translation></message>
+    <message><source>No Click</source><translation>无操作</translation></message>
+    <message><source>No action — dwell without clicking</source><translation>无操作 — 悬停不点击</translation></message>
+    <message><source>No action</source><translation>无操作</translation></message>
+    <message><source>Dwell Active</source><translation>悬停激活</translation></message>
+    <message><source>Enable dwell-clicking (same as the Auto button)</source><translation>启用悬停点击（与自动按钮相同）</translation></message>
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -61,11 +66,12 @@
     <message><source>Scroll Up</source><translation>向上滚动</translation></message>
     <message><source>Scroll Down</source><translation>向下滚动</translation></message>
     <message><source>Scroll Left/Right</source><translation>左/右滚动</translation></message>
-    <message><source>Ctrl modifier</source><translation>Ctrl修饰键</translation></message>
-    <message><source>Alt modifier</source><translation>Alt修饰键</translation></message>
-    <message><source>Shift modifier</source><translation>Shift修饰键</translation></message>
-    <message><source>Exit button</source><translation>退出按钮</translation></message>
-    <message><source>Quit button</source><translation>退出程序按钮</translation></message>
+    <message><source>Ctrl Modifier</source><translation>Ctrl修饰键</translation></message>
+    <message><source>Alt Modifier</source><translation>Alt修饰键</translation></message>
+    <message><source>Shift Modifier</source><translation>Shift修饰键</translation></message>
+    <message><source>Exit Button</source><translation>退出按钮</translation></message>
+    <message><source>Quit Button</source><translation>退出程序按钮</translation></message>
+    <message><source>Dwell Active Button</source><translation>悬停激活按钮</translation></message>
     <message><source>Window</source><translation>窗口</translation></message>
     <message><source>Opacity:</source><translation>透明度：</translation></message>
     <message><source>Always on top</source><translation>窗口置顶</translation></message>

@@ -39,6 +39,11 @@
     <message><source>Selected: </source><translation>選択済み：</translation></message>
     <message><source>Running in the system tray. Right-click the tray icon to quit.</source><translation>システムトレイで実行中。トレイアイコンを右クリックして終了。</translation></message>
     <message><source>Quit Program</source><translation>プログラムを終了</translation></message>
+    <message><source>No Click</source><translation>何もしない</translation></message>
+    <message><source>No action — dwell without clicking</source><translation>何もしない — クリックせずにホバー</translation></message>
+    <message><source>No action</source><translation>何もしない</translation></message>
+    <message><source>Dwell Active</source><translation>ドウェル有効</translation></message>
+    <message><source>Enable dwell-clicking (same as the Auto button)</source><translation>滞留クリックを有効にする（Autoボタンと同じ）</translation></message>
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -61,11 +66,12 @@
     <message><source>Scroll Up</source><translation>上にスクロール</translation></message>
     <message><source>Scroll Down</source><translation>下にスクロール</translation></message>
     <message><source>Scroll Left/Right</source><translation>左右にスクロール</translation></message>
-    <message><source>Ctrl modifier</source><translation>Ctrl キー</translation></message>
-    <message><source>Alt modifier</source><translation>Alt キー</translation></message>
-    <message><source>Shift modifier</source><translation>Shift キー</translation></message>
-    <message><source>Exit button</source><translation>終了ボタン</translation></message>
-    <message><source>Quit button</source><translation>プログラム終了ボタン</translation></message>
+    <message><source>Ctrl Modifier</source><translation>Ctrl キー</translation></message>
+    <message><source>Alt Modifier</source><translation>Alt キー</translation></message>
+    <message><source>Shift Modifier</source><translation>Shift キー</translation></message>
+    <message><source>Exit Button</source><translation>終了ボタン</translation></message>
+    <message><source>Quit Button</source><translation>プログラム終了ボタン</translation></message>
+    <message><source>Dwell Active Button</source><translation>ドウェル有効ボタン</translation></message>
     <message><source>Window</source><translation>ウィンドウ</translation></message>
     <message><source>Opacity:</source><translation>不透明度：</translation></message>
     <message><source>Always on top</source><translation>常に最前面に表示</translation></message>

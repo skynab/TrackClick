@@ -51,5 +51,11 @@
         <file alias="trackclick_zh_CN.ts">translations/trackclick_zh_CN.ts</file>
         <file alias="trackclick_ja.ts">translations/trackclick_ja.ts</file>
         <file alias="trackclick_ko.ts">translations/trackclick_ko.ts</file>
+        <file alias="trackclick_hi.ts">translations/trackclick_hi.ts</file>
+        <file alias="trackclick_ar.ts">translations/trackclick_ar.ts</file>
+        <file alias="trackclick_bn.ts">translations/trackclick_bn.ts</file>
+        <file alias="trackclick_pt.ts">translations/trackclick_pt.ts</file>
+        <file alias="trackclick_ru.ts">translations/trackclick_ru.ts</file>
+        <file alias="trackclick_ur.ts">translations/trackclick_ur.ts</file>
     </qresource>
 </RCC>

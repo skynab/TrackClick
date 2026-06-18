@@ -103,5 +103,8 @@
     <message><source>Language:</source><translation>Idioma:</translation></message>
     <message><source>Reset to Defaults</source><translation>Redefinir para padrões</translation></message>
     <message><source>Open On-Screen Keyboard</source><translation>Abrir teclado virtual</translation></message>
+    <message><source>No on-screen keyboard was found.
+Please install 'onboard' or 'florence'.</source><translation>Nenhum teclado virtual foi encontrado.
+Instale 'onboard' ou 'florence'.</translation></message>
 </context>
 </TS>

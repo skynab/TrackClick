@@ -91,5 +91,8 @@
     <message><source>Repeat click:</source><translation>重复点击：</translation></message>
     <message><source>Launch on system startup</source><translation>开机自动启动</translation></message>
     <message><source>Open On-Screen Keyboard</source><translation>打开屏幕键盘</translation></message>
+    <message><source>No on-screen keyboard was found.
+Please install 'onboard' or 'florence'.</source><translation>未找到屏幕键盘。
+请安装 'onboard' 或 'florence'。</translation></message>
 </context>
 </TS>

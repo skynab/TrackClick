@@ -692,7 +692,7 @@ void SettingsDialog::buildUi()
     m_btnOnScreenKbd = new QPushButton(tr("Open On-Screen Keyboard"));
     m_btnOnScreenKbd->setFlat(true);
     wfl->addRow(m_btnOnScreenKbd);
-    connect(m_btnOnScreenKbd, &QPushButton::clicked, this, []() {
+    connect(m_btnOnScreenKbd, &QPushButton::clicked, this, [this]() {
 #if defined(Q_OS_WIN)
         // Build full path from %SystemRoot% so PATH resolution isn't needed.
         const QString sysRoot = QString::fromLocal8Bit(qgetenv("SystemRoot"));
@@ -715,14 +715,20 @@ void SettingsDialog::buildUi()
                 "com.apple.preference.universalaccess?Keyboard"));
         }
 #else
-        static const QStringList kbs =
-            {"onboard", "florence", "xvkbd", "kvkbd", "matchbox-keyboard"};
+        // Prefer Wayland-native keyboards on Wayland to avoid X11 keyboards
+        // starting (returning true) and then immediately crashing on pure Wayland.
+        const bool onWayland = !qgetenv("WAYLAND_DISPLAY").isEmpty();
+        const QStringList kbs = onWayland
+            ? QStringList{"onboard", "squeekboard", "wvkbd",
+                          "maliit-keyboard", "florence", "kvkbd", "matchbox-keyboard"}
+            : QStringList{"onboard", "florence", "xvkbd", "kvkbd", "matchbox-keyboard"};
         for (const QString& kb : kbs) {
             if (QProcess::startDetached(kb, {}))
                 return;
         }
-        QMessageBox::information(nullptr, "On-Screen Keyboard",
-            "No on-screen keyboard found.\nPlease install 'onboard' or 'florence'.");
+        QMessageBox::information(this, tr("On-Screen Keyboard"),
+            tr("No on-screen keyboard was found.\n"
+               "Please install 'onboard' or 'florence'."));
 #endif
     });
 

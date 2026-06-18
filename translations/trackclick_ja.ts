@@ -91,5 +91,8 @@
     <message><source>Repeat click:</source><translation>クリック繰り返し：</translation></message>
     <message><source>Launch on system startup</source><translation>システム起動時に起動</translation></message>
     <message><source>Open On-Screen Keyboard</source><translation>スクリーンキーボードを開く</translation></message>
+    <message><source>No on-screen keyboard was found.
+Please install 'onboard' or 'florence'.</source><translation>スクリーンキーボードが見つかりませんでした。
+'onboard' または 'florence' をインストールしてください。</translation></message>
 </context>
 </TS>

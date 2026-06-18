@@ -103,5 +103,8 @@
     <message><source>Language:</source><translation>भाषा:</translation></message>
     <message><source>Reset to Defaults</source><translation>डिफ़ॉल्ट पर रीसेट करें</translation></message>
     <message><source>Open On-Screen Keyboard</source><translation>ऑन-स्क्रीन कीबोर्ड खोलें</translation></message>
+    <message><source>No on-screen keyboard was found.
+Please install 'onboard' or 'florence'.</source><translation>कोई ऑन-स्क्रीन कीबोर्ड नहीं मिला।
+कृपया 'onboard' या 'florence' इंस्टॉल करें।</translation></message>
 </context>
 </TS>

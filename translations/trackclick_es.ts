@@ -91,5 +91,8 @@
     <message><source>Repeat click:</source><translation>Repetir clic:</translation></message>
     <message><source>Launch on system startup</source><translation>Iniciar con el sistema</translation></message>
     <message><source>Open On-Screen Keyboard</source><translation>Abrir teclado en pantalla</translation></message>
+    <message><source>No on-screen keyboard was found.
+Please install 'onboard' or 'florence'.</source><translation>No se encontró ningún teclado en pantalla.
+Instale 'onboard' o 'florence'.</translation></message>
 </context>
 </TS>

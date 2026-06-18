@@ -103,5 +103,8 @@
     <message><source>Language:</source><translation>اللغة:</translation></message>
     <message><source>Reset to Defaults</source><translation>إعادة التعيين إلى الافتراضي</translation></message>
     <message><source>Open On-Screen Keyboard</source><translation>فتح لوحة المفاتيح على الشاشة</translation></message>
+    <message><source>No on-screen keyboard was found.
+Please install 'onboard' or 'florence'.</source><translation>لم يتم العثور على لوحة مفاتيح على الشاشة.
+يرجى تثبيت 'onboard' أو 'florence'.</translation></message>
 </context>
 </TS>

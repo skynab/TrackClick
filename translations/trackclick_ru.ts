@@ -103,5 +103,8 @@
     <message><source>Language:</source><translation>Язык:</translation></message>
     <message><source>Reset to Defaults</source><translation>Сбросить настройки</translation></message>
     <message><source>Open On-Screen Keyboard</source><translation>Открыть экранную клавиатуру</translation></message>
+    <message><source>No on-screen keyboard was found.
+Please install 'onboard' or 'florence'.</source><translation>Экранная клавиатура не найдена.
+Установите 'onboard' или 'florence'.</translation></message>
 </context>
 </TS>

@@ -694,7 +694,11 @@ void SettingsDialog::buildUi()
     wfl->addRow(m_btnOnScreenKbd);
     connect(m_btnOnScreenKbd, &QPushButton::clicked, this, []() {
 #if defined(Q_OS_WIN)
-        QProcess::startDetached("osk.exe", {});
+        // Build full path from %SystemRoot% so PATH resolution isn't needed.
+        const QString sysRoot = QString::fromLocal8Bit(qgetenv("SystemRoot"));
+        const QString osk = (sysRoot.isEmpty() ? QString("C:\\Windows") : sysRoot)
+                            + "\\System32\\osk.exe";
+        QProcess::startDetached(osk, {});
 #elif defined(Q_OS_MAC)
         // The macOS Accessibility Keyboard is a system service, not a standalone app.
         // Navigate to Accessibility > Keyboard in System Settings so the user can

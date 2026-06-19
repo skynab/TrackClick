@@ -90,8 +90,7 @@ jobs:
             libgl1-mesa-dev \
             libx11-dev \
             libxtst-dev \
-            libxi-dev \
-            rpm
+            libxi-dev
           sudo apt-get install -y qt6-multimedia-dev || true
           # uinput is needed at runtime on Wayland; ensure the header is present for the build
           sudo modprobe uinput || true
@@ -205,24 +204,6 @@ jobs:
         with:
           name: TrackClick-Linux
           path: TrackClick-Linux.AppImage
-
-      - name: Package distro packages (Linux)
-        if: matrix.name == 'Linux'
-        run: |
-          # Generate .deb and .rpm from the CPack config produced at configure time.
-          # Runs after the AppImage upload so a packaging hiccup never costs the
-          # AppImage artifact.
-          cpack --config build/CPackConfig.cmake -G "DEB;RPM" -B dist-packages
-          ls -la dist-packages
-
-      - name: Upload (Linux packages)
-        if: matrix.name == 'Linux'
-        uses: actions/upload-artifact@v4
-        with:
-          name: TrackClick-Linux-packages
-          path: |
-            dist-packages/*.deb
-            dist-packages/*.rpm
 
       - name: Upload (macOS)
         if: matrix.name == 'macOS'

@@ -965,7 +965,12 @@ void MainWindow::onEdgePoll()
     if (lock == EdgeLock::None) return;
 
     QRect  avail  = QGuiApplication::primaryScreen()->availableGeometry();
-    QPoint cursor = QCursor::pos();
+    // Use ClickInjector::cursorPos() rather than QCursor::pos(): on Wayland the
+    // latter goes stale as soon as the pointer leaves the window, so the
+    // slide-away/peek detection never saw the cursor move and the feature
+    // appeared dead on Ubuntu.  cursorPos() tracks the cursor globally (evdev /
+    // XQueryPointer), the same source the dwell timer uses.
+    QPoint cursor = ClickInjector::cursorPos();
 
     const int shownX  = (lock == EdgeLock::Left)
         ? avail.left()

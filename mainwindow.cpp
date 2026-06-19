@@ -273,7 +273,9 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     buildTray();
     loadWindowSettings();
 
-
+    // If launch-on-startup is enabled, make sure the OS registration still
+    // exists and points at the current executable (self-heals after updates).
+    syncLaunchOnStartup();
 }
 
 void MainWindow::promptForInputAccessIfNeeded()
@@ -1243,12 +1245,19 @@ static void setLaunchOnStartup(bool enable)
 static void setLaunchOnStartup(bool) {}
 #endif
 
+void MainWindow::syncLaunchOnStartup()
+{
+    // Only re-assert when enabled; disabling is handled in applySettings so we
+    // never touch the OS registration on launch for users who opted out.
+    if (m_settings.launchOnStartup)
+        setLaunchOnStartup(true);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 void MainWindow::applySettings(const AppSettings& s)
 {
-    const QString oldLanguage        = m_settings.language;
-    const bool   oldLaunchOnStartup = m_settings.launchOnStartup;
+    const QString oldLanguage = m_settings.language;
     m_settings = s;
 
     m_dwell->setDwellMs(s.dwellMs);
@@ -1284,8 +1293,10 @@ void MainWindow::applySettings(const AppSettings& s)
     m_persist.setValue("window/startMin",      s.startMinimized);
     m_persist.setValue("window/xMinimizesApp", s.xMinimizesApp);
     m_persist.setValue("window/launchOnStartup", s.launchOnStartup);
-    if (s.launchOnStartup != oldLaunchOnStartup)
-        setLaunchOnStartup(s.launchOnStartup);
+    // Reconcile unconditionally: the registry/autostart entry must match the
+    // setting even when it is unchanged here but was lost externally, never
+    // written by an older build, or points at a stale executable path.
+    setLaunchOnStartup(s.launchOnStartup);
     m_persist.setValue("audio/enabled",      s.audioFeedback);
     m_persist.setValue("show/noClick",        s.showNoClick);
     m_persist.setValue("show/leftClick",     s.showLeftClick);

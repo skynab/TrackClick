@@ -118,6 +118,16 @@ if(UNIX AND NOT APPLE)
     install(FILES icons/app.svg
             DESTINATION share/icons/hicolor/scalable/apps
             RENAME TrackClick.svg)
+
+    # The binary installs as "TrackClick" (matching the macOS/Windows target and
+    # the desktop launcher's Exec=/StartupWMClass=), but the Debian package and
+    # the command users type are lowercase "trackclick".  Ship a relative
+    # lowercase symlink so `trackclick` works from a terminal too; the .desktop
+    # launcher keeps using the capitalised binary.
+    install(CODE "
+        execute_process(COMMAND \"${CMAKE_COMMAND}\" -E create_symlink
+            TrackClick \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/bin/trackclick\")
+    ")
 endif()
 
 option(BUILD_TESTS "Build unit tests" OFF)

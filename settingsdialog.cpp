@@ -450,7 +450,7 @@ void SettingsDialog::retranslateUi()
     m_chkAlwaysOnTop->setText(tr("Always on top"));
     m_chkStartMinimized->setText(tr("Start minimized to tray"));
     m_chkXMinimizesApp->setText(tr("Top X minimizes app"));
-    m_chkLaunchOnStartup->setText(tr("Launch on system startup"));
+    m_chkLaunchOnStartup->setText(tr("Launch on system startup (Windows)"));
     m_chkAudio->setText(tr("Audio feedback on click"));
     m_chkIconsOnly->setText(tr("Icons only (hide button labels)"));
     m_chkLargeButtons->setText(tr("Large buttons"));
@@ -645,7 +645,7 @@ void SettingsDialog::buildUi()
     m_chkAlwaysOnTop    = new QCheckBox(tr("Always on top"));
     m_chkStartMinimized = new QCheckBox(tr("Start minimized to tray"));
     m_chkXMinimizesApp  = new QCheckBox(tr("Top X minimizes app"));
-    m_chkLaunchOnStartup= new QCheckBox(tr("Launch on system startup"));
+    m_chkLaunchOnStartup= new QCheckBox(tr("Launch on system startup (Windows)"));
     m_chkAudio         = new QCheckBox(tr("Audio feedback on click"));
     m_chkIconsOnly     = new QCheckBox(tr("Icons only (hide button labels)"));
     m_chkLargeButtons  = new QCheckBox(tr("Large buttons"));

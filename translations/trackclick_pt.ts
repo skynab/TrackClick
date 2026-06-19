@@ -90,7 +90,7 @@
     <message><source>Start minimized to tray</source><translation>Iniciar minimizado na bandeja</translation></message>
     <message><source>Top X minimizes app</source><translation>X superior minimiza o app</translation></message>
     <message><source>Close application</source><translation>Fechar aplicação</translation></message>
-    <message><source>Launch on system startup</source><translation>Iniciar com o sistema</translation></message>
+    <message><source>Launch on system startup (Windows)</source><translation>Iniciar com o sistema (Windows)</translation></message>
     <message><source>Audio feedback on click</source><translation>Feedback de áudio ao clicar</translation></message>
     <message><source>Icons only (hide button labels)</source><translation>Apenas ícones (ocultar rótulos)</translation></message>
     <message><source>Large buttons</source><translation>Botões grandes</translation></message>

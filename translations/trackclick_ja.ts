@@ -89,7 +89,7 @@
     <message><source>Language:</source><translation>言語：</translation></message>
     <message><source>Scroll repeat:</source><translation>スクロール繰り返し：</translation></message>
     <message><source>Repeat click:</source><translation>クリック繰り返し：</translation></message>
-    <message><source>Launch on system startup</source><translation>システム起動時に起動</translation></message>
+    <message><source>Launch on system startup (Windows)</source><translation>システム起動時に起動 (Windows)</translation></message>
     <message><source>Open On-Screen Keyboard</source><translation>スクリーンキーボードを開く</translation></message>
     <message><source>No on-screen keyboard was found.
 Please install 'onboard' or 'florence'.</source><translation>スクリーンキーボードが見つかりませんでした。

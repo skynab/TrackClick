@@ -90,7 +90,7 @@
     <message><source>Start minimized to tray</source><translation>ট্রেতে ছোট করে শুরু করুন</translation></message>
     <message><source>Top X minimizes app</source><translation>উপরের X অ্যাপ ছোট করে</translation></message>
     <message><source>Close application</source><translation>অ্যাপ্লিকেশন বন্ধ করুন</translation></message>
-    <message><source>Launch on system startup</source><translation>সিস্টেম স্টার্টআপে চালু করুন</translation></message>
+    <message><source>Launch on system startup (Windows)</source><translation>সিস্টেম স্টার্টআপে চালু করুন (Windows)</translation></message>
     <message><source>Audio feedback on click</source><translation>ক্লিকে অডিও ফিডব্যাক</translation></message>
     <message><source>Icons only (hide button labels)</source><translation>শুধু আইকন (বোতামের লেবেল লুকান)</translation></message>
     <message><source>Large buttons</source><translation>বড় বোতাম</translation></message>

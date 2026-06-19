@@ -90,7 +90,7 @@
     <message><source>Start minimized to tray</source><translation>ٹرے میں چھوٹا کرکے شروع کریں</translation></message>
     <message><source>Top X minimizes app</source><translation>اوپر X ایپ کو چھوٹا کرتا ہے</translation></message>
     <message><source>Close application</source><translation>ایپلیکیشن بند کریں</translation></message>
-    <message><source>Launch on system startup</source><translation>سسٹم اسٹارٹ پر لانچ کریں</translation></message>
+    <message><source>Launch on system startup (Windows)</source><translation>سسٹم اسٹارٹ پر لانچ کریں (Windows)</translation></message>
     <message><source>Audio feedback on click</source><translation>کلک پر آڈیو فیڈبیک</translation></message>
     <message><source>Icons only (hide button labels)</source><translation>صرف آئیکن (بٹن لیبل چھپائیں)</translation></message>
     <message><source>Large buttons</source><translation>بڑے بٹن</translation></message>

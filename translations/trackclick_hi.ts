@@ -90,7 +90,7 @@
     <message><source>Start minimized to tray</source><translation>ट्रे में न्यूनीकृत शुरू करें</translation></message>
     <message><source>Top X minimizes app</source><translation>ऊपरी X एप्प को छोटा करता है</translation></message>
     <message><source>Close application</source><translation>एप्लिकेशन बंद करें</translation></message>
-    <message><source>Launch on system startup</source><translation>सिस्टम स्टार्टअप पर लॉन्च करें</translation></message>
+    <message><source>Launch on system startup (Windows)</source><translation>सिस्टम स्टार्टअप पर लॉन्च करें (Windows)</translation></message>
     <message><source>Audio feedback on click</source><translation>क्लिक पर ऑडियो फीडबैक</translation></message>
     <message><source>Icons only (hide button labels)</source><translation>केवल आइकन (बटन लेबल छुपाएं)</translation></message>
     <message><source>Large buttons</source><translation>बड़े बटन</translation></message>

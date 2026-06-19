@@ -90,7 +90,7 @@
     <message><source>Start minimized to tray</source><translation>البدء مصغرًا في الحاوية</translation></message>
     <message><source>Top X minimizes app</source><translation>زر X العلوي يصغّر التطبيق</translation></message>
     <message><source>Close application</source><translation>إغلاق التطبيق</translation></message>
-    <message><source>Launch on system startup</source><translation>التشغيل عند بدء تشغيل النظام</translation></message>
+    <message><source>Launch on system startup (Windows)</source><translation>التشغيل عند بدء تشغيل النظام (Windows)</translation></message>
     <message><source>Audio feedback on click</source><translation>ردود فعل صوتية عند النقر</translation></message>
     <message><source>Icons only (hide button labels)</source><translation>أيقونات فقط (إخفاء تسميات الأزرار)</translation></message>
     <message><source>Large buttons</source><translation>أزرار كبيرة</translation></message>

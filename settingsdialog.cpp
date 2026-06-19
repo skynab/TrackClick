@@ -18,6 +18,8 @@
 #include <QSvgRenderer>
 #include <QMessageBox>
 #include <QProcess>
+#include <QProgressDialog>
+#include <QStandardPaths>
 #include <QSysInfo>
 #include <cmath>
 #ifdef Q_OS_MAC
@@ -726,9 +728,7 @@ void SettingsDialog::buildUi()
             if (QProcess::startDetached(kb, {}))
                 return;
         }
-        QMessageBox::information(this, tr("On-Screen Keyboard"),
-            tr("No on-screen keyboard was found.\n"
-               "Please install 'onboard' or 'florence'."));
+        promptInstallOnScreenKeyboard();
 #endif
     });
 
@@ -744,6 +744,81 @@ void SettingsDialog::buildUi()
     m_resetBtn = m_buttons->addButton(tr("Reset to Defaults"), QDialogButtonBox::ResetRole);
     root->addWidget(m_buttons);
 }
+
+#ifdef Q_OS_LINUX
+void SettingsDialog::promptInstallOnScreenKeyboard()
+{
+    // Build the install command for "onboard" (the keyboard the launcher tries
+    // first, packaged on every major distro) using whichever package manager is
+    // present.  Elevation is done with pkexec so the user gets a graphical
+    // password prompt rather than needing a terminal.
+    const QString pkexec = QStandardPaths::findExecutable("pkexec");
+    QStringList   installArgs;
+    if (!QStandardPaths::findExecutable("apt-get").isEmpty())
+        installArgs = {"env", "DEBIAN_FRONTEND=noninteractive",
+                       "apt-get", "install", "-y", "onboard"};
+    else if (!QStandardPaths::findExecutable("dnf").isEmpty())
+        installArgs = {"dnf", "install", "-y", "onboard"};
+    else if (!QStandardPaths::findExecutable("zypper").isEmpty())
+        installArgs = {"zypper", "--non-interactive", "install", "onboard"};
+    else if (!QStandardPaths::findExecutable("pacman").isEmpty())
+        installArgs = {"pacman", "-S", "--noconfirm", "onboard"};
+
+    // Without pkexec or a recognised package manager, fall back to advising.
+    if (pkexec.isEmpty() || installArgs.isEmpty()) {
+        QMessageBox::information(this, tr("On-Screen Keyboard"),
+            tr("No on-screen keyboard was found.\n"
+               "Please install 'onboard' or 'florence'."));
+        return;
+    }
+
+    if (QMessageBox::question(this, tr("On-Screen Keyboard"),
+            tr("No on-screen keyboard is installed. Install 'onboard' now?\n"
+               "You'll be asked for your password."),
+            QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes) != QMessageBox::Yes)
+        return;
+
+    // Run the install asynchronously behind a busy dialog so the settings
+    // window stays responsive during the download.
+    auto* proc     = new QProcess(this);
+    auto* progress = new QProgressDialog(tr("Installing on-screen keyboard…"),
+                                         QString(), 0, 0, this);
+    progress->setWindowTitle(tr("On-Screen Keyboard"));
+    progress->setWindowModality(Qt::WindowModal);
+    progress->setMinimumDuration(0);
+    progress->setCancelButton(nullptr);   // apt cannot be safely interrupted mid-run
+    progress->show();
+
+    connect(proc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+            this, [this, proc, progress](int code, QProcess::ExitStatus status) {
+        progress->close();
+        progress->deleteLater();
+        proc->deleteLater();
+        if (status == QProcess::NormalExit && code == 0) {
+            if (!QProcess::startDetached("onboard", {}))
+                QMessageBox::information(this, tr("On-Screen Keyboard"),
+                    tr("'onboard' was installed. Click the button again to open it."));
+        } else {
+            QMessageBox::warning(this, tr("On-Screen Keyboard"),
+                tr("The on-screen keyboard could not be installed automatically.\n"
+                   "You can install it from a terminal with:  sudo apt install onboard"));
+        }
+    });
+    connect(proc, &QProcess::errorOccurred, this,
+            [this, proc, progress](QProcess::ProcessError e) {
+        if (e != QProcess::FailedToStart)
+            return;   // other errors are followed by finished(), handled above
+        progress->close();
+        progress->deleteLater();
+        proc->deleteLater();
+        QMessageBox::warning(this, tr("On-Screen Keyboard"),
+            tr("Could not launch the installer (pkexec).\n"
+               "You can install it from a terminal with:  sudo apt install onboard"));
+    });
+
+    proc->start(pkexec, installArgs);
+}
+#endif
 
 void SettingsDialog::loadFrom(const AppSettings& s)
 {

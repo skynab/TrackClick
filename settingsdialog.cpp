@@ -682,7 +682,9 @@ void SettingsDialog::buildUi()
 
     wfl->addRow(m_lblOpacity, opRow);
     wfl->addRow(m_chkAlwaysOnTop);
-    wfl->addRow(m_chkStartMinimized);
+    // "Start minimized to tray" hidden from the UI — not added to the layout.
+    // The checkbox is still constructed above so load/save/retranslate refs stay valid.
+    // wfl->addRow(m_chkStartMinimized);
     wfl->addRow(m_chkXMinimizesApp);
     wfl->addRow(m_chkLaunchOnStartup);
     wfl->addRow(m_chkAudio);

@@ -90,7 +90,7 @@
     <message><source>Start minimized to tray</source><translation>Запускать свёрнутым в трей</translation></message>
     <message><source>Top X minimizes app</source><translation>Крестик сворачивает приложение</translation></message>
     <message><source>Close application</source><translation>Закрыть приложение</translation></message>
-    <message><source>Launch on system startup</source><translation>Запускать при старте системы</translation></message>
+    <message><source>Launch on system startup (Windows)</source><translation>Запускать при старте системы (Windows)</translation></message>
     <message><source>Audio feedback on click</source><translation>Звуковой отклик при нажатии</translation></message>
     <message><source>Icons only (hide button labels)</source><translation>Только иконки (скрыть надписи кнопок)</translation></message>
     <message><source>Large buttons</source><translation>Крупные кнопки</translation></message>
@@ -102,5 +102,9 @@
     <message><source>Vertical (two columns)</source><translation>Вертикально (два столбца)</translation></message>
     <message><source>Language:</source><translation>Язык:</translation></message>
     <message><source>Reset to Defaults</source><translation>Сбросить настройки</translation></message>
+    <message><source>Open On-Screen Keyboard</source><translation>Открыть экранную клавиатуру</translation></message>
+    <message><source>No on-screen keyboard was found.
+Please install 'onboard' or 'florence'.</source><translation>Экранная клавиатура не найдена.
+Установите 'onboard' или 'florence'.</translation></message>
 </context>
 </TS>

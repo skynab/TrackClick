@@ -90,7 +90,7 @@
     <message><source>Start minimized to tray</source><translation>Iniciar minimizado na bandeja</translation></message>
     <message><source>Top X minimizes app</source><translation>X superior minimiza o app</translation></message>
     <message><source>Close application</source><translation>Fechar aplicação</translation></message>
-    <message><source>Launch on system startup</source><translation>Iniciar com o sistema</translation></message>
+    <message><source>Launch on system startup (Windows)</source><translation>Iniciar com o sistema (Windows)</translation></message>
     <message><source>Audio feedback on click</source><translation>Feedback de áudio ao clicar</translation></message>
     <message><source>Icons only (hide button labels)</source><translation>Apenas ícones (ocultar rótulos)</translation></message>
     <message><source>Large buttons</source><translation>Botões grandes</translation></message>
@@ -102,5 +102,9 @@
     <message><source>Vertical (two columns)</source><translation>Vertical (duas colunas)</translation></message>
     <message><source>Language:</source><translation>Idioma:</translation></message>
     <message><source>Reset to Defaults</source><translation>Redefinir para padrões</translation></message>
+    <message><source>Open On-Screen Keyboard</source><translation>Abrir teclado virtual</translation></message>
+    <message><source>No on-screen keyboard was found.
+Please install 'onboard' or 'florence'.</source><translation>Nenhum teclado virtual foi encontrado.
+Instale 'onboard' ou 'florence'.</translation></message>
 </context>
 </TS>

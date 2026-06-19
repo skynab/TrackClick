@@ -5,3 +5,4 @@ Exec=TrackClick
 Icon=TrackClick
 Type=Application
 Categories=Utility;Accessibility;
+StartupWMClass=TrackClick

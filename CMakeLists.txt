@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(TrackClick VERSION 0.9.1 LANGUAGES CXX)
+project(TrackClick VERSION 0.9.2 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -108,8 +108,9 @@ install(TARGETS TrackClick DESTINATION bin)
 
 # ── Linux: desktop integration + input-device access rule ─────────────────────
 if(UNIX AND NOT APPLE)
-    # udev rule granting the active session read access to pointer devices, so
-    # the dwell timer can track the cursor over every window on Wayland.
+    # udev rule granting the active session read access to pointer devices so the
+    # dwell timer can track the cursor over every window on Wayland.  Shipped in
+    # the .deb (the postinst reloads udev); harmless when bundled in the AppImage.
     install(FILES installer/71-trackclick-input.rules
             DESTINATION lib/udev/rules.d)
     install(FILES installer/TrackClick.desktop
@@ -117,6 +118,16 @@ if(UNIX AND NOT APPLE)
     install(FILES icons/app.svg
             DESTINATION share/icons/hicolor/scalable/apps
             RENAME TrackClick.svg)
+
+    # The binary installs as "TrackClick" (matching the macOS/Windows target and
+    # the desktop launcher's Exec=/StartupWMClass=), but the Debian package and
+    # the command users type are lowercase "trackclick".  Ship a relative
+    # lowercase symlink so `trackclick` works from a terminal too; the .desktop
+    # launcher keeps using the capitalised binary.
+    install(CODE "
+        execute_process(COMMAND \"${CMAKE_COMMAND}\" -E create_symlink
+            TrackClick \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/bin/trackclick\")
+    ")
 endif()
 
 option(BUILD_TESTS "Build unit tests" OFF)
@@ -165,9 +176,11 @@ if(LINGUIST_FOUND)
     install(FILES ${QM_FILES} DESTINATION bin/translations)
 endif()
 
-# ── Packaging: Linux .deb / .rpm ──────────────────────────────────────────────
-# Native packages install to /usr and ship the udev rule, so input-device access
-# is set up automatically (the postinst reloads udev) with no terminal steps.
+# ── Packaging: Debian/Ubuntu .deb ─────────────────────────────────────────────
+# The .deb installs to /usr and ships the udev rule, so input-device access is
+# set up automatically at install time (the postinst reloads udev) and the
+# on-screen keyboard is pulled in via Recommends — no terminal steps needed.
+# The AppImage (built separately in CI) remains the portable cross-distro option.
 if(UNIX AND NOT APPLE)
     set(CPACK_PACKAGE_NAME "trackclick")
     set(CPACK_PACKAGE_VENDOR "TrackClick")
@@ -175,21 +188,19 @@ if(UNIX AND NOT APPLE)
     set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Dwell-click accessibility tool")
     set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
     set(CPACK_PACKAGING_INSTALL_PREFIX "/usr")
-    set(CPACK_GENERATOR "DEB;RPM")
+    set(CPACK_GENERATOR "DEB")
 
     # Reload udev after install so the input-access rule applies immediately.
     set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA
         "${CMAKE_CURRENT_SOURCE_DIR}/installer/postinst")
-    set(CPACK_RPM_POST_INSTALL_SCRIPT_FILE
-        "${CMAKE_CURRENT_SOURCE_DIR}/installer/postinst")
 
-    # Auto-derive library dependencies from the linked binary; add the runtime
-    # tools we shell out to (pkexec) that are not captured by shlib scanning.
+    # Auto-derive linked-library dependencies from the binary; recommend the
+    # on-screen keyboard and polkit (pkexec) which are used at runtime but not
+    # captured by shared-library scanning.
     set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
-    set(CPACK_DEBIAN_PACKAGE_DEPENDS "policykit-1")
+    set(CPACK_DEBIAN_PACKAGE_RECOMMENDS "onboard, policykit-1")
     set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
-    set(CPACK_RPM_PACKAGE_REQUIRES "polkit")
-    set(CPACK_RPM_PACKAGE_LICENSE "Proprietary")
+    set(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
 
     include(CPack)
 endif()

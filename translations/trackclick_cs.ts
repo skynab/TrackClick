@@ -91,6 +91,10 @@
     <message><source>Language:</source><translation>Jazyk:</translation></message>
     <message><source>Scroll repeat:</source><translation>Opakování rolování:</translation></message>
     <message><source>Repeat click:</source><translation>Opakovat kliknutí:</translation></message>
-    <message><source>Launch on system startup</source><translation>Spustit při startu systému</translation></message>
+    <message><source>Launch on system startup (Windows)</source><translation>Spustit při startu systému (Windows)</translation></message>
+    <message><source>Open On-Screen Keyboard</source><translation>Otevřít klávesnici na obrazovce</translation></message>
+    <message><source>No on-screen keyboard was found.
+Please install 'onboard' or 'florence'.</source><translation>Klávesnice na obrazovce nebyla nalezena.
+Nainstalujte prosím 'onboard' nebo 'florence'.</translation></message>
 </context>
 </TS>

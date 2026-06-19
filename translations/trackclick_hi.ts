@@ -90,7 +90,7 @@
     <message><source>Start minimized to tray</source><translation>ट्रे में न्यूनीकृत शुरू करें</translation></message>
     <message><source>Top X minimizes app</source><translation>ऊपरी X एप्प को छोटा करता है</translation></message>
     <message><source>Close application</source><translation>एप्लिकेशन बंद करें</translation></message>
-    <message><source>Launch on system startup</source><translation>सिस्टम स्टार्टअप पर लॉन्च करें</translation></message>
+    <message><source>Launch on system startup (Windows)</source><translation>सिस्टम स्टार्टअप पर लॉन्च करें (Windows)</translation></message>
     <message><source>Audio feedback on click</source><translation>क्लिक पर ऑडियो फीडबैक</translation></message>
     <message><source>Icons only (hide button labels)</source><translation>केवल आइकन (बटन लेबल छुपाएं)</translation></message>
     <message><source>Large buttons</source><translation>बड़े बटन</translation></message>
@@ -102,5 +102,9 @@
     <message><source>Vertical (two columns)</source><translation>लंबवत (दो कॉलम)</translation></message>
     <message><source>Language:</source><translation>भाषा:</translation></message>
     <message><source>Reset to Defaults</source><translation>डिफ़ॉल्ट पर रीसेट करें</translation></message>
+    <message><source>Open On-Screen Keyboard</source><translation>ऑन-स्क्रीन कीबोर्ड खोलें</translation></message>
+    <message><source>No on-screen keyboard was found.
+Please install 'onboard' or 'florence'.</source><translation>कोई ऑन-स्क्रीन कीबोर्ड नहीं मिला।
+कृपया 'onboard' या 'florence' इंस्टॉल करें।</translation></message>
 </context>
 </TS>

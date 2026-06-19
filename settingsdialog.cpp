@@ -16,6 +16,11 @@
 #include <QAbstractButton>
 #include <QPushButton>
 #include <QSvgRenderer>
+#include <QMessageBox>
+#include <QProcess>
+#include <QProgressDialog>
+#include <QStandardPaths>
+#include <QSysInfo>
 #include <cmath>
 #ifdef Q_OS_MAC
 #  include <QDesktopServices>
@@ -445,7 +450,7 @@ void SettingsDialog::retranslateUi()
     m_chkAlwaysOnTop->setText(tr("Always on top"));
     m_chkStartMinimized->setText(tr("Start minimized to tray"));
     m_chkXMinimizesApp->setText(tr("Top X minimizes app"));
-    m_chkLaunchOnStartup->setText(tr("Launch on system startup"));
+    m_chkLaunchOnStartup->setText(tr("Launch on system startup (Windows)"));
     m_chkAudio->setText(tr("Audio feedback on click"));
     m_chkIconsOnly->setText(tr("Icons only (hide button labels)"));
     m_chkLargeButtons->setText(tr("Large buttons"));
@@ -457,6 +462,7 @@ void SettingsDialog::retranslateUi()
     m_cmbLayout->setItemText(3, tr("Vertical (two columns)"));
     m_lblLanguage->setText(tr("Language:"));
     m_resetBtn->setText(tr("Reset to Defaults"));
+    m_btnOnScreenKbd->setText(tr("Open On-Screen Keyboard"));
 }
 
 // ── UI construction ───────────────────────────────────────────────────────────
@@ -507,9 +513,9 @@ void SettingsDialog::buildUi()
 #ifdef BUILD_NUMBER
 #  define TC_STR_(x) #x
 #  define TC_STR(x) TC_STR_(x)
-    auto* versionLbl = new QLabel("Version 0.9.1 (build " TC_STR(BUILD_NUMBER) ")");
+    auto* versionLbl = new QLabel("Version 0.9.2 (build " TC_STR(BUILD_NUMBER) ")");
 #else
-    auto* versionLbl = new QLabel("Version 0.9.1");
+    auto* versionLbl = new QLabel("Version 0.9.2");
 #endif
     versionLbl->setStyleSheet(
         "color: #666666; font-size: 11px; background: transparent;");
@@ -639,7 +645,7 @@ void SettingsDialog::buildUi()
     m_chkAlwaysOnTop    = new QCheckBox(tr("Always on top"));
     m_chkStartMinimized = new QCheckBox(tr("Start minimized to tray"));
     m_chkXMinimizesApp  = new QCheckBox(tr("Top X minimizes app"));
-    m_chkLaunchOnStartup= new QCheckBox(tr("Launch on system startup"));
+    m_chkLaunchOnStartup= new QCheckBox(tr("Launch on system startup (Windows)"));
     m_chkAudio         = new QCheckBox(tr("Audio feedback on click"));
     m_chkIconsOnly     = new QCheckBox(tr("Icons only (hide button labels)"));
     m_chkLargeButtons  = new QCheckBox(tr("Large buttons"));
@@ -676,7 +682,9 @@ void SettingsDialog::buildUi()
 
     wfl->addRow(m_lblOpacity, opRow);
     wfl->addRow(m_chkAlwaysOnTop);
-    wfl->addRow(m_chkStartMinimized);
+    // "Start minimized to tray" hidden from the UI — not added to the layout.
+    // The checkbox is still constructed above so load/save/retranslate refs stay valid.
+    // wfl->addRow(m_chkStartMinimized);
     wfl->addRow(m_chkXMinimizesApp);
     wfl->addRow(m_chkLaunchOnStartup);
     wfl->addRow(m_chkAudio);
@@ -684,6 +692,48 @@ void SettingsDialog::buildUi()
     wfl->addRow(m_chkLargeButtons);
     wfl->addRow(m_lblBtnLayout, m_cmbLayout);
     wfl->addRow(m_lblLanguage,  m_cmbLanguage);
+
+    m_btnOnScreenKbd = new QPushButton(tr("Open On-Screen Keyboard"));
+    m_btnOnScreenKbd->setFlat(true);
+    wfl->addRow(m_btnOnScreenKbd);
+    connect(m_btnOnScreenKbd, &QPushButton::clicked, this, [this]() {
+#if defined(Q_OS_WIN)
+        // Build full path from %SystemRoot% so PATH resolution isn't needed.
+        const QString sysRoot = QString::fromLocal8Bit(qgetenv("SystemRoot"));
+        const QString osk = (sysRoot.isEmpty() ? QString("C:\\Windows") : sysRoot)
+                            + "\\System32\\osk.exe";
+        QProcess::startDetached(osk, {});
+#elif defined(Q_OS_MAC)
+        // The macOS Accessibility Keyboard is a system service, not a standalone app.
+        // Navigate to Accessibility > Keyboard in System Settings so the user can
+        // enable it — once enabled it appears as a persistent floating keyboard.
+        const int macMajor = QSysInfo::productVersion().split('.').value(0).toInt();
+        if (macMajor >= 13) {
+            // macOS 13 Ventura+ uses the new System Settings URL scheme
+            QDesktopServices::openUrl(QUrl(
+                "x-apple.systempreferences:"
+                "com.apple.Accessibility-Settings.extension?Keyboard"));
+        } else {
+            QDesktopServices::openUrl(QUrl(
+                "x-apple.systempreferences:"
+                "com.apple.preference.universalaccess?Keyboard"));
+        }
+#else
+        // Prefer Wayland-native keyboards on Wayland to avoid X11 keyboards
+        // starting (returning true) and then immediately crashing on pure Wayland.
+        const bool onWayland = !qgetenv("WAYLAND_DISPLAY").isEmpty();
+        const QStringList kbs = onWayland
+            ? QStringList{"onboard", "squeekboard", "wvkbd",
+                          "maliit-keyboard", "florence", "kvkbd", "matchbox-keyboard"}
+            : QStringList{"onboard", "florence", "xvkbd", "kvkbd", "matchbox-keyboard"};
+        for (const QString& kb : kbs) {
+            if (QProcess::startDetached(kb, {}))
+                return;
+        }
+        promptInstallOnScreenKeyboard();
+#endif
+    });
+
     root->addWidget(m_grpWin);
 
     // ── Buttons ───────────────────────────────────────────────
@@ -696,6 +746,81 @@ void SettingsDialog::buildUi()
     m_resetBtn = m_buttons->addButton(tr("Reset to Defaults"), QDialogButtonBox::ResetRole);
     root->addWidget(m_buttons);
 }
+
+#ifdef Q_OS_LINUX
+void SettingsDialog::promptInstallOnScreenKeyboard()
+{
+    // Build the install command for "onboard" (the keyboard the launcher tries
+    // first, packaged on every major distro) using whichever package manager is
+    // present.  Elevation is done with pkexec so the user gets a graphical
+    // password prompt rather than needing a terminal.
+    const QString pkexec = QStandardPaths::findExecutable("pkexec");
+    QStringList   installArgs;
+    if (!QStandardPaths::findExecutable("apt-get").isEmpty())
+        installArgs = {"env", "DEBIAN_FRONTEND=noninteractive",
+                       "apt-get", "install", "-y", "onboard"};
+    else if (!QStandardPaths::findExecutable("dnf").isEmpty())
+        installArgs = {"dnf", "install", "-y", "onboard"};
+    else if (!QStandardPaths::findExecutable("zypper").isEmpty())
+        installArgs = {"zypper", "--non-interactive", "install", "onboard"};
+    else if (!QStandardPaths::findExecutable("pacman").isEmpty())
+        installArgs = {"pacman", "-S", "--noconfirm", "onboard"};
+
+    // Without pkexec or a recognised package manager, fall back to advising.
+    if (pkexec.isEmpty() || installArgs.isEmpty()) {
+        QMessageBox::information(this, tr("On-Screen Keyboard"),
+            tr("No on-screen keyboard was found.\n"
+               "Please install 'onboard' or 'florence'."));
+        return;
+    }
+
+    if (QMessageBox::question(this, tr("On-Screen Keyboard"),
+            tr("No on-screen keyboard is installed. Install 'onboard' now?\n"
+               "You'll be asked for your password."),
+            QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes) != QMessageBox::Yes)
+        return;
+
+    // Run the install asynchronously behind a busy dialog so the settings
+    // window stays responsive during the download.
+    auto* proc     = new QProcess(this);
+    auto* progress = new QProgressDialog(tr("Installing on-screen keyboard…"),
+                                         QString(), 0, 0, this);
+    progress->setWindowTitle(tr("On-Screen Keyboard"));
+    progress->setWindowModality(Qt::WindowModal);
+    progress->setMinimumDuration(0);
+    progress->setCancelButton(nullptr);   // apt cannot be safely interrupted mid-run
+    progress->show();
+
+    connect(proc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+            this, [this, proc, progress](int code, QProcess::ExitStatus status) {
+        progress->close();
+        progress->deleteLater();
+        proc->deleteLater();
+        if (status == QProcess::NormalExit && code == 0) {
+            if (!QProcess::startDetached("onboard", {}))
+                QMessageBox::information(this, tr("On-Screen Keyboard"),
+                    tr("'onboard' was installed. Click the button again to open it."));
+        } else {
+            QMessageBox::warning(this, tr("On-Screen Keyboard"),
+                tr("The on-screen keyboard could not be installed automatically.\n"
+                   "You can install it from a terminal with:  sudo apt install onboard"));
+        }
+    });
+    connect(proc, &QProcess::errorOccurred, this,
+            [this, proc, progress](QProcess::ProcessError e) {
+        if (e != QProcess::FailedToStart)
+            return;   // other errors are followed by finished(), handled above
+        progress->close();
+        progress->deleteLater();
+        proc->deleteLater();
+        QMessageBox::warning(this, tr("On-Screen Keyboard"),
+            tr("Could not launch the installer (pkexec).\n"
+               "You can install it from a terminal with:  sudo apt install onboard"));
+    });
+
+    proc->start(pkexec, installArgs);
+}
+#endif
 
 void SettingsDialog::loadFrom(const AppSettings& s)
 {

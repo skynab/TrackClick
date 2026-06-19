@@ -62,6 +62,9 @@ private:
     void loadWindowSettings();
     void retranslateUi();
     void installLanguage(const QString& lang);
+    // Re-assert the launch-on-startup registration at launch so it self-heals if
+    // the entry was removed externally or the executable path changed.
+    void syncLaunchOnStartup();
     ClickButton* makeButton(const QString& label, const QString& tooltip, ClickType type, const QString& iconName);
     void applyEdgeLock();
     void animateEdgeTo(QPoint target);

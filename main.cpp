@@ -1,4 +1,5 @@
 #include <QApplication>
+#include <QIcon>
 #include <QMessageBox>
 #include <QSettings>
 #include <QSystemTrayIcon>
@@ -14,9 +15,20 @@ int main(int argc, char* argv[])
 
     QApplication app(argc, argv);
     app.setApplicationName("TrackClick");
-    app.setApplicationVersion("0.9.1");
+    app.setApplicationVersion("0.9.2");
     app.setOrganizationName("TrackClick");
     app.setOrganizationDomain("trackclick.app");
+
+#ifdef Q_OS_LINUX
+    // Windows and macOS get their app icon from the embedded .ico / bundle .icns;
+    // Linux has no embedded equivalent, so set the window icon at runtime (used
+    // in the task switcher / window list) and tell the desktop environment which
+    // .desktop entry this window belongs to so GNOME/KDE show its icon in the
+    // dock and overview (the basename must match the installed TrackClick.desktop
+    // and the window's WM_CLASS / app_id).
+    app.setWindowIcon(QIcon(":/icons/app.svg"));
+    app.setDesktopFileName("TrackClick");
+#endif
 
     // Install translator for the saved language before any UI is created.
     // The pointer is passed to MainWindow so it can remove it when the user

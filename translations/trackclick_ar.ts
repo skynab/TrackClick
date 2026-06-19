@@ -90,7 +90,7 @@
     <message><source>Start minimized to tray</source><translation>البدء مصغرًا في الحاوية</translation></message>
     <message><source>Top X minimizes app</source><translation>زر X العلوي يصغّر التطبيق</translation></message>
     <message><source>Close application</source><translation>إغلاق التطبيق</translation></message>
-    <message><source>Launch on system startup</source><translation>التشغيل عند بدء تشغيل النظام</translation></message>
+    <message><source>Launch on system startup (Windows)</source><translation>التشغيل عند بدء تشغيل النظام (Windows)</translation></message>
     <message><source>Audio feedback on click</source><translation>ردود فعل صوتية عند النقر</translation></message>
     <message><source>Icons only (hide button labels)</source><translation>أيقونات فقط (إخفاء تسميات الأزرار)</translation></message>
     <message><source>Large buttons</source><translation>أزرار كبيرة</translation></message>
@@ -102,5 +102,9 @@
     <message><source>Vertical (two columns)</source><translation>عمودي (عمودان)</translation></message>
     <message><source>Language:</source><translation>اللغة:</translation></message>
     <message><source>Reset to Defaults</source><translation>إعادة التعيين إلى الافتراضي</translation></message>
+    <message><source>Open On-Screen Keyboard</source><translation>فتح لوحة المفاتيح على الشاشة</translation></message>
+    <message><source>No on-screen keyboard was found.
+Please install 'onboard' or 'florence'.</source><translation>لم يتم العثور على لوحة مفاتيح على الشاشة.
+يرجى تثبيت 'onboard' أو 'florence'.</translation></message>
 </context>
 </TS>

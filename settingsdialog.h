@@ -88,6 +88,12 @@ private:
     void retranslateUi();
     void applyLanguagePreview(const QString& lang);
     void cleanupPreviewTranslator();
+#ifdef Q_OS_LINUX
+    // When no on-screen keyboard is installed, offer to install one through the
+    // system package manager (with a graphical pkexec password prompt) rather
+    // than just reporting that none was found.
+    void promptInstallOnScreenKeyboard();
+#endif
 
     AppSettings  m_settings;
     QTranslator* m_previewTranslator = nullptr;
@@ -158,4 +164,5 @@ private:
     QDialogButtonBox* m_buttons;
     QPushButton*      m_resetBtn      = nullptr;
     QPushButton*      m_btnSensTester = nullptr;
+    QPushButton*      m_btnOnScreenKbd = nullptr;
 };

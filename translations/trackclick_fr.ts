@@ -89,6 +89,10 @@
     <message><source>Language:</source><translation>Langue :</translation></message>
     <message><source>Scroll repeat:</source><translation>Répétition du défilement :</translation></message>
     <message><source>Repeat click:</source><translation>Répétition du clic :</translation></message>
-    <message><source>Launch on system startup</source><translation>Lancer au démarrage du système</translation></message>
+    <message><source>Launch on system startup (Windows)</source><translation>Lancer au démarrage du système (Windows)</translation></message>
+    <message><source>Open On-Screen Keyboard</source><translation>Ouvrir le clavier virtuel</translation></message>
+    <message><source>No on-screen keyboard was found.
+Please install 'onboard' or 'florence'.</source><translation>Aucun clavier virtuel trouvé.
+Veuillez installer 'onboard' ou 'florence'.</translation></message>
 </context>
 </TS>

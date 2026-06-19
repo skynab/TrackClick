@@ -89,6 +89,10 @@
     <message><source>Language:</source><translation>언어:</translation></message>
     <message><source>Scroll repeat:</source><translation>스크롤 반복:</translation></message>
     <message><source>Repeat click:</source><translation>클릭 반복:</translation></message>
-    <message><source>Launch on system startup</source><translation>시스템 시작 시 실행</translation></message>
+    <message><source>Launch on system startup (Windows)</source><translation>시스템 시작 시 실행 (Windows)</translation></message>
+    <message><source>Open On-Screen Keyboard</source><translation>화상 키보드 열기</translation></message>
+    <message><source>No on-screen keyboard was found.
+Please install 'onboard' or 'florence'.</source><translation>화상 키보드를 찾을 수 없습니다.
+'onboard' 또는 'florence'를 설치해 주세요.</translation></message>
 </context>
 </TS>

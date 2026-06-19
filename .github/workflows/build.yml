@@ -205,6 +205,22 @@ jobs:
           name: TrackClick-Linux
           path: TrackClick-Linux.AppImage
 
+      - name: Package .deb (Linux)
+        if: matrix.name == 'Linux'
+        run: |
+          # Build the Debian/Ubuntu package from the CPack config generated at
+          # configure time.  Runs after the AppImage upload so a packaging hiccup
+          # never costs the AppImage artifact.
+          cpack --config build/CPackConfig.cmake -G DEB -B dist-packages
+          ls -la dist-packages
+
+      - name: Upload (Linux .deb)
+        if: matrix.name == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: TrackClick-Linux-deb
+          path: dist-packages/*.deb
+
       - name: Upload (macOS)
         if: matrix.name == 'macOS'
         uses: actions/upload-artifact@v4

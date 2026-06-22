@@ -48,12 +48,13 @@
 <context>
     <name>SettingsDialog</name>
     <message><source>TrackClick — Settings</source><translation>TrackClick — 设置</translation></message>
-    <message><source>AutoMouse / Dwell Clicking</source><translation>自动鼠标 / 悬停点击</translation></message>
+    <message><source>Dwell Clicking</source><translation>悬停点击</translation></message>
     <message><source>Dwell time:</source><translation>悬停时间：</translation></message>
     <message><source>Sensitivity:</source><translation>灵敏度：</translation></message>
     <message><source>Permissions:</source><translation>辅助功能权限：</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>打开辅助功能设置…</translation></message>
     <message><source>Visible Buttons</source><translation>可见按钮</translation></message>
+    <message><source>Buttons</source><translation>按钮</translation></message>
     <message><source>No Click</source><translation>无操作</translation></message>
     <message><source>Left Click</source><translation>单击左键</translation></message>
     <message><source>Left Double</source><translation>双击左键</translation></message>

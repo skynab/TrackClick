@@ -48,12 +48,13 @@
 <context>
     <name>SettingsDialog</name>
     <message><source>TrackClick — Settings</source><translation>TrackClick — Configuración</translation></message>
-    <message><source>AutoMouse / Dwell Clicking</source><translation>AutoRatón / Clic por permanencia</translation></message>
+    <message><source>Dwell Clicking</source><translation>Clic por permanencia</translation></message>
     <message><source>Dwell time:</source><translation>Tiempo de permanencia:</translation></message>
     <message><source>Sensitivity:</source><translation>Sensibilidad:</translation></message>
     <message><source>Permissions:</source><translation>Permisos:</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>Abrir configuración de accesibilidad…</translation></message>
     <message><source>Visible Buttons</source><translation>Botones visibles</translation></message>
+    <message><source>Buttons</source><translation>Botones</translation></message>
     <message><source>No Click</source><translation>Sin acción</translation></message>
     <message><source>Left Click</source><translation>Clic izquierdo</translation></message>
     <message><source>Left Double</source><translation>Doble izquierdo</translation></message>

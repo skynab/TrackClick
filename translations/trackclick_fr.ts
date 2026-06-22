@@ -48,12 +48,13 @@
 <context>
     <name>SettingsDialog</name>
     <message><source>TrackClick — Settings</source><translation>TrackClick — Paramètres</translation></message>
-    <message><source>AutoMouse / Dwell Clicking</source><translation>AutoSouris / Clic par survol</translation></message>
+    <message><source>Dwell Clicking</source><translation>Clic par survol</translation></message>
     <message><source>Dwell time:</source><translation>Durée de survol :</translation></message>
     <message><source>Sensitivity:</source><translation>Sensibilité :</translation></message>
     <message><source>Permissions:</source><translation>Autorisations :</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>Ouvrir les réglages d'accessibilité…</translation></message>
     <message><source>Visible Buttons</source><translation>Boutons visibles</translation></message>
+    <message><source>Buttons</source><translation>Boutons</translation></message>
     <message><source>No Click</source><translation>Aucune action</translation></message>
     <message><source>Left Click</source><translation>Clic gauche</translation></message>
     <message><source>Left Double</source><translation>Double gauche</translation></message>

@@ -53,7 +53,7 @@
 <context>
     <name>SettingsDialog</name>
     <message><source>TrackClick — Settings</source><translation>TrackClick — ترتیبات</translation></message>
-    <message><source>AutoMouse / Dwell Clicking</source><translation>آٹوماؤس / ڈویل کلکنگ</translation></message>
+    <message><source>Dwell Clicking</source><translation>ڈویل کلکنگ</translation></message>
     <message><source>Dwell time:</source><translation>ڈویل وقت:</translation></message>
     <message><source>Sensitivity:</source><translation>حساسیت:</translation></message>
     <message><source>Sensitivity Tester…</source><translation>حساسیت ٹیسٹر…</translation></message>
@@ -62,6 +62,7 @@
     <message><source>Permissions:</source><translation>اجازتیں:</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>رسائی ترتیبات کھولیں…</translation></message>
     <message><source>Visible Buttons</source><translation>نظر آنے والے بٹن</translation></message>
+    <message><source>Buttons</source><translation>بٹن</translation></message>
     <message><source>No Click</source><translation>کوئی کلک نہیں</translation></message>
     <message><source>Left Click</source><translation>بایاں کلک</translation></message>
     <message><source>Left Double</source><translation>بایاں دوہرا</translation></message>

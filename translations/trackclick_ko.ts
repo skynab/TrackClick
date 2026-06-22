@@ -48,12 +48,13 @@
 <context>
     <name>SettingsDialog</name>
     <message><source>TrackClick — Settings</source><translation>TrackClick — 설정</translation></message>
-    <message><source>AutoMouse / Dwell Clicking</source><translation>자동 마우스 / 머물기 클릭</translation></message>
+    <message><source>Dwell Clicking</source><translation>머물기 클릭</translation></message>
     <message><source>Dwell time:</source><translation>머물기 시간:</translation></message>
     <message><source>Sensitivity:</source><translation>머물기 감도:</translation></message>
     <message><source>Permissions:</source><translation>권한:</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>접근성 설정 열기…</translation></message>
     <message><source>Visible Buttons</source><translation>표시 버튼</translation></message>
+    <message><source>Buttons</source><translation>버튼</translation></message>
     <message><source>No Click</source><translation>동작 없음</translation></message>
     <message><source>Left Click</source><translation>왼쪽 클릭</translation></message>
     <message><source>Left Double</source><translation>왼쪽 더블 클릭</translation></message>

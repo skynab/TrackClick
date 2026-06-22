@@ -50,12 +50,13 @@
 <context>
     <name>SettingsDialog</name>
     <message><source>TrackClick — Settings</source><translation>TrackClick — Nastavení</translation></message>
-    <message><source>AutoMouse / Dwell Clicking</source><translation>AutoMyš / Klikání při najetí</translation></message>
+    <message><source>Dwell Clicking</source><translation>Klikání při najetí</translation></message>
     <message><source>Dwell time:</source><translation>Čas najetí:</translation></message>
     <message><source>Sensitivity:</source><translation>Citlivost:</translation></message>
     <message><source>Permissions:</source><translation>Oprávnění:</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>Otevřít nastavení zpřístupnění…</translation></message>
     <message><source>Visible Buttons</source><translation>Viditelná tlačítka</translation></message>
+    <message><source>Buttons</source><translation>Tlačítka</translation></message>
     <message><source>No Click</source><translation>Žádná akce</translation></message>
     <message><source>Left Click</source><translation>Levé kliknutí</translation></message>
     <message><source>Left Double</source><translation>Levý dvojklik</translation></message>

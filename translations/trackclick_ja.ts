@@ -48,12 +48,13 @@
 <context>
     <name>SettingsDialog</name>
     <message><source>TrackClick — Settings</source><translation>TrackClick — 設定</translation></message>
-    <message><source>AutoMouse / Dwell Clicking</source><translation>オートマウス / 滞留クリック</translation></message>
+    <message><source>Dwell Clicking</source><translation>滞留クリック</translation></message>
     <message><source>Dwell time:</source><translation>滞留時間：</translation></message>
     <message><source>Sensitivity:</source><translation>感度：</translation></message>
     <message><source>Permissions:</source><translation>権限：</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>アクセシビリティ設定を開く…</translation></message>
     <message><source>Visible Buttons</source><translation>表示ボタン</translation></message>
+    <message><source>Buttons</source><translation>ボタン</translation></message>
     <message><source>No Click</source><translation>何もしない</translation></message>
     <message><source>Left Click</source><translation>左クリック</translation></message>
     <message><source>Left Double</source><translation>左ダブルクリック</translation></message>

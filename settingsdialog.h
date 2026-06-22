@@ -53,6 +53,11 @@ struct AppSettings {
     // Audio feedback
     bool audioFeedback   = false;
 
+    // Audio click — fire the selected action on a loud sound instead of the
+    // dwell timer.  Off by default.  Threshold is 1–100 (higher = louder needed).
+    bool audioClickEnabled   = false;
+    int  audioClickThreshold = 50;
+
     // Button appearance
     bool iconsOnly           = false;
     bool largeButtons        = false;
@@ -87,6 +92,9 @@ private:
     void loadFrom(const AppSettings& s);
     AppSettings readUi() const;
     void retranslateUi();
+    // Descriptive text for the Audio Click tab (differs when the build has no
+    // audio support).  Shared by buildUi() and retranslateUi().
+    QString audioClickInfoText() const;
     void applyLanguagePreview(const QString& lang);
     void cleanupPreviewTranslator();
 #ifdef Q_OS_LINUX
@@ -160,6 +168,13 @@ private:
     QLabel*    m_lblEdgeLock = nullptr;
     QComboBox* m_cmbEdgeLock = nullptr;
     QCheckBox* m_chkEdgeHide = nullptr;
+
+    // Audio Click tab
+    QCheckBox* m_chkAudioClick     = nullptr;
+    QLabel*    m_lblAudioClickInfo = nullptr;
+    QLabel*    m_lblAudioThreshold = nullptr;
+    QSlider*   m_audioThreshSlider = nullptr;
+    QLabel*    m_audioThreshValue  = nullptr;
 
     QDialogButtonBox* m_buttons;
     QPushButton*      m_resetBtn      = nullptr;

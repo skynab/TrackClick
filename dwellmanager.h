@@ -33,6 +33,15 @@ public:
     // Update modifier mask without resetting the current dwell countdown.
     void setModifiers(int mods)      { m_modifiers = mods; }
 
+    // Audio-trigger mode: when on, the dwell countdown never fires on its own;
+    // the armed action only fires when fireNow() is called (by the audio cue).
+    void setAudioTriggerMode(bool on){ m_audioMode = on; }
+    bool audioTriggerMode() const    { return m_audioMode; }
+
+    // Fire the currently-armed action immediately, wherever the cursor is.
+    // Used by the audio-cue trigger as an alternative to the dwell timer.
+    void fireNow();
+
     int  dwellMs()       const { return m_dwellMs; }
     int  sensitivityPx() const { return m_sensitivityPx; }
 
@@ -48,6 +57,10 @@ private slots:
     void onPoll();
 
 private:
+    // Performs the armed action at `cur` (handles scroll-repeat, drag Down/Up
+    // pairing and post-fire re-arm).  Shared by the dwell timeout and fireNow().
+    void fireSelected(QPoint cur);
+
     QTimer  m_pollTimer;
     QTimer  m_dwellTimer;
 
@@ -66,6 +79,7 @@ private:
     int       m_sensitivityPx  = 5;
     int       m_scrollRepeat   = 3;
     bool      m_repeatOnDwell  = false;
+    bool      m_audioMode      = false; // fire on audio cue instead of dwell time
 
     qint64    m_hoverStartMs   = 0;
     qint64    m_waitStartMs    = 0; // when m_waiting began (for timeout fallback)

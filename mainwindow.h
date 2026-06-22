@@ -17,6 +17,7 @@
 #include "clickinjector.h"
 #include "dwellmanager.h"
 #include "settingsdialog.h"
+#include "audioclicklistener.h"
 
 class ClickButton;  // forward
 
@@ -68,6 +69,9 @@ private:
     ClickButton* makeButton(const QString& label, const QString& tooltip, ClickType type, const QString& iconName);
     void applyEdgeLock();
     void animateEdgeTo(QPoint target);
+    // Reconcile audio-click state (dwell trigger mode + microphone listener)
+    // with the current settings and whether dwell-active is on.
+    void updateAudioClick();
 
     // ── Resize helpers ────────────────────────────────────────────
     enum class ResizeEdge {
@@ -127,7 +131,8 @@ private:
     QAction*          m_quitAct    = nullptr;
     QTranslator*      m_translator = nullptr;
 #ifdef HAVE_MULTIMEDIA
-    QSoundEffect*     m_clickSound = nullptr;
+    QSoundEffect*       m_clickSound = nullptr;
+    AudioClickListener* m_audioClick = nullptr;
 #endif
 
     AppSettings   m_settings;

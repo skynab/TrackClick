@@ -483,6 +483,24 @@ void SettingsDialog::retranslateUi()
     m_lblLanguage->setText(tr("Language:"));
     m_resetBtn->setText(tr("Reset to Defaults"));
     m_btnOnScreenKbd->setText(tr("Open On-Screen Keyboard"));
+
+    m_tabs->setTabText(3, tr("Audio Click"));
+    m_chkAudioClick->setText(tr("Trigger the selected action with a loud sound"));
+    m_lblAudioClickInfo->setText(audioClickInfoText());
+    m_lblAudioThreshold->setText(tr("Loudness threshold:"));
+}
+
+QString SettingsDialog::audioClickInfoText() const
+{
+#ifdef HAVE_MULTIMEDIA
+    return tr("When enabled, the selected action fires when the microphone hears "
+              "a loud sound (such as a clap or a pop) instead of waiting for the "
+              "dwell timer. Turn on Dwell Active to start listening. Any loud "
+              "noise triggers the action — speech is not interpreted.");
+#else
+    return tr("Audio support is not available in this build, so audio click "
+              "cannot be used.");
+#endif
 }
 
 // ── UI construction ───────────────────────────────────────────────────────────
@@ -775,6 +793,51 @@ void SettingsDialog::buildUi()
 
     m_tabs->addTab(pageWin, tr("Window"));
 
+    // ── Audio Click ───────────────────────────────────────────
+    auto* pageAudio = new QWidget;
+    auto* aufl      = new QVBoxLayout(pageAudio);
+    aufl->setSpacing(8);
+
+    m_chkAudioClick = new QCheckBox(tr("Trigger the selected action with a loud sound"));
+    aufl->addWidget(m_chkAudioClick);
+
+    m_lblAudioClickInfo = new QLabel;
+    m_lblAudioClickInfo->setWordWrap(true);
+    m_lblAudioClickInfo->setStyleSheet("color:#979797;");
+    m_lblAudioClickInfo->setText(audioClickInfoText());
+    aufl->addWidget(m_lblAudioClickInfo);
+
+    auto* threshRow = new QHBoxLayout;
+    m_lblAudioThreshold = new QLabel(tr("Loudness threshold:"));
+    m_audioThreshSlider = new QSlider(Qt::Horizontal);
+    m_audioThreshSlider->setRange(1, 100);
+    m_audioThreshValue  = new QLabel("50%");
+    m_audioThreshValue->setFixedWidth(36);
+    threshRow->addWidget(m_lblAudioThreshold);
+    threshRow->addWidget(m_audioThreshSlider);
+    threshRow->addWidget(m_audioThreshValue);
+    aufl->addLayout(threshRow);
+    aufl->addStretch(1);
+
+    connect(m_audioThreshSlider, &QSlider::valueChanged, this, [this](int v){
+        m_audioThreshValue->setText(QString::number(v) + "%");
+    });
+    // The threshold only matters when audio click is enabled.
+    auto updateAudioEnabled = [this](bool on){
+        m_lblAudioThreshold->setEnabled(on);
+        m_audioThreshSlider->setEnabled(on);
+        m_audioThreshValue->setEnabled(on);
+    };
+    connect(m_chkAudioClick, &QCheckBox::toggled, this, updateAudioEnabled);
+
+#ifndef HAVE_MULTIMEDIA
+    // No audio support compiled in — show the option but make clear it is inert.
+    m_chkAudioClick->setEnabled(false);
+    m_audioThreshSlider->setEnabled(false);
+#endif
+
+    m_tabs->addTab(pageAudio, tr("Audio Click"));
+
     // ── Buttons ───────────────────────────────────────────────
     m_buttons  = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
 #ifdef Q_OS_LINUX
@@ -906,6 +969,13 @@ void SettingsDialog::loadFrom(const AppSettings& s)
             break;
         }
     }
+
+    m_chkAudioClick->setChecked(s.audioClickEnabled);
+    m_audioThreshSlider->setValue(s.audioClickThreshold);
+    m_audioThreshValue->setText(QString::number(s.audioClickThreshold) + "%");
+    m_lblAudioThreshold->setEnabled(s.audioClickEnabled);
+    m_audioThreshSlider->setEnabled(s.audioClickEnabled);
+    m_audioThreshValue->setEnabled(s.audioClickEnabled);
 }
 
 AppSettings SettingsDialog::readUi() const
@@ -948,6 +1018,9 @@ AppSettings SettingsDialog::readUi() const
     s.largeButtons    = m_chkLargeButtons->isChecked();
     s.buttonLayout    = static_cast<ButtonLayout>(m_cmbLayout->currentIndex());
     s.language        = m_cmbLanguage->currentData().toString();
+
+    s.audioClickEnabled   = m_chkAudioClick->isChecked();
+    s.audioClickThreshold = m_audioThreshSlider->value();
     return s;
 }
 

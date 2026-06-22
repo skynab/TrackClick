@@ -211,6 +211,8 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     m_settings.xMinimizesApp    = m_persist.value("window/xMinimizesApp",    false).toBool();
     m_settings.launchOnStartup  = m_persist.value("window/launchOnStartup",  false).toBool();
     m_settings.audioFeedback   = m_persist.value("audio/enabled",    false).toBool();
+    m_settings.audioClickEnabled   = m_persist.value("audioClick/enabled",   false).toBool();
+    m_settings.audioClickThreshold = m_persist.value("audioClick/threshold",    50).toInt();
     m_settings.iconsOnly       = m_persist.value("show/iconsOnly",    false).toBool();
     m_settings.largeButtons    = m_persist.value("show/largeButtons", false).toBool();
     m_settings.buttonLayout    = static_cast<ButtonLayout>(m_persist.value("show/buttonLayout", static_cast<int>(ButtonLayout::Vertical)).toInt());
@@ -254,6 +256,15 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
 #ifdef HAVE_MULTIMEDIA
     m_clickSound = new QSoundEffect(this);
     m_clickSound->setSource(QUrl("qrc:/sounds/click-noise.wav"));
+
+    // Audio click: a loud sound fires the armed action instead of the dwell
+    // timer.  The listener is only started while dwell-active is on (see
+    // updateAudioClick()); here we just wire the trigger.
+    m_audioClick = new AudioClickListener(this);
+    connect(m_audioClick, &AudioClickListener::noiseDetected, this, [this]{
+        if (m_settings.audioClickEnabled && m_autoEnabled)
+            m_dwell->fireNow();
+    });
 #endif
 
     m_hoverTimer = new QTimer(this);
@@ -276,6 +287,10 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     // If launch-on-startup is enabled, make sure the OS registration still
     // exists and points at the current executable (self-heals after updates).
     syncLaunchOnStartup();
+
+    // Put the dwell manager into audio-trigger mode if the persisted setting
+    // asks for it (the microphone only opens once dwell-active is turned on).
+    updateAudioClick();
 }
 
 void MainWindow::promptForInputAccessIfNeeded()
@@ -1099,7 +1114,10 @@ void MainWindow::onAutoToggled(bool on)
                       "QPushButton:hover { background:#4A4A4A; border:1px solid #FFA028; color:#FFA028; }").arg(fs).arg(pad));
     }
 
-    m_dwellBar->setVisible(on);
+    // The dwell progress bar is meaningless in audio-click mode (there is no
+    // countdown), so hide it then; the status label still shows the selection.
+    const bool audioMode = m_settings.audioClickEnabled;
+    m_dwellBar->setVisible(on && !audioMode);
     m_statusLabel->setVisible(on);
 
     if (on) {
@@ -1108,6 +1126,8 @@ void MainWindow::onAutoToggled(bool on)
         m_dwell->disarm();
         m_dwellBar->setValue(0);
     }
+    // Start/stop the microphone listener to match the new dwell-active state.
+    updateAudioClick();
     // Adjust height only — keeps the window width stable so the dwell bar
     // simply fills whatever width the window already has.
     resize(width(), sizeHint().height());
@@ -1124,6 +1144,30 @@ void MainWindow::onDwellFired(QPoint /*pos*/, ClickType /*type*/)
 {
 #ifdef HAVE_MULTIMEDIA
     if (m_settings.audioFeedback) m_clickSound->play();
+#endif
+}
+
+void MainWindow::updateAudioClick()
+{
+#ifdef HAVE_MULTIMEDIA
+    const bool wantAudio = m_settings.audioClickEnabled;
+    // In audio mode the dwell timer never fires on its own — fireNow() (driven
+    // by the microphone) does instead.
+    m_dwell->setAudioTriggerMode(wantAudio);
+
+    if (m_audioClick) {
+        m_audioClick->setThreshold(m_settings.audioClickThreshold / 100.0);
+        // Only hold the microphone open while it can actually be used: audio
+        // click enabled AND dwell-active on.
+        const bool shouldListen = wantAudio && m_autoEnabled;
+        if (shouldListen && !m_audioClick->isRunning())
+            m_audioClick->start();
+        else if (!shouldListen && m_audioClick->isRunning())
+            m_audioClick->stop();
+    }
+#else
+    // No audio support: make sure the dwell timer keeps working normally.
+    m_dwell->setAudioTriggerMode(false);
 #endif
 }
 
@@ -1298,6 +1342,8 @@ void MainWindow::applySettings(const AppSettings& s)
     // written by an older build, or points at a stale executable path.
     setLaunchOnStartup(s.launchOnStartup);
     m_persist.setValue("audio/enabled",      s.audioFeedback);
+    m_persist.setValue("audioClick/enabled",   s.audioClickEnabled);
+    m_persist.setValue("audioClick/threshold", s.audioClickThreshold);
     m_persist.setValue("show/noClick",        s.showNoClick);
     m_persist.setValue("show/leftClick",     s.showLeftClick);
     m_persist.setValue("show/leftDouble",    s.showLeftDouble);
@@ -1325,6 +1371,7 @@ void MainWindow::applySettings(const AppSettings& s)
     m_persist.setValue("window/edgeLock",    static_cast<int>(s.edgeLock));
     m_persist.setValue("window/edgeHide",    s.edgeHide);
     applyEdgeLock();
+    updateAudioClick();
 }
 
 void MainWindow::onExitClicked()

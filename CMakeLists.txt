@@ -32,6 +32,7 @@ set(SOURCES
     dwellmanager.cpp
     clickinjector.cpp
     settingsdialog.cpp
+    audioclicklistener.cpp
     translations/tsparser.cpp
     resources.qrc
 )
@@ -41,6 +42,7 @@ set(HEADERS
     dwellmanager.h
     clickinjector.h
     settingsdialog.h
+    audioclicklistener.h
 )
 
 if(WIN32)

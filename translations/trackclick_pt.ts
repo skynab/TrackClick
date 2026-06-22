@@ -108,4 +108,19 @@
 Please install 'onboard' or 'florence'.</source><translation>Nenhum teclado virtual foi encontrado.
 Instale 'onboard' ou 'florence'.</translation></message>
 </context>
+<context>
+    <name>SensitivityTesterDialog</name>
+    <message><source>Sensitivity Tester</source><translation>Testador de sensibilidade</translation></message>
+    <message><source>Click Start, then move your mouse over
+the crosshairs and keep it still.</source><translation>Clique em Iniciar, depois mova o mouse
+sobre a mira e mantenha-o parado.</translation></message>
+    <message><source>Start</source><translation>Iniciar</translation></message>
+    <message><source>Close</source><translation>Fechar</translation></message>
+    <message><source>Move your mouse over the crosshairs
+and keep it still.</source><translation>Mova o mouse sobre a mira
+e mantenha-o parado.</translation></message>
+    <message><source>Measuring — keep your mouse still…</source><translation>Medindo — mantenha o mouse parado…</translation></message>
+    <message><source>Sensitivity set to %1 px</source><translation>Sensibilidade definida para %1 px</translation></message>
+    <message><source>Retest</source><translation>Testar novamente</translation></message>
+</context>
 </TS>

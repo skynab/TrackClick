@@ -95,5 +95,26 @@
     <message><source>No on-screen keyboard was found.
 Please install 'onboard' or 'florence'.</source><translation>未找到屏幕键盘。
 请安装 'onboard' 或 'florence'。</translation></message>
+    <message><source>Lock to screen edge:</source><translation>锁定到屏幕边缘：</translation></message>
+    <message><source>Slide off screen when idle</source><translation>空闲时滑出屏幕</translation></message>
+    <message><source>None</source><translation>无</translation></message>
+    <message><source>Left edge</source><translation>左边缘</translation></message>
+    <message><source>Right edge</source><translation>右边缘</translation></message>
+    <message><source>Sensitivity Tester…</source><translation>灵敏度测试器…</translation></message>
+</context>
+<context>
+    <name>SensitivityTesterDialog</name>
+    <message><source>Sensitivity Tester</source><translation>灵敏度测试器</translation></message>
+    <message><source>Click Start, then move your mouse over
+the crosshairs and keep it still.</source><translation>点击“开始”，然后将鼠标移到
+十字准线上并保持不动。</translation></message>
+    <message><source>Start</source><translation>开始</translation></message>
+    <message><source>Close</source><translation>关闭</translation></message>
+    <message><source>Move your mouse over the crosshairs
+and keep it still.</source><translation>将鼠标移到十字准线上
+并保持不动。</translation></message>
+    <message><source>Measuring — keep your mouse still…</source><translation>正在测量 — 请保持鼠标不动…</translation></message>
+    <message><source>Sensitivity set to %1 px</source><translation>灵敏度已设置为 %1 像素</translation></message>
+    <message><source>Retest</source><translation>重新测试</translation></message>
 </context>
 </TS>

@@ -95,5 +95,26 @@
     <message><source>No on-screen keyboard was found.
 Please install 'onboard' or 'florence'.</source><translation>No se encontró ningún teclado en pantalla.
 Instale 'onboard' o 'florence'.</translation></message>
+    <message><source>Lock to screen edge:</source><translation>Anclar al borde de la pantalla:</translation></message>
+    <message><source>Slide off screen when idle</source><translation>Ocultar fuera de la pantalla al estar inactivo</translation></message>
+    <message><source>None</source><translation>Ninguno</translation></message>
+    <message><source>Left edge</source><translation>Borde izquierdo</translation></message>
+    <message><source>Right edge</source><translation>Borde derecho</translation></message>
+    <message><source>Sensitivity Tester…</source><translation>Probador de sensibilidad…</translation></message>
+</context>
+<context>
+    <name>SensitivityTesterDialog</name>
+    <message><source>Sensitivity Tester</source><translation>Probador de sensibilidad</translation></message>
+    <message><source>Click Start, then move your mouse over
+the crosshairs and keep it still.</source><translation>Haz clic en Iniciar, luego mueve el ratón
+sobre la cruz y mantenlo quieto.</translation></message>
+    <message><source>Start</source><translation>Iniciar</translation></message>
+    <message><source>Close</source><translation>Cerrar</translation></message>
+    <message><source>Move your mouse over the crosshairs
+and keep it still.</source><translation>Mueve el ratón sobre la cruz
+y mantenlo quieto.</translation></message>
+    <message><source>Measuring — keep your mouse still…</source><translation>Midiendo — mantén el ratón quieto…</translation></message>
+    <message><source>Sensitivity set to %1 px</source><translation>Sensibilidad ajustada a %1 px</translation></message>
+    <message><source>Retest</source><translation>Volver a probar</translation></message>
 </context>
 </TS>

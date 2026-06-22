@@ -108,4 +108,19 @@
 Please install 'onboard' or 'florence'.</source><translation>لم يتم العثور على لوحة مفاتيح على الشاشة.
 يرجى تثبيت 'onboard' أو 'florence'.</translation></message>
 </context>
+<context>
+    <name>SensitivityTesterDialog</name>
+    <message><source>Sensitivity Tester</source><translation>أداة اختبار الحساسية</translation></message>
+    <message><source>Click Start, then move your mouse over
+the crosshairs and keep it still.</source><translation>انقر على ابدأ، ثم حرّك الماوس فوق
+العلامة المتصالبة وأبقه ثابتًا.</translation></message>
+    <message><source>Start</source><translation>ابدأ</translation></message>
+    <message><source>Close</source><translation>إغلاق</translation></message>
+    <message><source>Move your mouse over the crosshairs
+and keep it still.</source><translation>حرّك الماوس فوق العلامة المتصالبة
+وأبقه ثابتًا.</translation></message>
+    <message><source>Measuring — keep your mouse still…</source><translation>جارٍ القياس — أبقِ الماوس ثابتًا…</translation></message>
+    <message><source>Sensitivity set to %1 px</source><translation>تم ضبط الحساسية على %1 بكسل</translation></message>
+    <message><source>Retest</source><translation>إعادة الاختبار</translation></message>
+</context>
 </TS>

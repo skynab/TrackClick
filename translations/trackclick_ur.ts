@@ -108,4 +108,19 @@
 Please install 'onboard' or 'florence'.</source><translation>کوئی آن-اسکرین کی بورڈ نہیں ملا۔
 براہ کرم 'onboard' یا 'florence' انسٹال کریں۔</translation></message>
 </context>
+<context>
+    <name>SensitivityTesterDialog</name>
+    <message><source>Sensitivity Tester</source><translation>حساسیت ٹیسٹر</translation></message>
+    <message><source>Click Start, then move your mouse over
+the crosshairs and keep it still.</source><translation>اسٹارٹ پر کلک کریں، پھر ماؤس کو
+کراس ہیئر پر لے جائیں اور ساکن رکھیں۔</translation></message>
+    <message><source>Start</source><translation>اسٹارٹ</translation></message>
+    <message><source>Close</source><translation>بند کریں</translation></message>
+    <message><source>Move your mouse over the crosshairs
+and keep it still.</source><translation>ماؤس کو کراس ہیئر پر لے جائیں
+اور ساکن رکھیں۔</translation></message>
+    <message><source>Measuring — keep your mouse still…</source><translation>پیمائش جاری ہے — ماؤس کو ساکن رکھیں…</translation></message>
+    <message><source>Sensitivity set to %1 px</source><translation>حساسیت %1 px پر سیٹ کر دی گئی</translation></message>
+    <message><source>Retest</source><translation>دوبارہ ٹیسٹ کریں</translation></message>
+</context>
 </TS>

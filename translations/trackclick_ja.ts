@@ -95,5 +95,26 @@
     <message><source>No on-screen keyboard was found.
 Please install 'onboard' or 'florence'.</source><translation>スクリーンキーボードが見つかりませんでした。
 'onboard' または 'florence' をインストールしてください。</translation></message>
+    <message><source>Lock to screen edge:</source><translation>画面の端に固定:</translation></message>
+    <message><source>Slide off screen when idle</source><translation>アイドル時に画面外へスライド</translation></message>
+    <message><source>None</source><translation>なし</translation></message>
+    <message><source>Left edge</source><translation>左端</translation></message>
+    <message><source>Right edge</source><translation>右端</translation></message>
+    <message><source>Sensitivity Tester…</source><translation>感度テスター…</translation></message>
+</context>
+<context>
+    <name>SensitivityTesterDialog</name>
+    <message><source>Sensitivity Tester</source><translation>感度テスター</translation></message>
+    <message><source>Click Start, then move your mouse over
+the crosshairs and keep it still.</source><translation>「開始」をクリックし、マウスを十字線の
+上に移動して静止させてください。</translation></message>
+    <message><source>Start</source><translation>開始</translation></message>
+    <message><source>Close</source><translation>閉じる</translation></message>
+    <message><source>Move your mouse over the crosshairs
+and keep it still.</source><translation>マウスを十字線の上に移動して
+静止させてください。</translation></message>
+    <message><source>Measuring — keep your mouse still…</source><translation>測定中 — マウスを静止させてください…</translation></message>
+    <message><source>Sensitivity set to %1 px</source><translation>感度を %1 px に設定しました</translation></message>
+    <message><source>Retest</source><translation>再テスト</translation></message>
 </context>
 </TS>

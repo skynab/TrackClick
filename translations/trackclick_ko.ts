@@ -95,5 +95,26 @@
     <message><source>No on-screen keyboard was found.
 Please install 'onboard' or 'florence'.</source><translation>화상 키보드를 찾을 수 없습니다.
 'onboard' 또는 'florence'를 설치해 주세요.</translation></message>
+    <message><source>Lock to screen edge:</source><translation>화면 가장자리에 고정:</translation></message>
+    <message><source>Slide off screen when idle</source><translation>유휴 상태일 때 화면 밖으로 밀기</translation></message>
+    <message><source>None</source><translation>없음</translation></message>
+    <message><source>Left edge</source><translation>왼쪽 가장자리</translation></message>
+    <message><source>Right edge</source><translation>오른쪽 가장자리</translation></message>
+    <message><source>Sensitivity Tester…</source><translation>감도 테스터…</translation></message>
+</context>
+<context>
+    <name>SensitivityTesterDialog</name>
+    <message><source>Sensitivity Tester</source><translation>감도 테스터</translation></message>
+    <message><source>Click Start, then move your mouse over
+the crosshairs and keep it still.</source><translation>시작을 클릭한 다음 마우스를
+십자선 위로 옮기고 가만히 두세요.</translation></message>
+    <message><source>Start</source><translation>시작</translation></message>
+    <message><source>Close</source><translation>닫기</translation></message>
+    <message><source>Move your mouse over the crosshairs
+and keep it still.</source><translation>마우스를 십자선 위로 옮기고
+가만히 두세요.</translation></message>
+    <message><source>Measuring — keep your mouse still…</source><translation>측정 중 — 마우스를 가만히 두세요…</translation></message>
+    <message><source>Sensitivity set to %1 px</source><translation>감도가 %1 px(으)로 설정됨</translation></message>
+    <message><source>Retest</source><translation>다시 테스트</translation></message>
 </context>
 </TS>

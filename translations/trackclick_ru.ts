@@ -108,4 +108,19 @@
 Please install 'onboard' or 'florence'.</source><translation>Экранная клавиатура не найдена.
 Установите 'onboard' или 'florence'.</translation></message>
 </context>
+<context>
+    <name>SensitivityTesterDialog</name>
+    <message><source>Sensitivity Tester</source><translation>Тест чувствительности</translation></message>
+    <message><source>Click Start, then move your mouse over
+the crosshairs and keep it still.</source><translation>Нажмите «Старт», затем наведите мышь
+на перекрестие и держите неподвижно.</translation></message>
+    <message><source>Start</source><translation>Старт</translation></message>
+    <message><source>Close</source><translation>Закрыть</translation></message>
+    <message><source>Move your mouse over the crosshairs
+and keep it still.</source><translation>Наведите мышь на перекрестие
+и держите неподвижно.</translation></message>
+    <message><source>Measuring — keep your mouse still…</source><translation>Измерение — держите мышь неподвижно…</translation></message>
+    <message><source>Sensitivity set to %1 px</source><translation>Чувствительность установлена на %1 пикс.</translation></message>
+    <message><source>Retest</source><translation>Повторить тест</translation></message>
+</context>
 </TS>

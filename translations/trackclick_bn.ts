@@ -108,4 +108,19 @@
 Please install 'onboard' or 'florence'.</source><translation>কোনো অন-স্ক্রিন কীবোর্ড পাওয়া যায়নি।
 'onboard' বা 'florence' ইনস্টল করুন।</translation></message>
 </context>
+<context>
+    <name>SensitivityTesterDialog</name>
+    <message><source>Sensitivity Tester</source><translation>সংবেদনশীলতা পরীক্ষক</translation></message>
+    <message><source>Click Start, then move your mouse over
+the crosshairs and keep it still.</source><translation>শুরু ক্লিক করুন, তারপর মাউসটি
+ক্রসহেয়ারের উপর নিয়ে স্থির রাখুন।</translation></message>
+    <message><source>Start</source><translation>শুরু</translation></message>
+    <message><source>Close</source><translation>বন্ধ করুন</translation></message>
+    <message><source>Move your mouse over the crosshairs
+and keep it still.</source><translation>মাউসটি ক্রসহেয়ারের উপর নিয়ে
+স্থির রাখুন।</translation></message>
+    <message><source>Measuring — keep your mouse still…</source><translation>পরিমাপ করা হচ্ছে — মাউস স্থির রাখুন…</translation></message>
+    <message><source>Sensitivity set to %1 px</source><translation>সংবেদনশীলতা %1 px এ সেট করা হয়েছে</translation></message>
+    <message><source>Retest</source><translation>পুনরায় পরীক্ষা</translation></message>
+</context>
 </TS>

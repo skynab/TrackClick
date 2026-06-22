@@ -16,6 +16,7 @@
 #include <QAbstractButton>
 #include <QPushButton>
 #include <QSvgRenderer>
+#include <QTabWidget>
 #include <QMessageBox>
 #include <QProcess>
 #include <QProgressDialog>
@@ -101,6 +102,24 @@ QPushButton[flat=true] {
     color: #FFFFFF;
 }
 QPushButton[flat=true]:hover { background: #4D4D4D; }
+QTabWidget::pane {
+    border: 1px solid #555;
+    border-radius: 4px;
+    top: -1px;
+    background: #2D2D2D;
+}
+QTabBar::tab {
+    background: #1A1A1A;
+    color: #979797;
+    padding: 6px 14px;
+    border: 1px solid #555;
+    border-bottom: none;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    margin-right: 2px;
+}
+QTabBar::tab:selected { background: #2D2D2D; color: #FFA600; }
+QTabBar::tab:hover    { color: #FFB833; }
 )";
 
 // ── Sensitivity Tester ────────────────────────────────────────────────────────
@@ -410,7 +429,7 @@ void SettingsDialog::retranslateUi()
 {
     setWindowTitle(tr("TrackClick — Settings"));
 
-    m_grpDwell->setTitle(tr("AutoMouse / Dwell Clicking"));
+    m_tabs->setTabText(0, tr("AutoMouse / Dwell Clicking"));
     m_lblDwellTime->setText(tr("Dwell time:"));
     m_lblSensitivity->setText(tr("Sensitivity:"));
     m_btnSensTester->setText(tr("Sensitivity Tester…"));
@@ -421,7 +440,7 @@ void SettingsDialog::retranslateUi()
     m_btnAccessibility->setText(tr("Open Accessibility Settings…"));
 #endif
 
-    m_grpBtns->setTitle(tr("Visible Buttons"));
+    m_tabs->setTabText(1, tr("Visible Buttons"));
     m_chkNoClick->setText(tr("No Click"));
     m_chkLeftClick->setText(tr("Left Click"));
     m_chkLeftDouble->setText(tr("Left Double"));
@@ -441,7 +460,7 @@ void SettingsDialog::retranslateUi()
     m_chkQuitButton->setText(tr("Quit Button"));
     m_chkDwellActiveBtn->setText(tr("Dwell Active Button"));
 
-    m_grpWin->setTitle(tr("Window"));
+    m_tabs->setTabText(2, tr("Window"));
     m_lblEdgeLock->setText(tr("Lock to screen edge:"));
     m_cmbEdgeLock->setItemText(0, tr("None"));
     m_cmbEdgeLock->setItemText(1, tr("Left edge"));
@@ -526,9 +545,16 @@ void SettingsDialog::buildUi()
 
     root->addWidget(header);
 
+    // ── Tabbed sections ───────────────────────────────────────
+    // Each former group box becomes a tab page so the dialog shows one section
+    // at a time instead of the whole stack at once.  Tab labels carry the
+    // section names and are retranslated in retranslateUi().
+    m_tabs = new QTabWidget;
+    root->addWidget(m_tabs);
+
     // ── Dwell / AutoMouse ─────────────────────────────────────
-    m_grpDwell   = new QGroupBox(tr("AutoMouse / Dwell Clicking"));
-    auto* fl     = new QFormLayout(m_grpDwell);
+    auto* pageDwell = new QWidget;
+    auto* fl        = new QFormLayout(pageDwell);
     fl->setSpacing(6);
 
     m_dwellMs      = new QSpinBox; m_dwellMs->setRange(100, 10000); m_dwellMs->setSuffix(" ms");
@@ -569,11 +595,11 @@ void SettingsDialog::buildUi()
     fl->addRow(m_lblPermissions, m_btnAccessibility);
 #endif
 
-    root->addWidget(m_grpDwell);
+    m_tabs->addTab(pageDwell, tr("AutoMouse / Dwell Clicking"));
 
     // ── Button Visibility ─────────────────────────────────────
-    m_grpBtns    = new QGroupBox(tr("Visible Buttons"));
-    auto* grid   = new QGridLayout(m_grpBtns);
+    auto* pageBtns = new QWidget;
+    auto* grid     = new QGridLayout(pageBtns);
     grid->setSpacing(6);
 
     m_chkNoClick     = new QCheckBox(tr("No Click"));
@@ -609,11 +635,11 @@ void SettingsDialog::buildUi()
     addChk(m_chkModAlt);      addChk(m_chkModShift);    addChk(m_chkExitButton);
     addChk(m_chkQuitButton);  addChk(m_chkDwellActiveBtn);
 
-    root->addWidget(m_grpBtns);
+    m_tabs->addTab(pageBtns, tr("Visible Buttons"));
 
     // ── Window ────────────────────────────────────────────────
-    m_grpWin     = new QGroupBox(tr("Window"));
-    auto* wfl    = new QFormLayout(m_grpWin);
+    auto* pageWin = new QWidget;
+    auto* wfl     = new QFormLayout(pageWin);
     wfl->setSpacing(6);
     wfl->setFormAlignment(Qt::AlignHCenter | Qt::AlignTop);
     wfl->setLabelAlignment(Qt::AlignHCenter);
@@ -734,7 +760,7 @@ void SettingsDialog::buildUi()
 #endif
     });
 
-    root->addWidget(m_grpWin);
+    m_tabs->addTab(pageWin, tr("Window"));
 
     // ── Buttons ───────────────────────────────────────────────
     m_buttons  = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);

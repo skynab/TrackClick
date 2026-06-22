@@ -52,6 +52,12 @@
 </context>
 <context>
     <name>SettingsDialog</name>
+    <message><source>Audio Click</source><translation>ऑडियो क्लिक</translation></message>
+    <message><source>Trigger the selected action with a loud sound</source><translation>तेज़ आवाज़ से चयनित क्रिया चलाएं</translation></message>
+    <message><source>When enabled, the selected action fires when the microphone hears a loud sound (such as a clap or a pop) instead of waiting for the dwell timer. Turn on Dwell Active to start listening. Any loud noise triggers the action — speech is not interpreted.</source><translation>सक्षम होने पर, चयनित क्रिया ड्वेल टाइमर का इंतज़ार करने के बजाय तब चलती है जब माइक्रोफ़ोन कोई तेज़ आवाज़ (जैसे ताली या पॉप) सुनता है। सुनना शुरू करने के लिए ड्वेल एक्टिव चालू करें। कोई भी तेज़ आवाज़ क्रिया को चलाती है — वाणी की पहचान नहीं की जाती।</translation></message>
+    <message><source>Audio support is not available in this build, so audio click cannot be used.</source><translation>इस बिल्ड में ऑडियो समर्थन उपलब्ध नहीं है, इसलिए ऑडियो क्लिक का उपयोग नहीं किया जा सकता।</translation></message>
+    <message><source>Loudness threshold:</source><translation>ध्वनि तीव्रता सीमा:</translation></message>
+    <message><source>Input level:</source><translation>इनपुट स्तर:</translation></message>
     <message><source>TrackClick — Settings</source><translation>TrackClick — सेटिंग्स</translation></message>
     <message><source>Dwell Clicking</source><translation>ड्वेल क्लिकिंग</translation></message>
     <message><source>Dwell time:</source><translation>ड्वेल समय:</translation></message>

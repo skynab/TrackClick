@@ -81,8 +81,10 @@ void AudioClickListener::onReadyRead()
     const QByteArray chunk = m_io->readAll();
     if (chunk.isEmpty()) return;
 
-    if (peakLevel(chunk.constData(), chunk.size()) < m_threshold)
-        return;
+    const double peak = peakLevel(chunk.constData(), chunk.size());
+    emit level(peak);   // drives the calibration meter
+
+    if (peak < m_threshold) return;
 
     const qint64 now = QDateTime::currentMSecsSinceEpoch();
     if (now - m_lastFireMs < m_cooldownMs) return;   // debounce one noise = one click

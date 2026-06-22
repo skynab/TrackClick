@@ -52,6 +52,12 @@
 </context>
 <context>
     <name>SettingsDialog</name>
+    <message><source>Audio Click</source><translation>النقر الصوتي</translation></message>
+    <message><source>Trigger the selected action with a loud sound</source><translation>تشغيل الإجراء المحدد بصوت عالٍ</translation></message>
+    <message><source>When enabled, the selected action fires when the microphone hears a loud sound (such as a clap or a pop) instead of waiting for the dwell timer. Turn on Dwell Active to start listening. Any loud noise triggers the action — speech is not interpreted.</source><translation>عند التمكين، يُنفَّذ الإجراء المحدد عندما يسمع الميكروفون صوتًا عاليًا (مثل تصفيقة أو طقطقة) بدلاً من انتظار مؤقت التحويم. شغّل «التحويم النشط» لبدء الاستماع. أي صوت عالٍ يُشغّل الإجراء — لا يتم تفسير الكلام.</translation></message>
+    <message><source>Audio support is not available in this build, so audio click cannot be used.</source><translation>دعم الصوت غير متوفر في هذا الإصدار، لذا لا يمكن استخدام النقر الصوتي.</translation></message>
+    <message><source>Loudness threshold:</source><translation>عتبة الصوت:</translation></message>
+    <message><source>Input level:</source><translation>مستوى الإدخال:</translation></message>
     <message><source>TrackClick — Settings</source><translation>TrackClick — الإعدادات</translation></message>
     <message><source>Dwell Clicking</source><translation>النقر بالتحوم</translation></message>
     <message><source>Dwell time:</source><translation>مدة التحوم:</translation></message>

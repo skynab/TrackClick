@@ -35,6 +35,9 @@ public:
 
 signals:
     void noiseDetected();
+    // Continuous input level (0.0–1.0 peak) for a calibration meter — emitted
+    // for every captured buffer, regardless of the threshold.
+    void level(double level01);
 
 private slots:
     void onReadyRead();

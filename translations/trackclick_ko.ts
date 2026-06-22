@@ -47,6 +47,12 @@
 </context>
 <context>
     <name>SettingsDialog</name>
+    <message><source>Audio Click</source><translation>소리 클릭</translation></message>
+    <message><source>Trigger the selected action with a loud sound</source><translation>큰 소리로 선택한 동작 실행</translation></message>
+    <message><source>When enabled, the selected action fires when the microphone hears a loud sound (such as a clap or a pop) instead of waiting for the dwell timer. Turn on Dwell Active to start listening. Any loud noise triggers the action — speech is not interpreted.</source><translation>사용 설정하면 머무름 타이머를 기다리는 대신 마이크가 큰 소리(예: 박수나 팝 소리)를 감지할 때 선택한 동작이 실행됩니다. 머무름 활성화를 켜면 수신을 시작합니다. 큰 소리면 무엇이든 동작이 실행됩니다 — 음성은 인식되지 않습니다.</translation></message>
+    <message><source>Audio support is not available in this build, so audio click cannot be used.</source><translation>이 빌드에서는 오디오를 지원하지 않으므로 소리 클릭을 사용할 수 없습니다.</translation></message>
+    <message><source>Loudness threshold:</source><translation>음량 임계값:</translation></message>
+    <message><source>Input level:</source><translation>입력 레벨:</translation></message>
     <message><source>TrackClick — Settings</source><translation>TrackClick — 설정</translation></message>
     <message><source>Dwell Clicking</source><translation>머물기 클릭</translation></message>
     <message><source>Dwell time:</source><translation>머물기 시간:</translation></message>

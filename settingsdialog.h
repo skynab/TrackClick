@@ -103,7 +103,8 @@ private:
     // ── Tab container (tab labels need retranslation) ─────────
     QTabWidget* m_tabs = nullptr;
 
-    // ── Form-row labels (need retranslation) ──────────────────
+    // ── Section / form-row labels (need retranslation) ────────
+    QLabel* m_lblVisibleButtons = nullptr;
     QLabel* m_lblDwellTime    = nullptr;
     QLabel* m_lblSensitivity  = nullptr;
     QLabel* m_lblScrollRepeat = nullptr;

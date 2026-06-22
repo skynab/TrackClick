@@ -429,7 +429,7 @@ void SettingsDialog::retranslateUi()
 {
     setWindowTitle(tr("TrackClick — Settings"));
 
-    m_tabs->setTabText(0, tr("AutoMouse / Dwell Clicking"));
+    m_tabs->setTabText(0, tr("Dwell Clicking"));
     m_lblDwellTime->setText(tr("Dwell time:"));
     m_lblSensitivity->setText(tr("Sensitivity:"));
     m_btnSensTester->setText(tr("Sensitivity Tester…"));
@@ -440,7 +440,8 @@ void SettingsDialog::retranslateUi()
     m_btnAccessibility->setText(tr("Open Accessibility Settings…"));
 #endif
 
-    m_tabs->setTabText(1, tr("Visible Buttons"));
+    m_tabs->setTabText(1, tr("Buttons"));
+    m_lblVisibleButtons->setText(tr("Visible Buttons"));
     m_chkNoClick->setText(tr("No Click"));
     m_chkLeftClick->setText(tr("Left Click"));
     m_chkLeftDouble->setText(tr("Left Double"));
@@ -595,12 +596,19 @@ void SettingsDialog::buildUi()
     fl->addRow(m_lblPermissions, m_btnAccessibility);
 #endif
 
-    m_tabs->addTab(pageDwell, tr("AutoMouse / Dwell Clicking"));
+    m_tabs->addTab(pageDwell, tr("Dwell Clicking"));
 
     // ── Button Visibility ─────────────────────────────────────
     auto* pageBtns = new QWidget;
     auto* grid     = new QGridLayout(pageBtns);
     grid->setSpacing(6);
+
+    // Section header — the tab is just labelled "Buttons", so spell out what
+    // these checkboxes control here.
+    m_lblVisibleButtons = new QLabel(tr("Visible Buttons"));
+    m_lblVisibleButtons->setStyleSheet(
+        "color: #FFA600; font-weight: bold; background: transparent;");
+    grid->addWidget(m_lblVisibleButtons, 0, 0, 1, 3);
 
     m_chkNoClick     = new QCheckBox(tr("No Click"));
     m_chkLeftClick   = new QCheckBox(tr("Left Click"));
@@ -621,7 +629,7 @@ void SettingsDialog::buildUi()
     m_chkQuitButton      = new QCheckBox(tr("Quit Button"));
     m_chkDwellActiveBtn  = new QCheckBox(tr("Dwell Active Button"));
 
-    int row = 0, col = 0;
+    int row = 1, col = 0;   // row 0 holds the "Visible Buttons" section header
     auto addChk = [&](QCheckBox* c){
         grid->addWidget(c, row, col);
         col++;
@@ -635,7 +643,7 @@ void SettingsDialog::buildUi()
     addChk(m_chkModAlt);      addChk(m_chkModShift);    addChk(m_chkExitButton);
     addChk(m_chkQuitButton);  addChk(m_chkDwellActiveBtn);
 
-    m_tabs->addTab(pageBtns, tr("Visible Buttons"));
+    m_tabs->addTab(pageBtns, tr("Buttons"));
 
     // ── Window ────────────────────────────────────────────────
     auto* pageWin = new QWidget;

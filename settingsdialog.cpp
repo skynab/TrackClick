@@ -643,6 +643,11 @@ void SettingsDialog::buildUi()
     addChk(m_chkModAlt);      addChk(m_chkModShift);    addChk(m_chkExitButton);
     addChk(m_chkQuitButton);  addChk(m_chkDwellActiveBtn);
 
+    // Absorb any leftover vertical space in a trailing empty row so the tab's
+    // extra height doesn't get spread across the content rows (which otherwise
+    // makes the title row balloon to fill half the tab).
+    grid->setRowStretch(row + 1, 1);
+
     m_tabs->addTab(pageBtns, tr("Buttons"));
 
     // ── Window ────────────────────────────────────────────────

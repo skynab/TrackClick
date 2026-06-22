@@ -53,7 +53,7 @@
 <context>
     <name>SettingsDialog</name>
     <message><source>TrackClick — Settings</source><translation>TrackClick — الإعدادات</translation></message>
-    <message><source>AutoMouse / Dwell Clicking</source><translation>AutoMouse / النقر بالتحوم</translation></message>
+    <message><source>Dwell Clicking</source><translation>النقر بالتحوم</translation></message>
     <message><source>Dwell time:</source><translation>مدة التحوم:</translation></message>
     <message><source>Sensitivity:</source><translation>الحساسية:</translation></message>
     <message><source>Sensitivity Tester…</source><translation>اختبار الحساسية…</translation></message>
@@ -62,6 +62,7 @@
     <message><source>Permissions:</source><translation>الأذونات:</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>فتح إعدادات إمكانية الوصول…</translation></message>
     <message><source>Visible Buttons</source><translation>الأزرار المرئية</translation></message>
+    <message><source>Buttons</source><translation>الأزرار</translation></message>
     <message><source>No Click</source><translation>بدون نقر</translation></message>
     <message><source>Left Click</source><translation>نقر بالزر الأيسر</translation></message>
     <message><source>Left Double</source><translation>نقر مزدوج أيسر</translation></message>

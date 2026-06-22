@@ -53,7 +53,7 @@
 <context>
     <name>SettingsDialog</name>
     <message><source>TrackClick — Settings</source><translation>TrackClick — সেটিংস</translation></message>
-    <message><source>AutoMouse / Dwell Clicking</source><translation>অটোমাউস / ড্ওয়েল ক্লিকিং</translation></message>
+    <message><source>Dwell Clicking</source><translation>ড্ওয়েল ক্লিকিং</translation></message>
     <message><source>Dwell time:</source><translation>ড্ওয়েল সময়:</translation></message>
     <message><source>Sensitivity:</source><translation>সংবেদনশীলতা:</translation></message>
     <message><source>Sensitivity Tester…</source><translation>সংবেদনশীলতা পরীক্ষক…</translation></message>
@@ -62,6 +62,7 @@
     <message><source>Permissions:</source><translation>অনুমতি:</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>অ্যাক্সেসিবিলিটি সেটিংস খুলুন…</translation></message>
     <message><source>Visible Buttons</source><translation>দৃশ্যমান বোতাম</translation></message>
+    <message><source>Buttons</source><translation>বোতাম</translation></message>
     <message><source>No Click</source><translation>কোনো ক্লিক নেই</translation></message>
     <message><source>Left Click</source><translation>বাম ক্লিক</translation></message>
     <message><source>Left Double</source><translation>বাম দ্বৈত</translation></message>

@@ -53,7 +53,7 @@
 <context>
     <name>SettingsDialog</name>
     <message><source>TrackClick — Settings</source><translation>TrackClick — Настройки</translation></message>
-    <message><source>AutoMouse / Dwell Clicking</source><translation>AutoMouse / Нажатие с задержкой</translation></message>
+    <message><source>Dwell Clicking</source><translation>Нажатие с задержкой</translation></message>
     <message><source>Dwell time:</source><translation>Время задержки:</translation></message>
     <message><source>Sensitivity:</source><translation>Чувствительность:</translation></message>
     <message><source>Sensitivity Tester…</source><translation>Тест чувствительности…</translation></message>
@@ -62,6 +62,7 @@
     <message><source>Permissions:</source><translation>Разрешения:</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>Открыть параметры специальных возможностей…</translation></message>
     <message><source>Visible Buttons</source><translation>Видимые кнопки</translation></message>
+    <message><source>Buttons</source><translation>Кнопки</translation></message>
     <message><source>No Click</source><translation>Без клика</translation></message>
     <message><source>Left Click</source><translation>Левый клик</translation></message>
     <message><source>Left Double</source><translation>Двойной левый</translation></message>

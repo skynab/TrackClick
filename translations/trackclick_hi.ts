@@ -53,7 +53,7 @@
 <context>
     <name>SettingsDialog</name>
     <message><source>TrackClick — Settings</source><translation>TrackClick — सेटिंग्स</translation></message>
-    <message><source>AutoMouse / Dwell Clicking</source><translation>ऑटोमाउस / ड्वेल क्लिकिंग</translation></message>
+    <message><source>Dwell Clicking</source><translation>ड्वेल क्लिकिंग</translation></message>
     <message><source>Dwell time:</source><translation>ड्वेल समय:</translation></message>
     <message><source>Sensitivity:</source><translation>संवेदनशीलता:</translation></message>
     <message><source>Sensitivity Tester…</source><translation>संवेदनशीलता परीक्षक…</translation></message>
@@ -62,6 +62,7 @@
     <message><source>Permissions:</source><translation>अनुमतियां:</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>एक्सेसिबिलिटी सेटिंग्स खोलें…</translation></message>
     <message><source>Visible Buttons</source><translation>दृश्य बटन</translation></message>
+    <message><source>Buttons</source><translation>बटन</translation></message>
     <message><source>No Click</source><translation>कोई क्लिक नहीं</translation></message>
     <message><source>Left Click</source><translation>बाएं क्लिक</translation></message>
     <message><source>Left Double</source><translation>बाएं दोहरा</translation></message>

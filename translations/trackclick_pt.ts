@@ -53,7 +53,7 @@
 <context>
     <name>SettingsDialog</name>
     <message><source>TrackClick — Settings</source><translation>TrackClick — Configurações</translation></message>
-    <message><source>AutoMouse / Dwell Clicking</source><translation>AutoMouse / Clique por permanência</translation></message>
+    <message><source>Dwell Clicking</source><translation>Clique por permanência</translation></message>
     <message><source>Dwell time:</source><translation>Tempo de permanência:</translation></message>
     <message><source>Sensitivity:</source><translation>Sensibilidade:</translation></message>
     <message><source>Sensitivity Tester…</source><translation>Testador de sensibilidade…</translation></message>
@@ -62,6 +62,7 @@
     <message><source>Permissions:</source><translation>Permissões:</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>Abrir configurações de acessibilidade…</translation></message>
     <message><source>Visible Buttons</source><translation>Botões visíveis</translation></message>
+    <message><source>Buttons</source><translation>Botões</translation></message>
     <message><source>No Click</source><translation>Sem clique</translation></message>
     <message><source>Left Click</source><translation>Clique esquerdo</translation></message>
     <message><source>Left Double</source><translation>Duplo esquerdo</translation></message>

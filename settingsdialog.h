@@ -9,6 +9,7 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QSlider>
+#include <QTabWidget>
 #include <QTranslator>
 
 enum class ButtonLayout { Rectangle, Horizontal, Vertical, VerticalTwo };
@@ -99,12 +100,11 @@ private:
     QTranslator* m_previewTranslator = nullptr;
     QTranslator* m_appTranslator     = nullptr; // borrowed from MainWindow
 
-    // ── Group boxes (titles need retranslation) ───────────────
-    QGroupBox* m_grpDwell = nullptr;
-    QGroupBox* m_grpBtns  = nullptr;
-    QGroupBox* m_grpWin   = nullptr;
+    // ── Tab container (tab labels need retranslation) ─────────
+    QTabWidget* m_tabs = nullptr;
 
-    // ── Form-row labels (need retranslation) ──────────────────
+    // ── Section / form-row labels (need retranslation) ────────
+    QLabel* m_lblVisibleButtons = nullptr;
     QLabel* m_lblDwellTime    = nullptr;
     QLabel* m_lblSensitivity  = nullptr;
     QLabel* m_lblScrollRepeat = nullptr;

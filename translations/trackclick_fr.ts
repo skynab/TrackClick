@@ -48,12 +48,13 @@
 <context>
     <name>SettingsDialog</name>
     <message><source>TrackClick — Settings</source><translation>TrackClick — Paramètres</translation></message>
-    <message><source>AutoMouse / Dwell Clicking</source><translation>AutoSouris / Clic par survol</translation></message>
+    <message><source>Dwell Clicking</source><translation>Clic par survol</translation></message>
     <message><source>Dwell time:</source><translation>Durée de survol :</translation></message>
     <message><source>Sensitivity:</source><translation>Sensibilité :</translation></message>
     <message><source>Permissions:</source><translation>Autorisations :</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>Ouvrir les réglages d'accessibilité…</translation></message>
     <message><source>Visible Buttons</source><translation>Boutons visibles</translation></message>
+    <message><source>Buttons</source><translation>Boutons</translation></message>
     <message><source>No Click</source><translation>Aucune action</translation></message>
     <message><source>Left Click</source><translation>Clic gauche</translation></message>
     <message><source>Left Double</source><translation>Double gauche</translation></message>
@@ -94,5 +95,26 @@
     <message><source>No on-screen keyboard was found.
 Please install 'onboard' or 'florence'.</source><translation>Aucun clavier virtuel trouvé.
 Veuillez installer 'onboard' ou 'florence'.</translation></message>
+    <message><source>Lock to screen edge:</source><translation>Ancrer au bord de l'écran :</translation></message>
+    <message><source>Slide off screen when idle</source><translation>Glisser hors de l'écran en cas d'inactivité</translation></message>
+    <message><source>None</source><translation>Aucun</translation></message>
+    <message><source>Left edge</source><translation>Bord gauche</translation></message>
+    <message><source>Right edge</source><translation>Bord droit</translation></message>
+    <message><source>Sensitivity Tester…</source><translation>Testeur de sensibilité…</translation></message>
+</context>
+<context>
+    <name>SensitivityTesterDialog</name>
+    <message><source>Sensitivity Tester</source><translation>Testeur de sensibilité</translation></message>
+    <message><source>Click Start, then move your mouse over
+the crosshairs and keep it still.</source><translation>Cliquez sur Démarrer, puis déplacez la souris
+sur la croix et maintenez-la immobile.</translation></message>
+    <message><source>Start</source><translation>Démarrer</translation></message>
+    <message><source>Close</source><translation>Fermer</translation></message>
+    <message><source>Move your mouse over the crosshairs
+and keep it still.</source><translation>Déplacez la souris sur la croix
+et maintenez-la immobile.</translation></message>
+    <message><source>Measuring — keep your mouse still…</source><translation>Mesure en cours — gardez la souris immobile…</translation></message>
+    <message><source>Sensitivity set to %1 px</source><translation>Sensibilité réglée sur %1 px</translation></message>
+    <message><source>Retest</source><translation>Retester</translation></message>
 </context>
 </TS>

@@ -53,7 +53,7 @@
 <context>
     <name>SettingsDialog</name>
     <message><source>TrackClick — Settings</source><translation>TrackClick — সেটিংস</translation></message>
-    <message><source>AutoMouse / Dwell Clicking</source><translation>অটোমাউস / ড্ওয়েল ক্লিকিং</translation></message>
+    <message><source>Dwell Clicking</source><translation>ড্ওয়েল ক্লিকিং</translation></message>
     <message><source>Dwell time:</source><translation>ড্ওয়েল সময়:</translation></message>
     <message><source>Sensitivity:</source><translation>সংবেদনশীলতা:</translation></message>
     <message><source>Sensitivity Tester…</source><translation>সংবেদনশীলতা পরীক্ষক…</translation></message>
@@ -62,6 +62,7 @@
     <message><source>Permissions:</source><translation>অনুমতি:</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>অ্যাক্সেসিবিলিটি সেটিংস খুলুন…</translation></message>
     <message><source>Visible Buttons</source><translation>দৃশ্যমান বোতাম</translation></message>
+    <message><source>Buttons</source><translation>বোতাম</translation></message>
     <message><source>No Click</source><translation>কোনো ক্লিক নেই</translation></message>
     <message><source>Left Click</source><translation>বাম ক্লিক</translation></message>
     <message><source>Left Double</source><translation>বাম দ্বৈত</translation></message>
@@ -106,5 +107,20 @@
     <message><source>No on-screen keyboard was found.
 Please install 'onboard' or 'florence'.</source><translation>কোনো অন-স্ক্রিন কীবোর্ড পাওয়া যায়নি।
 'onboard' বা 'florence' ইনস্টল করুন।</translation></message>
+</context>
+<context>
+    <name>SensitivityTesterDialog</name>
+    <message><source>Sensitivity Tester</source><translation>সংবেদনশীলতা পরীক্ষক</translation></message>
+    <message><source>Click Start, then move your mouse over
+the crosshairs and keep it still.</source><translation>শুরু ক্লিক করুন, তারপর মাউসটি
+ক্রসহেয়ারের উপর নিয়ে স্থির রাখুন।</translation></message>
+    <message><source>Start</source><translation>শুরু</translation></message>
+    <message><source>Close</source><translation>বন্ধ করুন</translation></message>
+    <message><source>Move your mouse over the crosshairs
+and keep it still.</source><translation>মাউসটি ক্রসহেয়ারের উপর নিয়ে
+স্থির রাখুন।</translation></message>
+    <message><source>Measuring — keep your mouse still…</source><translation>পরিমাপ করা হচ্ছে — মাউস স্থির রাখুন…</translation></message>
+    <message><source>Sensitivity set to %1 px</source><translation>সংবেদনশীলতা %1 px এ সেট করা হয়েছে</translation></message>
+    <message><source>Retest</source><translation>পুনরায় পরীক্ষা</translation></message>
 </context>
 </TS>

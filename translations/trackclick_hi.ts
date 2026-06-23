@@ -53,7 +53,7 @@
 <context>
     <name>SettingsDialog</name>
     <message><source>TrackClick — Settings</source><translation>TrackClick — सेटिंग्स</translation></message>
-    <message><source>AutoMouse / Dwell Clicking</source><translation>ऑटोमाउस / ड्वेल क्लिकिंग</translation></message>
+    <message><source>Dwell Clicking</source><translation>ड्वेल क्लिकिंग</translation></message>
     <message><source>Dwell time:</source><translation>ड्वेल समय:</translation></message>
     <message><source>Sensitivity:</source><translation>संवेदनशीलता:</translation></message>
     <message><source>Sensitivity Tester…</source><translation>संवेदनशीलता परीक्षक…</translation></message>
@@ -62,6 +62,7 @@
     <message><source>Permissions:</source><translation>अनुमतियां:</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>एक्सेसिबिलिटी सेटिंग्स खोलें…</translation></message>
     <message><source>Visible Buttons</source><translation>दृश्य बटन</translation></message>
+    <message><source>Buttons</source><translation>बटन</translation></message>
     <message><source>No Click</source><translation>कोई क्लिक नहीं</translation></message>
     <message><source>Left Click</source><translation>बाएं क्लिक</translation></message>
     <message><source>Left Double</source><translation>बाएं दोहरा</translation></message>
@@ -106,5 +107,20 @@
     <message><source>No on-screen keyboard was found.
 Please install 'onboard' or 'florence'.</source><translation>कोई ऑन-स्क्रीन कीबोर्ड नहीं मिला।
 कृपया 'onboard' या 'florence' इंस्टॉल करें।</translation></message>
+</context>
+<context>
+    <name>SensitivityTesterDialog</name>
+    <message><source>Sensitivity Tester</source><translation>संवेदनशीलता परीक्षक</translation></message>
+    <message><source>Click Start, then move your mouse over
+the crosshairs and keep it still.</source><translation>प्रारंभ पर क्लिक करें, फिर माउस को
+क्रॉसहेयर पर ले जाएं और स्थिर रखें।</translation></message>
+    <message><source>Start</source><translation>प्रारंभ</translation></message>
+    <message><source>Close</source><translation>बंद करें</translation></message>
+    <message><source>Move your mouse over the crosshairs
+and keep it still.</source><translation>माउस को क्रॉसहेयर पर ले जाएं
+और स्थिर रखें।</translation></message>
+    <message><source>Measuring — keep your mouse still…</source><translation>माप रहे हैं — माउस को स्थिर रखें…</translation></message>
+    <message><source>Sensitivity set to %1 px</source><translation>संवेदनशीलता %1 px पर सेट</translation></message>
+    <message><source>Retest</source><translation>पुनः परीक्षण</translation></message>
 </context>
 </TS>

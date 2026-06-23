@@ -48,12 +48,13 @@
 <context>
     <name>SettingsDialog</name>
     <message><source>TrackClick — Settings</source><translation>TrackClick — 設定</translation></message>
-    <message><source>AutoMouse / Dwell Clicking</source><translation>オートマウス / 滞留クリック</translation></message>
+    <message><source>Dwell Clicking</source><translation>滞留クリック</translation></message>
     <message><source>Dwell time:</source><translation>滞留時間：</translation></message>
     <message><source>Sensitivity:</source><translation>感度：</translation></message>
     <message><source>Permissions:</source><translation>権限：</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>アクセシビリティ設定を開く…</translation></message>
     <message><source>Visible Buttons</source><translation>表示ボタン</translation></message>
+    <message><source>Buttons</source><translation>ボタン</translation></message>
     <message><source>No Click</source><translation>何もしない</translation></message>
     <message><source>Left Click</source><translation>左クリック</translation></message>
     <message><source>Left Double</source><translation>左ダブルクリック</translation></message>
@@ -94,5 +95,26 @@
     <message><source>No on-screen keyboard was found.
 Please install 'onboard' or 'florence'.</source><translation>スクリーンキーボードが見つかりませんでした。
 'onboard' または 'florence' をインストールしてください。</translation></message>
+    <message><source>Lock to screen edge:</source><translation>画面の端に固定:</translation></message>
+    <message><source>Slide off screen when idle</source><translation>アイドル時に画面外へスライド</translation></message>
+    <message><source>None</source><translation>なし</translation></message>
+    <message><source>Left edge</source><translation>左端</translation></message>
+    <message><source>Right edge</source><translation>右端</translation></message>
+    <message><source>Sensitivity Tester…</source><translation>感度テスター…</translation></message>
+</context>
+<context>
+    <name>SensitivityTesterDialog</name>
+    <message><source>Sensitivity Tester</source><translation>感度テスター</translation></message>
+    <message><source>Click Start, then move your mouse over
+the crosshairs and keep it still.</source><translation>「開始」をクリックし、マウスを十字線の
+上に移動して静止させてください。</translation></message>
+    <message><source>Start</source><translation>開始</translation></message>
+    <message><source>Close</source><translation>閉じる</translation></message>
+    <message><source>Move your mouse over the crosshairs
+and keep it still.</source><translation>マウスを十字線の上に移動して
+静止させてください。</translation></message>
+    <message><source>Measuring — keep your mouse still…</source><translation>測定中 — マウスを静止させてください…</translation></message>
+    <message><source>Sensitivity set to %1 px</source><translation>感度を %1 px に設定しました</translation></message>
+    <message><source>Retest</source><translation>再テスト</translation></message>
 </context>
 </TS>

@@ -53,7 +53,7 @@
 <context>
     <name>SettingsDialog</name>
     <message><source>TrackClick — Settings</source><translation>TrackClick — ترتیبات</translation></message>
-    <message><source>AutoMouse / Dwell Clicking</source><translation>آٹوماؤس / ڈویل کلکنگ</translation></message>
+    <message><source>Dwell Clicking</source><translation>ڈویل کلکنگ</translation></message>
     <message><source>Dwell time:</source><translation>ڈویل وقت:</translation></message>
     <message><source>Sensitivity:</source><translation>حساسیت:</translation></message>
     <message><source>Sensitivity Tester…</source><translation>حساسیت ٹیسٹر…</translation></message>
@@ -62,6 +62,7 @@
     <message><source>Permissions:</source><translation>اجازتیں:</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>رسائی ترتیبات کھولیں…</translation></message>
     <message><source>Visible Buttons</source><translation>نظر آنے والے بٹن</translation></message>
+    <message><source>Buttons</source><translation>بٹن</translation></message>
     <message><source>No Click</source><translation>کوئی کلک نہیں</translation></message>
     <message><source>Left Click</source><translation>بایاں کلک</translation></message>
     <message><source>Left Double</source><translation>بایاں دوہرا</translation></message>
@@ -106,5 +107,20 @@
     <message><source>No on-screen keyboard was found.
 Please install 'onboard' or 'florence'.</source><translation>کوئی آن-اسکرین کی بورڈ نہیں ملا۔
 براہ کرم 'onboard' یا 'florence' انسٹال کریں۔</translation></message>
+</context>
+<context>
+    <name>SensitivityTesterDialog</name>
+    <message><source>Sensitivity Tester</source><translation>حساسیت ٹیسٹر</translation></message>
+    <message><source>Click Start, then move your mouse over
+the crosshairs and keep it still.</source><translation>اسٹارٹ پر کلک کریں، پھر ماؤس کو
+کراس ہیئر پر لے جائیں اور ساکن رکھیں۔</translation></message>
+    <message><source>Start</source><translation>اسٹارٹ</translation></message>
+    <message><source>Close</source><translation>بند کریں</translation></message>
+    <message><source>Move your mouse over the crosshairs
+and keep it still.</source><translation>ماؤس کو کراس ہیئر پر لے جائیں
+اور ساکن رکھیں۔</translation></message>
+    <message><source>Measuring — keep your mouse still…</source><translation>پیمائش جاری ہے — ماؤس کو ساکن رکھیں…</translation></message>
+    <message><source>Sensitivity set to %1 px</source><translation>حساسیت %1 px پر سیٹ کر دی گئی</translation></message>
+    <message><source>Retest</source><translation>دوبارہ ٹیسٹ کریں</translation></message>
 </context>
 </TS>

@@ -50,12 +50,13 @@
 <context>
     <name>SettingsDialog</name>
     <message><source>TrackClick — Settings</source><translation>TrackClick — Nastavení</translation></message>
-    <message><source>AutoMouse / Dwell Clicking</source><translation>AutoMyš / Klikání při najetí</translation></message>
+    <message><source>Dwell Clicking</source><translation>Klikání při najetí</translation></message>
     <message><source>Dwell time:</source><translation>Čas najetí:</translation></message>
     <message><source>Sensitivity:</source><translation>Citlivost:</translation></message>
     <message><source>Permissions:</source><translation>Oprávnění:</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>Otevřít nastavení zpřístupnění…</translation></message>
     <message><source>Visible Buttons</source><translation>Viditelná tlačítka</translation></message>
+    <message><source>Buttons</source><translation>Tlačítka</translation></message>
     <message><source>No Click</source><translation>Žádná akce</translation></message>
     <message><source>Left Click</source><translation>Levé kliknutí</translation></message>
     <message><source>Left Double</source><translation>Levý dvojklik</translation></message>
@@ -96,5 +97,26 @@
     <message><source>No on-screen keyboard was found.
 Please install 'onboard' or 'florence'.</source><translation>Klávesnice na obrazovce nebyla nalezena.
 Nainstalujte prosím 'onboard' nebo 'florence'.</translation></message>
+    <message><source>Lock to screen edge:</source><translation>Ukotvit k okraji obrazovky:</translation></message>
+    <message><source>Slide off screen when idle</source><translation>Při nečinnosti skrýt mimo obrazovku</translation></message>
+    <message><source>None</source><translation>Žádné</translation></message>
+    <message><source>Left edge</source><translation>Levý okraj</translation></message>
+    <message><source>Right edge</source><translation>Pravý okraj</translation></message>
+    <message><source>Sensitivity Tester…</source><translation>Test citlivosti…</translation></message>
+</context>
+<context>
+    <name>SensitivityTesterDialog</name>
+    <message><source>Sensitivity Tester</source><translation>Test citlivosti</translation></message>
+    <message><source>Click Start, then move your mouse over
+the crosshairs and keep it still.</source><translation>Klikněte na Start, poté najeďte myší
+na nitkový kříž a držte ji v klidu.</translation></message>
+    <message><source>Start</source><translation>Spustit</translation></message>
+    <message><source>Close</source><translation>Zavřít</translation></message>
+    <message><source>Move your mouse over the crosshairs
+and keep it still.</source><translation>Najeďte myší na nitkový kříž
+a držte ji v klidu.</translation></message>
+    <message><source>Measuring — keep your mouse still…</source><translation>Měření — držte myš v klidu…</translation></message>
+    <message><source>Sensitivity set to %1 px</source><translation>Citlivost nastavena na %1 px</translation></message>
+    <message><source>Retest</source><translation>Otestovat znovu</translation></message>
 </context>
 </TS>

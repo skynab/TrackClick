@@ -9,8 +9,14 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QSlider>
+#include <QProgressBar>
 #include <QTabWidget>
+#include <QTimer>
 #include <QTranslator>
+
+#ifdef HAVE_MULTIMEDIA
+class AudioClickListener;
+#endif
 
 enum class ButtonLayout { Rectangle, Horizontal, Vertical, VerticalTwo };
 enum class EdgeLock    { None, Left, Right };
@@ -53,6 +59,11 @@ struct AppSettings {
     // Audio feedback
     bool audioFeedback   = false;
 
+    // Audio click — fire the selected action on a loud sound instead of the
+    // dwell timer.  Off by default.  Threshold is 1–100 (higher = louder needed).
+    bool audioClickEnabled   = false;
+    int  audioClickThreshold = 50;
+
     // Button appearance
     bool iconsOnly           = false;
     bool largeButtons        = false;
@@ -87,6 +98,13 @@ private:
     void loadFrom(const AppSettings& s);
     AppSettings readUi() const;
     void retranslateUi();
+    // Descriptive text for the Audio Click tab (differs when the build has no
+    // audio support).  Shared by buildUi() and retranslateUi().
+    QString audioClickInfoText() const;
+    // Start/stop the live microphone meter used to calibrate the threshold.
+    // No-ops when the build has no audio support.
+    void startAudioMeter();
+    void stopAudioMeter();
     void applyLanguagePreview(const QString& lang);
     void cleanupPreviewTranslator();
 #ifdef Q_OS_LINUX
@@ -160,6 +178,20 @@ private:
     QLabel*    m_lblEdgeLock = nullptr;
     QComboBox* m_cmbEdgeLock = nullptr;
     QCheckBox* m_chkEdgeHide = nullptr;
+
+    // Audio Click tab
+    QCheckBox*    m_chkAudioClick     = nullptr;
+    QLabel*       m_lblAudioClickInfo = nullptr;
+    QLabel*       m_lblAudioThreshold = nullptr;
+    QSlider*      m_audioThreshSlider = nullptr;
+    QLabel*       m_audioThreshValue  = nullptr;
+    QLabel*       m_lblAudioMeter     = nullptr;
+    QProgressBar* m_audioMeter        = nullptr;
+    QTimer        m_meterTimer;            // drives smooth meter decay
+    double        m_meterTarget = 0.0;     // peak-hold level, 0.0–1.0
+#ifdef HAVE_MULTIMEDIA
+    AudioClickListener* m_meterListener = nullptr;
+#endif
 
     QDialogButtonBox* m_buttons;
     QPushButton*      m_resetBtn      = nullptr;

@@ -2,6 +2,7 @@
 #ifdef HAVE_MULTIMEDIA
 #include <QObject>
 #include <QAudioFormat>
+#include <QTimer>
 #include <QtGlobal>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
@@ -40,11 +41,15 @@ signals:
     void level(double level01);
 
 private slots:
-    void onReadyRead();
+    // Reads whatever the device has captured and processes it.  Driven by a
+    // timer rather than QIODevice::readyRead, which is unreliable in pull mode
+    // on some Linux audio backends (PulseAudio/PipeWire).
+    void poll();
 
 private:
     double peakLevel(const char* data, qint64 len) const;
 
+    QTimer       m_pollTimer;
     QAudioFormat m_format;
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     QAudioSource* m_source = nullptr;
@@ -55,5 +60,6 @@ private:
     double     m_threshold  = 0.5;
     qint64     m_cooldownMs = 350;
     qint64     m_lastFireMs = 0;
+    int        m_dbgPeaksLogged = 0;  // limits debug peak logging per capture
 };
 #endif // HAVE_MULTIMEDIA

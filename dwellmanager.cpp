@@ -44,9 +44,32 @@ void DwellManager::disarm()
     emit dwellProgress(0.0f);
 }
 
+void DwellManager::fireNow()
+{
+    if (!m_armed) return;
+
+    const QPoint cur = m_cursorPosFn();
+    fireSelected(cur);
+
+    // In audio-trigger mode there is no movement-based re-arm: each audio cue
+    // should be able to fire again right away.  A drag still alternates
+    // Down/Up across cues (m_dragActive stays set), so only clear the
+    // movement-wait state that fireSelected leaves behind for ordinary clicks.
+    if (!m_dragActive) {
+        m_waiting      = false;
+        m_hovering     = false;
+        m_anchorPos    = cur;
+        m_hoverStartMs = m_nowFn();
+    }
+}
+
 void DwellManager::onPoll()
 {
     if (!m_armed) return;
+
+    // In audio-trigger mode the cursor-stillness countdown is disabled; the
+    // action fires only when fireNow() is called from the audio cue.
+    if (m_audioMode) return;
 
     QPoint cur = m_cursorPosFn();
 
@@ -125,60 +148,64 @@ void DwellManager::onPoll()
     frac = qBound(0.0f, frac, 1.0f);
     emit dwellProgress(frac);
 
-    if (elapsed >= m_dwellMs) {
-        emit dwellAboutToFire(cur, m_clickType);
-        bool isScroll = (m_clickType == ClickType::ScrollUp   ||
-                         m_clickType == ClickType::ScrollDown  ||
-                         m_clickType == ClickType::ScrollLeft  ||
-                         m_clickType == ClickType::ScrollRight);
-        int reps = isScroll ? m_scrollRepeat : 1;
-        for (int i = 0; i < reps; ++i)
-            m_clickFn(m_clickType, cur, m_modifiers);
-        emit dwellFired(cur, m_clickType);
+    if (elapsed >= m_dwellMs)
+        fireSelected(cur);
+}
 
-        // For drag (Down) events: skip the movement-wait entirely and go straight
-        // into the next hover countdown for the paired Up event.  This is critical
-        // on Linux where the OS button grab can freeze the cursor position, making
-        // movement-based re-arm impossible.  The user drags to a destination and
-        // dwells to release; if the cursor IS frozen the countdown still fires Up.
-        if (m_clickType == ClickType::LeftDown) {
-            m_clickType   = ClickType::LeftUp;
-            m_dragActive  = true;
-            m_dragStartMs = m_nowFn();
-            m_anchorPos   = cur;
-            m_lastPos     = cur;
-            m_hovering    = false;
-            emit dwellProgress(0.0f);
-            return;
-        }
-        if (m_clickType == ClickType::RightDown) {
-            m_clickType   = ClickType::RightUp;
-            m_dragActive  = true;
-            m_dragStartMs = m_nowFn();
-            m_anchorPos   = cur;
-            m_lastPos     = cur;
-            m_hovering    = false;
-            emit dwellProgress(0.0f);
-            return;
-        }
+void DwellManager::fireSelected(QPoint cur)
+{
+    emit dwellAboutToFire(cur, m_clickType);
+    bool isScroll = (m_clickType == ClickType::ScrollUp   ||
+                     m_clickType == ClickType::ScrollDown  ||
+                     m_clickType == ClickType::ScrollLeft  ||
+                     m_clickType == ClickType::ScrollRight);
+    int reps = isScroll ? m_scrollRepeat : 1;
+    for (int i = 0; i < reps; ++i)
+        m_clickFn(m_clickType, cur, m_modifiers);
+    emit dwellFired(cur, m_clickType);
 
-        // For Up events (completing a drag), restore the original Down type.
-        if (m_clickType == ClickType::LeftUp && m_dragActive) {
-            m_clickType  = ClickType::LeftDown;
-            m_dragActive = false;
-        } else if (m_clickType == ClickType::RightUp && m_dragActive) {
-            m_clickType  = ClickType::RightDown;
-            m_dragActive = false;
-        }
-
-        // Wait for cursor to move before allowing next dwell (prevents an
-        // immediate double-fire at the same location).  In one-shot mode the
-        // timeout branch in the waiting block disarms to avoid repeat firing;
-        // in repeat mode it lets the next dwell proceed normally.
+    // For drag (Down) events: skip the movement-wait entirely and go straight
+    // into the next hover countdown for the paired Up event.  This is critical
+    // on Linux where the OS button grab can freeze the cursor position, making
+    // movement-based re-arm impossible.  The user drags to a destination and
+    // dwells to release; if the cursor IS frozen the countdown still fires Up.
+    if (m_clickType == ClickType::LeftDown) {
+        m_clickType   = ClickType::LeftUp;
+        m_dragActive  = true;
+        m_dragStartMs = m_nowFn();
         m_anchorPos   = cur;
-        m_waiting     = true;
+        m_lastPos     = cur;
         m_hovering    = false;
-        m_waitStartMs = m_nowFn();
         emit dwellProgress(0.0f);
+        return;
     }
+    if (m_clickType == ClickType::RightDown) {
+        m_clickType   = ClickType::RightUp;
+        m_dragActive  = true;
+        m_dragStartMs = m_nowFn();
+        m_anchorPos   = cur;
+        m_lastPos     = cur;
+        m_hovering    = false;
+        emit dwellProgress(0.0f);
+        return;
+    }
+
+    // For Up events (completing a drag), restore the original Down type.
+    if (m_clickType == ClickType::LeftUp && m_dragActive) {
+        m_clickType  = ClickType::LeftDown;
+        m_dragActive = false;
+    } else if (m_clickType == ClickType::RightUp && m_dragActive) {
+        m_clickType  = ClickType::RightDown;
+        m_dragActive = false;
+    }
+
+    // Wait for cursor to move before allowing next dwell (prevents an
+    // immediate double-fire at the same location).  In one-shot mode the
+    // timeout branch in the waiting block disarms to avoid repeat firing;
+    // in repeat mode it lets the next dwell proceed normally.
+    m_anchorPos   = cur;
+    m_waiting     = true;
+    m_hovering    = false;
+    m_waitStartMs = m_nowFn();
+    emit dwellProgress(0.0f);
 }

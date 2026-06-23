@@ -1,5 +1,6 @@
 #include "settingsdialog.h"
 #include "translations/tsparser.h"
+#include "audioclicklistener.h"
 #include <QApplication>
 #include <QCursor>
 #include <QEvent>
@@ -365,6 +366,24 @@ SettingsDialog::SettingsDialog(const AppSettings& current,
     connect(m_resetBtn, &QPushButton::clicked, this, [this](){
         loadFrom(AppSettings{});
     });
+
+    // ── Live input-level meter (calibration) ──────────────────
+    m_meterTimer.setInterval(40);
+    connect(&m_meterTimer, &QTimer::timeout, this, [this](){
+        m_meterTarget *= 0.82;   // smooth decay so the bar falls back gently
+        m_audioMeter->setValue(static_cast<int>(qBound(0.0, m_meterTarget, 1.0) * 100));
+    });
+#ifdef HAVE_MULTIMEDIA
+    m_meterListener = new AudioClickListener(this);
+    connect(m_meterListener, &AudioClickListener::level, this, [this](double l){
+        if (l > m_meterTarget) m_meterTarget = l;   // instant rise, timed fall
+    });
+    // Only open the microphone while the Audio Click tab (index 3) is showing.
+    connect(m_tabs, &QTabWidget::currentChanged, this, [this](int idx){
+        if (idx == 3) startAudioMeter();
+        else          stopAudioMeter();
+    });
+#endif
 }
 
 // ── Language preview ──────────────────────────────────────────────────────────
@@ -413,6 +432,7 @@ void SettingsDialog::done(int result)
     // on Cancel the app reverts to whatever translator was active before the
     // dialog opened.
     cleanupPreviewTranslator();
+    stopAudioMeter();   // release the microphone when the dialog closes
     QDialog::done(result);
 }
 
@@ -483,6 +503,45 @@ void SettingsDialog::retranslateUi()
     m_lblLanguage->setText(tr("Language:"));
     m_resetBtn->setText(tr("Reset to Defaults"));
     m_btnOnScreenKbd->setText(tr("Open On-Screen Keyboard"));
+
+    m_tabs->setTabText(3, tr("Audio Click"));
+    m_chkAudioClick->setText(tr("Trigger the selected action with a loud sound"));
+    m_lblAudioClickInfo->setText(audioClickInfoText());
+    m_lblAudioThreshold->setText(tr("Loudness threshold:"));
+    m_lblAudioMeter->setText(tr("Input level:"));
+}
+
+QString SettingsDialog::audioClickInfoText() const
+{
+#ifdef HAVE_MULTIMEDIA
+    return tr("When enabled, the selected action fires when the microphone hears "
+              "a loud sound (such as a clap or a pop) instead of waiting for the "
+              "dwell timer. Turn on Dwell Active to start listening. Any loud "
+              "noise triggers the action — speech is not interpreted.");
+#else
+    return tr("Audio support is not available in this build, so audio click "
+              "cannot be used.");
+#endif
+}
+
+void SettingsDialog::startAudioMeter()
+{
+#ifdef HAVE_MULTIMEDIA
+    if (!m_meterListener) return;
+    if (!m_meterListener->isRunning())
+        m_meterListener->start();   // harmless if there is no input device
+    m_meterTimer.start();
+#endif
+}
+
+void SettingsDialog::stopAudioMeter()
+{
+#ifdef HAVE_MULTIMEDIA
+    m_meterTimer.stop();
+    if (m_meterListener) m_meterListener->stop();
+#endif
+    m_meterTarget = 0.0;
+    if (m_audioMeter) m_audioMeter->setValue(0);
 }
 
 // ── UI construction ───────────────────────────────────────────────────────────
@@ -533,9 +592,9 @@ void SettingsDialog::buildUi()
 #ifdef BUILD_NUMBER
 #  define TC_STR_(x) #x
 #  define TC_STR(x) TC_STR_(x)
-    auto* versionLbl = new QLabel("Version 0.9.2 (build " TC_STR(BUILD_NUMBER) ")");
+    auto* versionLbl = new QLabel("Version 0.9.3 (build " TC_STR(BUILD_NUMBER) ")");
 #else
-    auto* versionLbl = new QLabel("Version 0.9.2");
+    auto* versionLbl = new QLabel("Version 0.9.3");
 #endif
     versionLbl->setStyleSheet(
         "color: #666666; font-size: 11px; background: transparent;");
@@ -545,6 +604,34 @@ void SettingsDialog::buildUi()
     hLay->addStretch(1);
 
     root->addWidget(header);
+
+    // ── Language selector ─────────────────────────────────────
+    // Placed above the tab widget (not inside the Window tab) so the language
+    // can be changed no matter which tab is open.  Native-script names are
+    // intentionally not translated.
+    m_cmbLanguage = new QComboBox;
+    m_cmbLanguage->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+    m_cmbLanguage->setMinimumWidth(130);
+    m_cmbLanguage->addItem("English",   "en");
+    m_cmbLanguage->addItem("Čeština",   "cs");
+    m_cmbLanguage->addItem("Français",  "fr");
+    m_cmbLanguage->addItem("Español",   "es");
+    m_cmbLanguage->addItem("中文简体",   "zh_CN");
+    m_cmbLanguage->addItem("日本語",     "ja");
+    m_cmbLanguage->addItem("한국어",     "ko");
+    m_cmbLanguage->addItem("हिन्दी",    "hi");
+    m_cmbLanguage->addItem("العربية",   "ar");
+    m_cmbLanguage->addItem("বাংলা",     "bn");
+    m_cmbLanguage->addItem("Português", "pt");
+    m_cmbLanguage->addItem("Русский",   "ru");
+    m_cmbLanguage->addItem("اردو",      "ur");
+    m_lblLanguage = new QLabel(tr("Language:"));
+
+    auto* langRow = new QHBoxLayout;
+    langRow->addWidget(m_lblLanguage);
+    langRow->addWidget(m_cmbLanguage);
+    langRow->addStretch(1);
+    root->addLayout(langRow);
 
     // ── Tabbed sections ───────────────────────────────────────
     // Each former group box becomes a tab page so the dialog shows one section
@@ -697,27 +784,8 @@ void SettingsDialog::buildUi()
     m_cmbLayout->addItem(tr("Vertical (one column)"));
     m_cmbLayout->addItem(tr("Vertical (two columns)"));
 
-    // Language names are shown in their native script — intentionally not tr()
-    m_cmbLanguage = new QComboBox;
-    m_cmbLanguage->setSizeAdjustPolicy(QComboBox::AdjustToContents);
-    m_cmbLanguage->setMinimumWidth(130);
-    m_cmbLanguage->addItem("English",   "en");
-    m_cmbLanguage->addItem("Čeština",   "cs");
-    m_cmbLanguage->addItem("Français",  "fr");
-    m_cmbLanguage->addItem("Español",   "es");
-    m_cmbLanguage->addItem("中文简体",   "zh_CN");
-    m_cmbLanguage->addItem("日本語",     "ja");
-    m_cmbLanguage->addItem("한국어",     "ko");
-    m_cmbLanguage->addItem("हिन्दी",    "hi");
-    m_cmbLanguage->addItem("العربية",   "ar");
-    m_cmbLanguage->addItem("বাংলা",     "bn");
-    m_cmbLanguage->addItem("Português", "pt");
-    m_cmbLanguage->addItem("Русский",   "ru");
-    m_cmbLanguage->addItem("اردو",      "ur");
-
     m_lblOpacity   = new QLabel(tr("Opacity:"));
     m_lblBtnLayout = new QLabel(tr("Button layout:"));
-    m_lblLanguage  = new QLabel(tr("Language:"));
 
     wfl->addRow(m_lblOpacity, opRow);
     wfl->addRow(m_chkAlwaysOnTop);
@@ -730,7 +798,6 @@ void SettingsDialog::buildUi()
     wfl->addRow(m_chkIconsOnly);
     wfl->addRow(m_chkLargeButtons);
     wfl->addRow(m_lblBtnLayout, m_cmbLayout);
-    wfl->addRow(m_lblLanguage,  m_cmbLanguage);
 
     m_btnOnScreenKbd = new QPushButton(tr("Open On-Screen Keyboard"));
     m_btnOnScreenKbd->setFlat(true);
@@ -774,6 +841,71 @@ void SettingsDialog::buildUi()
     });
 
     m_tabs->addTab(pageWin, tr("Window"));
+
+    // ── Audio Click ───────────────────────────────────────────
+    auto* pageAudio = new QWidget;
+    auto* aufl      = new QVBoxLayout(pageAudio);
+    aufl->setSpacing(8);
+
+    m_chkAudioClick = new QCheckBox(tr("Trigger the selected action with a loud sound"));
+    aufl->addWidget(m_chkAudioClick);
+
+    m_lblAudioClickInfo = new QLabel;
+    m_lblAudioClickInfo->setWordWrap(true);
+    m_lblAudioClickInfo->setStyleSheet("color:#979797;");
+    m_lblAudioClickInfo->setText(audioClickInfoText());
+    aufl->addWidget(m_lblAudioClickInfo);
+
+    // Threshold slider and live input meter share one grid so the slider handle
+    // lines up directly above the meter bar (both run on the same 0–100 scale),
+    // letting the user set the threshold just below where their noise peaks.
+    auto* calGrid = new QGridLayout;
+    calGrid->setHorizontalSpacing(8);
+    m_lblAudioThreshold = new QLabel(tr("Loudness threshold:"));
+    m_audioThreshSlider = new QSlider(Qt::Horizontal);
+    m_audioThreshSlider->setRange(1, 100);
+    m_audioThreshValue  = new QLabel("50%");
+    m_audioThreshValue->setFixedWidth(36);
+    calGrid->addWidget(m_lblAudioThreshold, 0, 0);
+    calGrid->addWidget(m_audioThreshSlider, 0, 1);
+    calGrid->addWidget(m_audioThreshValue,  0, 2);
+
+    m_lblAudioMeter = new QLabel(tr("Input level:"));
+    m_audioMeter    = new QProgressBar;
+    m_audioMeter->setRange(0, 100);
+    m_audioMeter->setValue(0);
+    m_audioMeter->setTextVisible(false);
+    m_audioMeter->setFixedHeight(10);
+    m_audioMeter->setStyleSheet(
+        "QProgressBar{background:#1A1A1A;border:1px solid #555;border-radius:3px;}"
+        "QProgressBar::chunk{background:#FFA600;border-radius:2px;}");
+    calGrid->addWidget(m_lblAudioMeter, 1, 0);
+    calGrid->addWidget(m_audioMeter,    1, 1);
+    calGrid->setColumnStretch(1, 1);
+    aufl->addLayout(calGrid);
+    aufl->addStretch(1);
+
+    connect(m_audioThreshSlider, &QSlider::valueChanged, this, [this](int v){
+        m_audioThreshValue->setText(QString::number(v) + "%");
+    });
+    // The threshold only matters when audio click is enabled.
+    auto updateAudioEnabled = [this](bool on){
+        m_lblAudioThreshold->setEnabled(on);
+        m_audioThreshSlider->setEnabled(on);
+        m_audioThreshValue->setEnabled(on);
+    };
+    connect(m_chkAudioClick, &QCheckBox::toggled, this, updateAudioEnabled);
+
+#ifndef HAVE_MULTIMEDIA
+    // No audio support compiled in — show the option but make clear it is inert,
+    // and hide the live meter (there is nothing to display).
+    m_chkAudioClick->setEnabled(false);
+    m_audioThreshSlider->setEnabled(false);
+    m_lblAudioMeter->hide();
+    m_audioMeter->hide();
+#endif
+
+    m_tabs->addTab(pageAudio, tr("Audio Click"));
 
     // ── Buttons ───────────────────────────────────────────────
     m_buttons  = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
@@ -906,6 +1038,13 @@ void SettingsDialog::loadFrom(const AppSettings& s)
             break;
         }
     }
+
+    m_chkAudioClick->setChecked(s.audioClickEnabled);
+    m_audioThreshSlider->setValue(s.audioClickThreshold);
+    m_audioThreshValue->setText(QString::number(s.audioClickThreshold) + "%");
+    m_lblAudioThreshold->setEnabled(s.audioClickEnabled);
+    m_audioThreshSlider->setEnabled(s.audioClickEnabled);
+    m_audioThreshValue->setEnabled(s.audioClickEnabled);
 }
 
 AppSettings SettingsDialog::readUi() const
@@ -948,6 +1087,9 @@ AppSettings SettingsDialog::readUi() const
     s.largeButtons    = m_chkLargeButtons->isChecked();
     s.buttonLayout    = static_cast<ButtonLayout>(m_cmbLayout->currentIndex());
     s.language        = m_cmbLanguage->currentData().toString();
+
+    s.audioClickEnabled   = m_chkAudioClick->isChecked();
+    s.audioClickThreshold = m_audioThreshSlider->value();
     return s;
 }
 

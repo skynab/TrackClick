@@ -52,6 +52,12 @@
 </context>
 <context>
     <name>SettingsDialog</name>
+    <message><source>Audio Click</source><translation>Clique por som</translation></message>
+    <message><source>Trigger the selected action with a loud sound</source><translation>Acionar a ação selecionada com um som alto</translation></message>
+    <message><source>When enabled, the selected action fires when the microphone hears a loud sound (such as a clap or a pop) instead of waiting for the dwell timer. Turn on Dwell Active to start listening. Any loud noise triggers the action — speech is not interpreted.</source><translation>Quando ativado, a ação selecionada é executada quando o microfone ouve um som alto (como uma palma ou um estalo) em vez de esperar pelo temporizador de permanência. Ative Permanência ativa para começar a ouvir. Qualquer som alto aciona a ação — a fala não é interpretada.</translation></message>
+    <message><source>Audio support is not available in this build, so audio click cannot be used.</source><translation>O suporte de áudio não está disponível nesta compilação, portanto o clique por som não pode ser usado.</translation></message>
+    <message><source>Loudness threshold:</source><translation>Limite de volume:</translation></message>
+    <message><source>Input level:</source><translation>Nível de entrada:</translation></message>
     <message><source>TrackClick — Settings</source><translation>TrackClick — Configurações</translation></message>
     <message><source>Dwell Clicking</source><translation>Clique por permanência</translation></message>
     <message><source>Dwell time:</source><translation>Tempo de permanência:</translation></message>

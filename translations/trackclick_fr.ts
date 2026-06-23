@@ -47,6 +47,12 @@
 </context>
 <context>
     <name>SettingsDialog</name>
+    <message><source>Audio Click</source><translation>Clic audio</translation></message>
+    <message><source>Trigger the selected action with a loud sound</source><translation>Déclencher l'action sélectionnée avec un son fort</translation></message>
+    <message><source>When enabled, the selected action fires when the microphone hears a loud sound (such as a clap or a pop) instead of waiting for the dwell timer. Turn on Dwell Active to start listening. Any loud noise triggers the action — speech is not interpreted.</source><translation>Lorsque cette option est activée, l'action sélectionnée se déclenche dès que le microphone entend un son fort (comme un claquement ou un pop) au lieu d'attendre le minuteur de survol. Activez Survol actif pour commencer l'écoute. Tout bruit fort déclenche l'action — la parole n'est pas interprétée.</translation></message>
+    <message><source>Audio support is not available in this build, so audio click cannot be used.</source><translation>La prise en charge audio n'est pas disponible dans cette version, le clic audio ne peut donc pas être utilisé.</translation></message>
+    <message><source>Loudness threshold:</source><translation>Seuil de volume :</translation></message>
+    <message><source>Input level:</source><translation>Niveau d'entrée :</translation></message>
     <message><source>TrackClick — Settings</source><translation>TrackClick — Paramètres</translation></message>
     <message><source>Dwell Clicking</source><translation>Clic par survol</translation></message>
     <message><source>Dwell time:</source><translation>Durée de survol :</translation></message>

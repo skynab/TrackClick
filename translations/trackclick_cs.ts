@@ -49,6 +49,12 @@
 </context>
 <context>
     <name>SettingsDialog</name>
+    <message><source>Audio Click</source><translation>Zvukové kliknutí</translation></message>
+    <message><source>Trigger the selected action with a loud sound</source><translation>Spustit vybranou akci hlasitým zvukem</translation></message>
+    <message><source>When enabled, the selected action fires when the microphone hears a loud sound (such as a clap or a pop) instead of waiting for the dwell timer. Turn on Dwell Active to start listening. Any loud noise triggers the action — speech is not interpreted.</source><translation>Když je zapnuto, vybraná akce se spustí, jakmile mikrofon zaslechne hlasitý zvuk (například tlesknutí nebo lupnutí), místo čekání na časovač prodlevy. Naslouchání spustíte zapnutím Aktivní prodlevy. Jakýkoli hlasitý zvuk spustí akci — řeč se nevyhodnocuje.</translation></message>
+    <message><source>Audio support is not available in this build, so audio click cannot be used.</source><translation>Zvuková podpora není v tomto sestavení k dispozici, takže zvukové kliknutí nelze použít.</translation></message>
+    <message><source>Loudness threshold:</source><translation>Práh hlasitosti:</translation></message>
+    <message><source>Input level:</source><translation>Vstupní úroveň:</translation></message>
     <message><source>TrackClick — Settings</source><translation>TrackClick — Nastavení</translation></message>
     <message><source>Dwell Clicking</source><translation>Klikání při najetí</translation></message>
     <message><source>Dwell time:</source><translation>Čas najetí:</translation></message>

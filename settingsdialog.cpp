@@ -628,6 +628,7 @@ void SettingsDialog::buildUi()
     m_lblLanguage = new QLabel(tr("Language:"));
 
     auto* langRow = new QHBoxLayout;
+    langRow->addStretch(1);
     langRow->addWidget(m_lblLanguage);
     langRow->addWidget(m_cmbLanguage);
     langRow->addStretch(1);

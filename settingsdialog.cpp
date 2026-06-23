@@ -605,6 +605,34 @@ void SettingsDialog::buildUi()
 
     root->addWidget(header);
 
+    // ── Language selector ─────────────────────────────────────
+    // Placed above the tab widget (not inside the Window tab) so the language
+    // can be changed no matter which tab is open.  Native-script names are
+    // intentionally not translated.
+    m_cmbLanguage = new QComboBox;
+    m_cmbLanguage->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+    m_cmbLanguage->setMinimumWidth(130);
+    m_cmbLanguage->addItem("English",   "en");
+    m_cmbLanguage->addItem("Čeština",   "cs");
+    m_cmbLanguage->addItem("Français",  "fr");
+    m_cmbLanguage->addItem("Español",   "es");
+    m_cmbLanguage->addItem("中文简体",   "zh_CN");
+    m_cmbLanguage->addItem("日本語",     "ja");
+    m_cmbLanguage->addItem("한국어",     "ko");
+    m_cmbLanguage->addItem("हिन्दी",    "hi");
+    m_cmbLanguage->addItem("العربية",   "ar");
+    m_cmbLanguage->addItem("বাংলা",     "bn");
+    m_cmbLanguage->addItem("Português", "pt");
+    m_cmbLanguage->addItem("Русский",   "ru");
+    m_cmbLanguage->addItem("اردو",      "ur");
+    m_lblLanguage = new QLabel(tr("Language:"));
+
+    auto* langRow = new QHBoxLayout;
+    langRow->addWidget(m_lblLanguage);
+    langRow->addWidget(m_cmbLanguage);
+    langRow->addStretch(1);
+    root->addLayout(langRow);
+
     // ── Tabbed sections ───────────────────────────────────────
     // Each former group box becomes a tab page so the dialog shows one section
     // at a time instead of the whole stack at once.  Tab labels carry the
@@ -756,27 +784,8 @@ void SettingsDialog::buildUi()
     m_cmbLayout->addItem(tr("Vertical (one column)"));
     m_cmbLayout->addItem(tr("Vertical (two columns)"));
 
-    // Language names are shown in their native script — intentionally not tr()
-    m_cmbLanguage = new QComboBox;
-    m_cmbLanguage->setSizeAdjustPolicy(QComboBox::AdjustToContents);
-    m_cmbLanguage->setMinimumWidth(130);
-    m_cmbLanguage->addItem("English",   "en");
-    m_cmbLanguage->addItem("Čeština",   "cs");
-    m_cmbLanguage->addItem("Français",  "fr");
-    m_cmbLanguage->addItem("Español",   "es");
-    m_cmbLanguage->addItem("中文简体",   "zh_CN");
-    m_cmbLanguage->addItem("日本語",     "ja");
-    m_cmbLanguage->addItem("한국어",     "ko");
-    m_cmbLanguage->addItem("हिन्दी",    "hi");
-    m_cmbLanguage->addItem("العربية",   "ar");
-    m_cmbLanguage->addItem("বাংলা",     "bn");
-    m_cmbLanguage->addItem("Português", "pt");
-    m_cmbLanguage->addItem("Русский",   "ru");
-    m_cmbLanguage->addItem("اردو",      "ur");
-
     m_lblOpacity   = new QLabel(tr("Opacity:"));
     m_lblBtnLayout = new QLabel(tr("Button layout:"));
-    m_lblLanguage  = new QLabel(tr("Language:"));
 
     wfl->addRow(m_lblOpacity, opRow);
     wfl->addRow(m_chkAlwaysOnTop);
@@ -789,7 +798,6 @@ void SettingsDialog::buildUi()
     wfl->addRow(m_chkIconsOnly);
     wfl->addRow(m_chkLargeButtons);
     wfl->addRow(m_lblBtnLayout, m_cmbLayout);
-    wfl->addRow(m_lblLanguage,  m_cmbLanguage);
 
     m_btnOnScreenKbd = new QPushButton(tr("Open On-Screen Keyboard"));
     m_btnOnScreenKbd->setFlat(true);

@@ -145,8 +145,12 @@ jobs:
           # linuxdeploy requires the icon filename to match the Icon= entry in the desktop file
           cp icons/app.svg icons/TrackClick.svg
 
-          # Build the AppImage
+          # Build the AppImage.
+          # EXTRA_QT_PLUGINS=multimedia forces linuxdeploy-plugin-qt to bundle the
+          # Qt Multimedia backend plugin (and its libs) — without it the audio-click
+          # microphone capture has no backend at runtime and silently does nothing.
           QMAKE=$(which qmake6 || which qmake) \
+          EXTRA_QT_PLUGINS="multimedia" \
           OUTPUT=TrackClick-Linux.AppImage \
           ./linuxdeploy-x86_64.AppImage \
             --appdir AppDir \

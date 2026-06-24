@@ -199,8 +199,17 @@ if(UNIX AND NOT APPLE)
     # Auto-derive linked-library dependencies from the binary; recommend the
     # on-screen keyboard and polkit (pkexec) which are used at runtime but not
     # captured by shared-library scanning.
+    #
+    # The audio-click feature also needs Qt Multimedia's runtime *backend*, which
+    # Qt loads dynamically (dlopen) — so shlibdeps cannot see it.  On Qt 6.2/6.4
+    # (Ubuntu 22.04) that backend is GStreamer, and audio capture from PulseAudio/
+    # PipeWire comes via gst-plugins-good's pulsesrc.  Without these the input
+    # meter stays flat and no audio cue ever fires, even though the binary links
+    # libQt6Multimedia fine.  Recommended (not required) so the app still installs
+    # on systems where audio click isn't wanted.
     set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
-    set(CPACK_DEBIAN_PACKAGE_RECOMMENDS "onboard, policykit-1")
+    set(CPACK_DEBIAN_PACKAGE_RECOMMENDS
+        "onboard, policykit-1, gstreamer1.0-plugins-base, gstreamer1.0-plugins-good")
     set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
     set(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
 

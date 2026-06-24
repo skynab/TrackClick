@@ -513,6 +513,8 @@ void SettingsDialog::retranslateUi()
     m_cmbLayout->setItemText(2, tr("Vertical (one column)"));
     m_cmbLayout->setItemText(3, tr("Vertical (two columns)"));
     m_lblLanguage->setText(tr("Language:"));
+    m_okBtn->setText(tr("OK"));
+    m_cancelBtn->setText(tr("Cancel"));
     m_resetBtn->setText(tr("Reset to Defaults"));
     m_btnOnScreenKbd->setText(tr("Open On-Screen Keyboard"));
 
@@ -993,13 +995,10 @@ void SettingsDialog::buildUi()
     m_tabs->addTab(pageAudio, tr("Audio Click"));
 
     // ── Buttons ───────────────────────────────────────────────
-    m_buttons  = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-#ifdef Q_OS_LINUX
-    // On Linux/GTK the system theme injects icons into standard buttons; remove them.
-    for (QAbstractButton* btn : m_buttons->buttons())
-        btn->setIcon(QIcon());
-#endif
-    m_resetBtn = m_buttons->addButton(tr("Reset to Defaults"), QDialogButtonBox::ResetRole);
+    m_buttons   = new QDialogButtonBox();
+    m_okBtn     = m_buttons->addButton(tr("OK"),     QDialogButtonBox::AcceptRole);
+    m_cancelBtn = m_buttons->addButton(tr("Cancel"), QDialogButtonBox::RejectRole);
+    m_resetBtn  = m_buttons->addButton(tr("Reset to Defaults"), QDialogButtonBox::ResetRole);
     root->addWidget(m_buttons);
 }
 

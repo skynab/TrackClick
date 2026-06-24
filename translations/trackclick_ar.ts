@@ -115,6 +115,12 @@
     <message><source>No on-screen keyboard was found.
 Please install 'onboard' or 'florence'.</source><translation>لم يتم العثور على لوحة مفاتيح على الشاشة.
 يرجى تثبيت 'onboard' أو 'florence'.</translation></message>
+    <message><source>Custom Hotkeys</source><translation>اختصارات مخصصة</translation></message>
+    <message><source>Hotkey %1</source><translation>اختصار %1</translation></message>
+    <message><source>Label (optional)</source><translation>التسمية (اختياري)</translation></message>
+    <message><source>Show click indicator ring</source><translation>إظهار حلقة مؤشر النقر</translation></message>
+    <message><source>OK</source><translation>موافق</translation></message>
+    <message><source>Cancel</source><translation>إلغاء</translation></message>
 </context>
 <context>
     <name>SensitivityTesterDialog</name>

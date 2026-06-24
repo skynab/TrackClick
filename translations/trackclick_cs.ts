@@ -111,6 +111,13 @@ Nainstalujte prosím 'onboard' nebo 'florence'.</translation></message>
     <message><source>Left edge</source><translation>Levý okraj</translation></message>
     <message><source>Right edge</source><translation>Pravý okraj</translation></message>
     <message><source>Sensitivity Tester…</source><translation>Test citlivosti…</translation></message>
+    <message><source>Custom Hotkeys</source><translation>Vlastní zkratky</translation></message>
+    <message><source>Hotkey %1</source><translation>Zkratka %1</translation></message>
+    <message><source>Label (optional)</source><translation>Popisek (volitelný)</translation></message>
+    <message><source>Show click indicator ring</source><translation>Zobrazit indikátor kliknutí</translation></message>
+    <message><source>Reset to Defaults</source><translation>Obnovit výchozí nastavení</translation></message>
+    <message><source>OK</source><translation>OK</translation></message>
+    <message><source>Cancel</source><translation>Zrušit</translation></message>
 </context>
 <context>
     <name>SensitivityTesterDialog</name>

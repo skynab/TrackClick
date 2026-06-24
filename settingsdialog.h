@@ -219,6 +219,8 @@ private:
     QKeySequenceEdit* m_kseHotkey[3]      = {};
 
     QDialogButtonBox* m_buttons;
+    QPushButton*      m_okBtn         = nullptr;
+    QPushButton*      m_cancelBtn     = nullptr;
     QPushButton*      m_resetBtn      = nullptr;
     QPushButton*      m_btnSensTester = nullptr;
     QPushButton*      m_btnOnScreenKbd = nullptr;

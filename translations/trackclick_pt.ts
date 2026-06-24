@@ -115,6 +115,12 @@
     <message><source>No on-screen keyboard was found.
 Please install 'onboard' or 'florence'.</source><translation>Nenhum teclado virtual foi encontrado.
 Instale 'onboard' ou 'florence'.</translation></message>
+    <message><source>Custom Hotkeys</source><translation>Atalhos personalizados</translation></message>
+    <message><source>Hotkey %1</source><translation>Atalho %1</translation></message>
+    <message><source>Label (optional)</source><translation>Rótulo (opcional)</translation></message>
+    <message><source>Show click indicator ring</source><translation>Mostrar anel indicador de clique</translation></message>
+    <message><source>OK</source><translation>OK</translation></message>
+    <message><source>Cancel</source><translation>Cancelar</translation></message>
 </context>
 <context>
     <name>SensitivityTesterDialog</name>

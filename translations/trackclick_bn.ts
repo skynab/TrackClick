@@ -115,6 +115,12 @@
     <message><source>No on-screen keyboard was found.
 Please install 'onboard' or 'florence'.</source><translation>কোনো অন-স্ক্রিন কীবোর্ড পাওয়া যায়নি।
 'onboard' বা 'florence' ইনস্টল করুন।</translation></message>
+    <message><source>Custom Hotkeys</source><translation>কাস্টম হটকি</translation></message>
+    <message><source>Hotkey %1</source><translation>হটকি %1</translation></message>
+    <message><source>Label (optional)</source><translation>লেবেল (ঐচ্ছিক)</translation></message>
+    <message><source>Show click indicator ring</source><translation>ক্লিক ইন্ডিকেটর রিং দেখান</translation></message>
+    <message><source>OK</source><translation>ঠিক আছে</translation></message>
+    <message><source>Cancel</source><translation>বাতিল</translation></message>
 </context>
 <context>
     <name>SensitivityTesterDialog</name>

@@ -1,4 +1,5 @@
 #pragma once
+#include <QKeySequence>
 #include <QPoint>
 
 // All click types supported by TrackClick
@@ -35,6 +36,10 @@ public:
     // Perform a click at the given screen position with optional modifiers.
     // Modifiers is a bitmask of ModifierFlag values.
     static void performClick(ClickType type, QPoint pos, int modifiers = ModNone);
+
+    // Inject a key combination (e.g. F12, Ctrl+A) system-wide.
+    // Uses SendInput on Windows, CGEvent on macOS, XTest on Linux.
+    static void injectKeySequence(const QKeySequence& seq);
 
     // Move the system cursor to pos without clicking.
     static void moveCursor(QPoint pos);

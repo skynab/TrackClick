@@ -7,6 +7,7 @@
 #include <QDialogButtonBox>
 #include <QGroupBox>
 #include <QLabel>
+#include <QLineEdit>
 #include <QPushButton>
 #include <QSlider>
 #include <QProgressBar>
@@ -14,12 +15,20 @@
 #include <QTimer>
 #include <QTranslator>
 
+class QKeySequenceEdit;
+
 #ifdef HAVE_MULTIMEDIA
 class AudioClickListener;
 #endif
 
 enum class ButtonLayout { Rectangle, Horizontal, Vertical, VerticalTwo };
 enum class EdgeLock    { None, Left, Right };
+
+struct HotkeySlot {
+    bool    enabled     = false;
+    QString label;         // button display label; falls back to key sequence text if empty
+    QString keySequence;   // stored as QKeySequence::toString(PortableText)
+};
 
 struct AppSettings {
     // Dwell / AutoMouse
@@ -76,6 +85,9 @@ struct AppSettings {
     // Edge lock / hide
     EdgeLock edgeLock = EdgeLock::None;
     bool     edgeHide = false;
+
+    // Custom hotkey buttons (up to 3)
+    HotkeySlot hotkeys[3];
 };
 
 class SettingsDialog : public QDialog
@@ -195,6 +207,12 @@ private:
 #ifdef HAVE_MULTIMEDIA
     AudioClickListener* m_meterListener = nullptr;
 #endif
+
+    // Custom Hotkeys section (Buttons tab)
+    QLabel*           m_lblCustomHotkeys  = nullptr;
+    QCheckBox*        m_chkHotkey[3]      = {};
+    QLineEdit*        m_edtHotkeyLabel[3] = {};
+    QKeySequenceEdit* m_kseHotkey[3]      = {};
 
     QDialogButtonBox* m_buttons;
     QPushButton*      m_resetBtn      = nullptr;

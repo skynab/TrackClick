@@ -1,7 +1,9 @@
 #include "settingsdialog.h"
 #include "translations/tsparser.h"
 #include "audioclicklistener.h"
+#include "clickinjector.h"
 #include <QApplication>
+#include <QKeySequenceEdit>
 #include <QCursor>
 #include <QEvent>
 #include <QFrame>
@@ -61,12 +63,15 @@ QCheckBox::indicator {
 QCheckBox::indicator:checked {
     image: url(:/icons/toggle_on.svg);
 }
-QSpinBox, QDoubleSpinBox, QComboBox {
+QSpinBox, QDoubleSpinBox, QComboBox, QLineEdit, QKeySequenceEdit {
     background: #1A1A1A;
     color: #979797;
     border: 1px solid #555;
     border-radius: 3px;
     padding: 2px 4px;
+}
+QLineEdit:focus, QKeySequenceEdit:focus {
+    border: 1px solid #FFA600;
 }
 QComboBox::drop-down { border: none; width: 18px; }
 QComboBox QAbstractItemView {
@@ -481,6 +486,12 @@ void SettingsDialog::retranslateUi()
     m_chkQuitButton->setText(tr("Quit Button"));
     m_chkDwellActiveBtn->setText(tr("Dwell Active Button"));
 
+    m_lblCustomHotkeys->setText(tr("Custom Hotkeys"));
+    for (int i = 0; i < 3; ++i) {
+        m_chkHotkey[i]->setText(tr("Hotkey %1").arg(i + 1));
+        m_edtHotkeyLabel[i]->setPlaceholderText(tr("Label (optional)"));
+    }
+
     m_tabs->setTabText(2, tr("Window"));
     m_lblEdgeLock->setText(tr("Lock to screen edge:"));
     m_cmbEdgeLock->setItemText(0, tr("None"));
@@ -731,10 +742,47 @@ void SettingsDialog::buildUi()
     addChk(m_chkModAlt);      addChk(m_chkModShift);    addChk(m_chkExitButton);
     addChk(m_chkQuitButton);  addChk(m_chkDwellActiveBtn);
 
-    // Absorb any leftover vertical space in a trailing empty row so the tab's
-    // extra height doesn't get spread across the content rows (which otherwise
-    // makes the title row balloon to fill half the tab).
-    grid->setRowStretch(row + 1, 1);
+    // Ensure we're at the start of a fresh row for the hotkeys section
+    if (col > 0) { col = 0; row++; }
+
+    // ── Custom Hotkeys section ────────────────────────────────
+    auto* hotkeysSep = new QFrame;
+    hotkeysSep->setFrameShape(QFrame::HLine);
+    hotkeysSep->setStyleSheet("QFrame { color: #555; }");
+    grid->addWidget(hotkeysSep, row++, 0, 1, 3);
+
+    m_lblCustomHotkeys = new QLabel(tr("Custom Hotkeys"));
+    m_lblCustomHotkeys->setStyleSheet(
+        "color: #FFA600; font-weight: bold; background: transparent;");
+    grid->addWidget(m_lblCustomHotkeys, row++, 0, 1, 3);
+
+    for (int i = 0; i < 3; ++i) {
+        m_chkHotkey[i] = new QCheckBox(tr("Hotkey %1").arg(i + 1));
+
+        m_edtHotkeyLabel[i] = new QLineEdit;
+        m_edtHotkeyLabel[i]->setPlaceholderText(tr("Label (optional)"));
+        m_edtHotkeyLabel[i]->setToolTip(
+            tr("Button label shown on the toolbar. Defaults to the key name if left blank."));
+
+        m_kseHotkey[i] = new QKeySequenceEdit;
+        m_kseHotkey[i]->setToolTip(
+            tr("Click here and press the desired key combination (e.g. F12, Ctrl+A, Alt+Z)."));
+#if QT_VERSION >= QT_VERSION_CHECK(6, 1, 0)
+        m_kseHotkey[i]->setMaximumSequenceLength(1);
+#endif
+        auto updateRowEnabled = [this, i](bool on) {
+            m_edtHotkeyLabel[i]->setEnabled(on);
+            m_kseHotkey[i]->setEnabled(on);
+        };
+        connect(m_chkHotkey[i], &QCheckBox::toggled, this, updateRowEnabled);
+
+        grid->addWidget(m_chkHotkey[i],      row, 0);
+        grid->addWidget(m_edtHotkeyLabel[i], row, 1);
+        grid->addWidget(m_kseHotkey[i],      row, 2);
+        row++;
+    }
+
+    grid->setRowStretch(row, 1);
 
     m_tabs->addTab(pageBtns, tr("Buttons"));
 
@@ -1046,6 +1094,14 @@ void SettingsDialog::loadFrom(const AppSettings& s)
     m_lblAudioThreshold->setEnabled(s.audioClickEnabled);
     m_audioThreshSlider->setEnabled(s.audioClickEnabled);
     m_audioThreshValue->setEnabled(s.audioClickEnabled);
+
+    for (int i = 0; i < 3; ++i) {
+        m_chkHotkey[i]->setChecked(s.hotkeys[i].enabled);
+        m_edtHotkeyLabel[i]->setText(s.hotkeys[i].label);
+        m_kseHotkey[i]->setKeySequence(QKeySequence(s.hotkeys[i].keySequence));
+        m_edtHotkeyLabel[i]->setEnabled(s.hotkeys[i].enabled);
+        m_kseHotkey[i]->setEnabled(s.hotkeys[i].enabled);
+    }
 }
 
 AppSettings SettingsDialog::readUi() const
@@ -1091,6 +1147,13 @@ AppSettings SettingsDialog::readUi() const
 
     s.audioClickEnabled   = m_chkAudioClick->isChecked();
     s.audioClickThreshold = m_audioThreshSlider->value();
+
+    for (int i = 0; i < 3; ++i) {
+        s.hotkeys[i].enabled     = m_chkHotkey[i]->isChecked();
+        s.hotkeys[i].label       = m_edtHotkeyLabel[i]->text().trimmed();
+        s.hotkeys[i].keySequence = m_kseHotkey[i]->keySequence()
+                                       .toString(QKeySequence::PortableText);
+    }
     return s;
 }
 

@@ -221,6 +221,12 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     m_settings.repeatOnDwell   = m_persist.value("dwell/repeatOnDwell", false).toBool();
     m_settings.edgeLock = static_cast<EdgeLock>(m_persist.value("window/edgeLock", 0).toInt());
     m_settings.edgeHide = m_persist.value("window/edgeHide", false).toBool();
+    for (int i = 0; i < 3; ++i) {
+        const QString base = QString("hotkey/%1/").arg(i);
+        m_settings.hotkeys[i].enabled     = m_persist.value(base + "enabled", false).toBool();
+        m_settings.hotkeys[i].label       = m_persist.value(base + "label",   "").toString();
+        m_settings.hotkeys[i].keySequence = m_persist.value(base + "seq",     "").toString();
+    }
 
     // Adopt any translator already installed at startup so installLanguage()
     // can remove it when the user later switches languages (e.g. back to English).
@@ -525,6 +531,37 @@ private:
     const int* m_dwellMs;
 };
 
+// Attaches dwell-hover fire behaviour to a hotkey QPushButton.
+// On hover, waits dwellMs then calls the provided action.
+class HotkeyHoverFilter : public QObject {
+public:
+    HotkeyHoverFilter(QPushButton* btn, const int* dwellMs,
+                      std::function<void()> action)
+        : QObject(btn), m_dwellMs(dwellMs), m_action(std::move(action))
+    {
+        m_timer = new QTimer(this);
+        m_timer->setSingleShot(true);
+        QObject::connect(m_timer, &QTimer::timeout, this,
+                         [this]{ m_action(); });
+        btn->installEventFilter(this);
+    }
+
+protected:
+    bool eventFilter(QObject*, QEvent* ev) override
+    {
+        if (ev->type() == QEvent::Enter)
+            m_timer->start(*m_dwellMs);
+        else if (ev->type() == QEvent::Leave)
+            m_timer->stop();
+        return false;
+    }
+
+private:
+    QTimer*               m_timer;
+    const int*            m_dwellMs;
+    std::function<void()> m_action;
+};
+
 void MainWindow::rebuildButtons()
 {
     // Clear existing
@@ -538,6 +575,7 @@ void MainWindow::rebuildButtons()
     }
     m_clickButtons.clear();
     m_ctrlBtn = m_altBtn = m_shiftBtn = m_dwellActiveBtn = nullptr;
+    m_hotkeyBtns[0] = m_hotkeyBtns[1] = m_hotkeyBtns[2] = nullptr;
 
     auto* grid = new QGridLayout(m_btnArea);
     grid->setSpacing(4);
@@ -640,6 +678,40 @@ void MainWindow::rebuildButtons()
 
     const QSize modSize = isVerticalMode ? QSize(0, large ? 32 : 22)
                                          : QSize(large ? 48 : 32, large ? 40 : 28);
+
+    // ── Custom hotkey buttons ─────────────────────────────────
+    for (int i = 0; i < 3; ++i) {
+        const auto& slot = m_settings.hotkeys[i];
+        if (!slot.enabled || slot.keySequence.isEmpty()) continue;
+
+        QKeySequence seq(slot.keySequence, QKeySequence::PortableText);
+        const QString displayLabel = slot.label.isEmpty()
+            ? seq.toString(QKeySequence::NativeText)
+            : slot.label;
+        if (displayLabel.isEmpty()) continue;
+
+        auto* btn = new QPushButton(displayLabel, m_btnArea);
+        btn->setMinimumHeight(large ? 48 : 36);
+        btn->setToolTip(seq.toString(QKeySequence::NativeText));
+        btn->setStyleSheet(modStyle(false));
+
+        auto fireHotkey = [this, seq]() {
+            ClickInjector::injectKeySequence(seq);
+#ifdef HAVE_MULTIMEDIA
+            if (m_settings.audioFeedback && m_clickSound) m_clickSound->play();
+#endif
+        };
+        connect(btn, &QPushButton::clicked, this, fireHotkey);
+        new HotkeyHoverFilter(btn, &m_settings.dwellMs, fireHotkey);
+
+        m_hotkeyBtns[i] = btn;
+
+        // Each hotkey button occupies its own full-width row so the label text
+        // always has room regardless of layout mode.
+        if (col > 0) { col = 0; row++; }
+        const int hkSpan = (COLS == 99) ? 99 : COLS;
+        grid->addWidget(btn, row++, 0, 1, hkSpan);
+    }
 
     if (m_settings.showModCtrl) {
         m_ctrlBtn = new QPushButton("Ctrl");
@@ -1370,6 +1442,12 @@ void MainWindow::applySettings(const AppSettings& s)
     m_persist.setValue("dwell/repeatOnDwell", s.repeatOnDwell);
     m_persist.setValue("window/edgeLock",    static_cast<int>(s.edgeLock));
     m_persist.setValue("window/edgeHide",    s.edgeHide);
+    for (int i = 0; i < 3; ++i) {
+        const QString base = QString("hotkey/%1/").arg(i);
+        m_persist.setValue(base + "enabled", s.hotkeys[i].enabled);
+        m_persist.setValue(base + "label",   s.hotkeys[i].label);
+        m_persist.setValue(base + "seq",     s.hotkeys[i].keySequence);
+    }
     applyEdgeLock();
     updateAudioClick();
 }

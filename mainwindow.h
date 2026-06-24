@@ -103,6 +103,9 @@ private:
     QPushButton*  m_shiftBtn       = nullptr;
     QPushButton*  m_dwellActiveBtn = nullptr;
 
+    // Custom hotkey action buttons (up to 3)
+    QPushButton*  m_hotkeyBtns[3] = {};
+
     // ── State ─────────────────────────────────────────────────
     ClickType   m_selectedType = ClickType::LeftClick;
     int         m_modifiers    = ModNone;

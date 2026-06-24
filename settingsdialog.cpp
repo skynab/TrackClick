@@ -1128,6 +1128,11 @@ void SettingsDialog::loadFrom(const AppSettings& s)
     m_audioThreshSlider->setEnabled(s.audioClickEnabled);
     m_audioThreshValue->setEnabled(s.audioClickEnabled);
 
+    // Select the saved input device (index 0 / "System default" if not found,
+    // e.g. the device was unplugged or the id came from another machine).
+    int devIdx = m_cmbAudioDevice->findData(s.audioInputDevice);
+    m_cmbAudioDevice->setCurrentIndex(devIdx >= 0 ? devIdx : 0);
+
     for (int i = 0; i < 3; ++i) {
         m_chkHotkey[i]->setChecked(s.hotkeys[i].enabled);
         m_edtHotkeyLabel[i]->setText(s.hotkeys[i].label);
@@ -1180,6 +1185,7 @@ AppSettings SettingsDialog::readUi() const
 
     s.audioClickEnabled   = m_chkAudioClick->isChecked();
     s.audioClickThreshold = m_audioThreshSlider->value();
+    s.audioInputDevice    = m_cmbAudioDevice->currentData().toString();
 
     for (int i = 0; i < 3; ++i) {
         s.hotkeys[i].enabled     = m_chkHotkey[i]->isChecked();

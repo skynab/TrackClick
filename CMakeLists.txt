@@ -57,7 +57,12 @@ elseif(APPLE)
         MACOSX_PACKAGE_LOCATION Resources)
     add_executable(TrackClick MACOSX_BUNDLE ${SOURCES} ${HEADERS} ${MACOSX_ICON})
     set_target_properties(TrackClick PROPERTIES
-        MACOSX_BUNDLE_ICON_FILE TrackClick.icns)
+        MACOSX_BUNDLE_INFO_PLIST            "${CMAKE_CURRENT_SOURCE_DIR}/installer/MacOSXBundleInfo.plist.in"
+        MACOSX_BUNDLE_ICON_FILE             "TrackClick.icns"
+        MACOSX_BUNDLE_BUNDLE_NAME           "TrackClick"
+        MACOSX_BUNDLE_GUI_IDENTIFIER        "com.trackclick.TrackClick"
+        MACOSX_BUNDLE_BUNDLE_VERSION        "${PROJECT_VERSION}"
+        MACOSX_BUNDLE_SHORT_VERSION_STRING  "${PROJECT_VERSION}")
 else()
     add_executable(TrackClick ${SOURCES} ${HEADERS})
 endif()

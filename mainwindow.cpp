@@ -645,6 +645,13 @@ void MainWindow::rebuildButtons()
         addIf(true, tr("Scroll ►"), tr("Scroll Right"), ClickType::ScrollRight, "scroll_right");
     }
 
+    // Horizontal mode: give every column equal stretch so buttons fill the full
+    // window width both at initial size and when the user resizes.
+    if (m_settings.buttonLayout == ButtonLayout::Horizontal) {
+        for (int c = 0; c < col; ++c)
+            grid->setColumnStretch(c, 1);
+    }
+
     // Advance to next row for the modifier buttons.
     // Rectangle: pad the incomplete last row with spacers first.
     if (m_settings.buttonLayout == ButtonLayout::Rectangle) {
@@ -713,6 +720,7 @@ void MainWindow::rebuildButtons()
         grid->addWidget(btn, row++, 0, 1, hkSpan);
     }
 
+    // ── Create modifier buttons (placement handled below) ────────
     if (m_settings.showModCtrl) {
         m_ctrlBtn = new QPushButton("Ctrl");
         m_ctrlBtn->setCheckable(true);
@@ -725,7 +733,6 @@ void MainWindow::rebuildButtons()
             if (m_autoEnabled) m_dwell->setModifiers(m_modifiers);
         });
         new ModHoverFilter(m_ctrlBtn, &m_settings.dwellMs);
-        addMod(m_ctrlBtn);
     }
     if (m_settings.showModAlt) {
         m_altBtn = new QPushButton("Alt");
@@ -739,9 +746,7 @@ void MainWindow::rebuildButtons()
             if (m_autoEnabled) m_dwell->setModifiers(m_modifiers);
         });
         new ModHoverFilter(m_altBtn, &m_settings.dwellMs);
-        addMod(m_altBtn);
     }
-    int shiftRow = -1, shiftCol = -1;
     if (m_settings.showModShift) {
         m_shiftBtn = new QPushButton("Shift");
         m_shiftBtn->setCheckable(true);
@@ -754,14 +759,10 @@ void MainWindow::rebuildButtons()
             if (m_autoEnabled) m_dwell->setModifiers(m_modifiers);
         });
         new ModHoverFilter(m_shiftBtn, &m_settings.dwellMs);
-        shiftRow = row; shiftCol = col;
-        addMod(m_shiftBtn);
     }
 
     // ── Dwell Active button ───────────────────────────────────
-    // Placed directly below the Shift button; same size and style.
-    // Acts as an in-panel alias for the Auto button in the title bar.
-    if (m_settings.showDwellActiveBtn && shiftRow >= 0) {
+    if (m_settings.showDwellActiveBtn) {
         auto dwellActiveStyle = [large](bool on) -> QString {
             const char* fs  = large ? "14px" : "11px";
             const char* pad = large ? "4px"  : "2px";
@@ -788,12 +789,37 @@ void MainWindow::rebuildButtons()
         });
 
         new ModHoverFilter(m_dwellActiveBtn, &m_settings.dwellMs);
+    }
 
-        grid->addWidget(m_dwellActiveBtn, shiftRow + 1, shiftCol);
-        // Advance row/col past the new button so the Quit button lands correctly.
-        if (shiftRow + 1 >= row) row = shiftRow + 1;
-        col = shiftCol + 1;
-        if (col >= COLS) { col = 0; row++; }
+    // ── Place modifier + dwell-active buttons ─────────────────
+    if (m_settings.buttonLayout == ButtonLayout::Horizontal) {
+        // Group all modifiers into a sub-row widget that spans the full grid
+        // width so they fill available space evenly instead of occupying only
+        // the first few columns of the click-button grid.
+        auto* modRow = new QWidget(m_btnArea);
+        modRow->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+        auto* modHBox = new QHBoxLayout(modRow);
+        modHBox->setSpacing(4);
+        modHBox->setContentsMargins(0, 0, 0, 0);
+        if (m_ctrlBtn)        modHBox->addWidget(m_ctrlBtn);
+        if (m_altBtn)         modHBox->addWidget(m_altBtn);
+        if (m_shiftBtn)       modHBox->addWidget(m_shiftBtn);
+        if (m_dwellActiveBtn) modHBox->addWidget(m_dwellActiveBtn);
+        if (modHBox->count() > 0) {
+            if (col > 0) { col = 0; row++; }
+            grid->addWidget(modRow, row++, 0, 1, 99);
+        }
+    } else {
+        // Vertical / Rectangle: column-flow placement.
+        if (m_ctrlBtn)  addMod(m_ctrlBtn);
+        if (m_altBtn)   addMod(m_altBtn);
+        if (m_shiftBtn) addMod(m_shiftBtn);
+        if (m_dwellActiveBtn) {
+            // Always start at column 0 so position doesn't shift as other
+            // modifier buttons are toggled on/off.
+            if (col > 0) { col = 0; row++; }
+            addMod(m_dwellActiveBtn);
+        }
     }
 
     // ── Quit button ───────────────────────────────────────────
@@ -836,8 +862,13 @@ ClickButton* MainWindow::makeButton(const QString& label, const QString& tooltip
         m_settings.buttonLayout == ButtonLayout::VerticalTwo) {
         btn->setMinimumSize(0, large ? 54 : 36);
         btn->setIconSize(QSize(large ? 24 : 16, large ? 24 : 16));
-    } else if (large) {
-        btn->setMinimumSize(48, 64);
+    } else if (m_settings.buttonLayout == ButtonLayout::Horizontal) {
+        btn->setMinimumSize(60, large ? 72 : 54);
+        btn->setIconSize(QSize(large ? 28 : 20, large ? 28 : 20));
+    } else {
+        // Rectangle
+        btn->setMinimumSize(48, large ? 64 : 48);
+        btn->setIconSize(QSize(large ? 24 : 16, large ? 24 : 16));
     }
     return btn;
 }

@@ -647,6 +647,9 @@ void MainWindow::rebuildButtons()
 
     // Horizontal mode: give every column equal stretch so buttons fill the full
     // window width both at initial size and when the user resizes.
+    // fullSpan is used by all subsequent full-width rows so they span exactly
+    // the click-button columns and don't create phantom empty columns.
+    const int fullSpan = (m_settings.buttonLayout == ButtonLayout::Horizontal) ? col : COLS;
     if (m_settings.buttonLayout == ButtonLayout::Horizontal) {
         for (int c = 0; c < col; ++c)
             grid->setColumnStretch(c, 1);
@@ -687,6 +690,19 @@ void MainWindow::rebuildButtons()
                                          : QSize(large ? 48 : 32, large ? 40 : 28);
 
     // ── Custom hotkey buttons ─────────────────────────────────
+    // Build all enabled hotkey buttons first, then place them.
+    // In horizontal mode they share one sub-row; in other modes each gets its
+    // own full-width row (labels can be long so space matters there).
+    QWidget*    hkRowWidget = nullptr;
+    QHBoxLayout* hkRowHBox  = nullptr;
+    if (m_settings.buttonLayout == ButtonLayout::Horizontal) {
+        hkRowWidget = new QWidget(m_btnArea);
+        hkRowWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+        hkRowHBox = new QHBoxLayout(hkRowWidget);
+        hkRowHBox->setSpacing(4);
+        hkRowHBox->setContentsMargins(0, 0, 0, 0);
+    }
+
     for (int i = 0; i < 3; ++i) {
         const auto& slot = m_settings.hotkeys[i];
         if (!slot.enabled || slot.keySequence.isEmpty()) continue;
@@ -713,11 +729,17 @@ void MainWindow::rebuildButtons()
 
         m_hotkeyBtns[i] = btn;
 
-        // Each hotkey button occupies its own full-width row so the label text
-        // always has room regardless of layout mode.
+        if (hkRowHBox) {
+            hkRowHBox->addWidget(btn);
+        } else {
+            if (col > 0) { col = 0; row++; }
+            grid->addWidget(btn, row++, 0, 1, fullSpan);
+        }
+    }
+
+    if (hkRowWidget && hkRowHBox->count() > 0) {
         if (col > 0) { col = 0; row++; }
-        const int hkSpan = (COLS == 99) ? 99 : COLS;
-        grid->addWidget(btn, row++, 0, 1, hkSpan);
+        grid->addWidget(hkRowWidget, row++, 0, 1, fullSpan);
     }
 
     // ── Create modifier buttons (placement handled below) ────────
@@ -807,7 +829,7 @@ void MainWindow::rebuildButtons()
         if (m_dwellActiveBtn) modHBox->addWidget(m_dwellActiveBtn);
         if (modHBox->count() > 0) {
             if (col > 0) { col = 0; row++; }
-            grid->addWidget(modRow, row++, 0, 1, 99);
+            grid->addWidget(modRow, row++, 0, 1, fullSpan);
         }
     } else {
         // Vertical / Rectangle: column-flow placement.
@@ -815,9 +837,13 @@ void MainWindow::rebuildButtons()
         if (m_altBtn)   addMod(m_altBtn);
         if (m_shiftBtn) addMod(m_shiftBtn);
         if (m_dwellActiveBtn) {
-            // Always start at column 0 so position doesn't shift as other
-            // modifier buttons are toggled on/off.
-            if (col > 0) { col = 0; row++; }
+            // In Rectangle mode, force Dwell Active to column 0 of its own row
+            // so it doesn't land mid-row next to click-type modifiers.
+            // In Vertical/VerticalTwo, let it fill the next available slot so
+            // it groups naturally with the modifier buttons (no orphaned gap).
+            if (m_settings.buttonLayout == ButtonLayout::Rectangle && col > 0) {
+                col = 0; row++;
+            }
             addMod(m_dwellActiveBtn);
         }
     }
@@ -835,8 +861,7 @@ void MainWindow::rebuildButtons()
                 .arg(large ? "4px"  : "2px")
         );
         quitBtn->setMinimumHeight(large ? 32 : 22);
-        const int span = (COLS == 99) ? 99 : COLS;
-        grid->addWidget(quitBtn, row, 0, 1, span);
+        grid->addWidget(quitBtn, row, 0, 1, fullSpan);
         connect(quitBtn, &QPushButton::clicked, qApp, &QApplication::quit);
     }
 

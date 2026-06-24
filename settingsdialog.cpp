@@ -767,7 +767,7 @@ void SettingsDialog::buildUi()
         m_kseHotkey[i] = new QKeySequenceEdit;
         m_kseHotkey[i]->setToolTip(
             tr("Click here and press the desired key combination (e.g. F12, Ctrl+A, Alt+Z)."));
-#if QT_VERSION >= QT_VERSION_CHECK(6, 1, 0)
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
         m_kseHotkey[i]->setMaximumSequenceLength(1);
 #endif
         auto updateRowEnabled = [this, i](bool on) {

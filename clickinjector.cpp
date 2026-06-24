@@ -445,7 +445,7 @@ struct UInputDev {
         ev.type  = type;
         ev.code  = code;
         ev.value = val;
-        ::write(fd, &ev, sizeof(ev));
+        (void)::write(fd, &ev, sizeof(ev));
     }
 
     void syn() const { send(EV_SYN, SYN_REPORT, 0); }
@@ -493,11 +493,11 @@ struct UInputKeyDev {
         ev.type  = EV_KEY;
         ev.code  = static_cast<uint16_t>(code);
         ev.value = down ? 1 : 0;
-        ::write(fd, &ev, sizeof(ev));
+        (void)::write(fd, &ev, sizeof(ev));
         struct input_event syn{};
         syn.type  = EV_SYN;
         syn.code  = SYN_REPORT;
-        ::write(fd, &syn, sizeof(syn));
+        (void)::write(fd, &syn, sizeof(syn));
     }
 };
 

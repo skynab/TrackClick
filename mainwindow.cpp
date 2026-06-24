@@ -177,6 +177,71 @@ void ClickButton::updateStyle()
     }
 }
 
+// ── Click confirmation overlay ────────────────────────────────────────────────
+// An expanding, fading ring rendered at the cursor position immediately after
+// a dwell-click or manual button-press fires.  It is a frameless, always-on-top
+// tool window that is transparent to mouse input and never steals focus.
+class MainWindow::ClickIndicatorOverlay : public QWidget {
+public:
+    explicit ClickIndicatorOverlay() : QWidget(nullptr,
+        Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::Tool
+        | Qt::WindowDoesNotAcceptFocus | Qt::WindowTransparentForInput)
+    {
+        setAttribute(Qt::WA_TranslucentBackground);
+        setAttribute(Qt::WA_ShowWithoutActivating);
+        resize(SIZE, SIZE);
+        m_timer.setInterval(STEP_MS);
+        connect(&m_timer, &QTimer::timeout, this, [this]{
+            if (++m_step >= STEPS) { m_timer.stop(); hide(); }
+            else update();
+        });
+    }
+
+    void flash(QPoint globalPos) {
+        move(globalPos.x() - SIZE / 2, globalPos.y() - SIZE / 2);
+        m_step = 0;
+        update();
+        show();
+        raise();
+        m_timer.start();
+    }
+
+protected:
+    void paintEvent(QPaintEvent*) override {
+        QPainter p(this);
+        p.setRenderHint(QPainter::Antialiasing);
+        p.fillRect(rect(), Qt::transparent);
+
+        const float t      = float(m_step) / float(STEPS);
+        const int   radius = int(MIN_R + t * (MAX_R - MIN_R));
+        const int   alpha  = int(255 * (1.0f - t));
+        const int   cx     = SIZE / 2;
+
+        // Outer expanding ring
+        QPen pen(QColor(0xFF, 0xA6, 0x00, alpha), 3);
+        p.setPen(pen);
+        p.setBrush(Qt::NoBrush);
+        p.drawEllipse(QPoint(cx, cx), radius, radius);
+
+        // Small solid centre dot that fades quickly
+        const int dotAlpha = int(255 * qMax(0.0f, 1.0f - t * 2.5f));
+        if (dotAlpha > 0) {
+            p.setPen(Qt::NoPen);
+            p.setBrush(QColor(0xFF, 0xA6, 0x00, dotAlpha));
+            p.drawEllipse(QPoint(cx, cx), 4, 4);
+        }
+    }
+
+private:
+    QTimer m_timer;
+    int    m_step = 0;
+    static constexpr int STEPS   = 24;   // ~384 ms total
+    static constexpr int STEP_MS = 16;   // ~60 fps
+    static constexpr int SIZE    = 100;  // widget size (pixels)
+    static constexpr int MIN_R   = 6;
+    static constexpr int MAX_R   = 42;
+};
+
 // ─────────────────────────────────────────────────────────────
 //  MainWindow
 // ─────────────────────────────────────────────────────────────
@@ -210,7 +275,8 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     m_settings.startMinimized   = m_persist.value("window/startMin",         false).toBool();
     m_settings.xMinimizesApp    = m_persist.value("window/xMinimizesApp",    false).toBool();
     m_settings.launchOnStartup  = m_persist.value("window/launchOnStartup",  false).toBool();
-    m_settings.audioFeedback   = m_persist.value("audio/enabled",    false).toBool();
+    m_settings.audioFeedback       = m_persist.value("audio/enabled",          false).toBool();
+    m_settings.showClickIndicator  = m_persist.value("visual/clickIndicator",  true).toBool();
     m_settings.audioClickEnabled   = m_persist.value("audioClick/enabled",   false).toBool();
     m_settings.audioClickThreshold = m_persist.value("audioClick/threshold",    50).toInt();
     m_settings.audioInputDevice    = m_persist.value("audioClick/device",       "").toString();
@@ -286,6 +352,8 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
 
     connect(m_dwell, &DwellManager::dwellProgress, this, &MainWindow::onDwellProgress);
     connect(m_dwell, &DwellManager::dwellFired,    this, &MainWindow::onDwellFired);
+
+    m_clickIndicator = new ClickIndicatorOverlay();
 
     buildUi();
     buildTray();
@@ -1182,6 +1250,8 @@ void MainWindow::onClickButtonPressed(ClickType type)
         int reps = isScroll ? m_settings.scrollRepeat : 1;
         for (int i = 0; i < reps; ++i)
             ClickInjector::performClick(type, pos, m_modifiers);
+        if (m_settings.showClickIndicator)
+            m_clickIndicator->flash(pos);
 #ifdef HAVE_MULTIMEDIA
         if (m_settings.audioFeedback) m_clickSound->play();
 #endif
@@ -1269,8 +1339,10 @@ void MainWindow::onDwellProgress(float frac)
     }
 }
 
-void MainWindow::onDwellFired(QPoint /*pos*/, ClickType /*type*/)
+void MainWindow::onDwellFired(QPoint pos, ClickType /*type*/)
 {
+    if (m_settings.showClickIndicator)
+        m_clickIndicator->flash(pos);
 #ifdef HAVE_MULTIMEDIA
     if (m_settings.audioFeedback) m_clickSound->play();
 #endif
@@ -1474,7 +1546,8 @@ void MainWindow::applySettings(const AppSettings& s)
     // setting even when it is unchanged here but was lost externally, never
     // written by an older build, or points at a stale executable path.
     setLaunchOnStartup(s.launchOnStartup);
-    m_persist.setValue("audio/enabled",      s.audioFeedback);
+    m_persist.setValue("audio/enabled",         s.audioFeedback);
+    m_persist.setValue("visual/clickIndicator", s.showClickIndicator);
     m_persist.setValue("audioClick/enabled",   s.audioClickEnabled);
     m_persist.setValue("audioClick/threshold", s.audioClickThreshold);
     m_persist.setValue("audioClick/device",    s.audioInputDevice);

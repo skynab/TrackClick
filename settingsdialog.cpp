@@ -503,6 +503,7 @@ void SettingsDialog::retranslateUi()
     m_chkXMinimizesApp->setText(tr("Top X minimizes app"));
     m_chkLaunchOnStartup->setText(tr("Launch on system startup (Windows)"));
     m_chkAudio->setText(tr("Audio feedback on click"));
+    m_chkClickIndicator->setText(tr("Show click indicator ring"));
     m_chkIconsOnly->setText(tr("Icons only (hide button labels)"));
     m_chkLargeButtons->setText(tr("Large buttons"));
     m_lblOpacity->setText(tr("Opacity:"));
@@ -826,8 +827,9 @@ void SettingsDialog::buildUi()
     m_chkStartMinimized = new QCheckBox(tr("Start minimized to tray"));
     m_chkXMinimizesApp  = new QCheckBox(tr("Top X minimizes app"));
     m_chkLaunchOnStartup= new QCheckBox(tr("Launch on system startup (Windows)"));
-    m_chkAudio         = new QCheckBox(tr("Audio feedback on click"));
-    m_chkIconsOnly     = new QCheckBox(tr("Icons only (hide button labels)"));
+    m_chkAudio          = new QCheckBox(tr("Audio feedback on click"));
+    m_chkClickIndicator = new QCheckBox(tr("Show click indicator ring"));
+    m_chkIconsOnly      = new QCheckBox(tr("Icons only (hide button labels)"));
     m_chkLargeButtons  = new QCheckBox(tr("Large buttons"));
 
     m_cmbLayout = new QComboBox;
@@ -849,6 +851,7 @@ void SettingsDialog::buildUi()
     wfl->addRow(m_chkXMinimizesApp);
     wfl->addRow(m_chkLaunchOnStartup);
     wfl->addRow(m_chkAudio);
+    wfl->addRow(m_chkClickIndicator);
     wfl->addRow(m_chkIconsOnly);
     wfl->addRow(m_chkLargeButtons);
     wfl->addRow(m_lblBtnLayout, m_cmbLayout);
@@ -1111,6 +1114,7 @@ void SettingsDialog::loadFrom(const AppSettings& s)
     m_chkXMinimizesApp->setChecked(s.xMinimizesApp);
     m_chkLaunchOnStartup->setChecked(s.launchOnStartup);
     m_chkAudio->setChecked(s.audioFeedback);
+    m_chkClickIndicator->setChecked(s.showClickIndicator);
     m_chkIconsOnly->setChecked(s.iconsOnly);
     m_chkLargeButtons->setChecked(s.largeButtons);
     m_cmbLayout->setCurrentIndex(static_cast<int>(s.buttonLayout));
@@ -1177,8 +1181,9 @@ AppSettings SettingsDialog::readUi() const
     s.startMinimized   = m_chkStartMinimized->isChecked();
     s.xMinimizesApp    = m_chkXMinimizesApp->isChecked();
     s.launchOnStartup  = m_chkLaunchOnStartup->isChecked();
-    s.audioFeedback   = m_chkAudio->isChecked();
-    s.iconsOnly       = m_chkIconsOnly->isChecked();
+    s.audioFeedback       = m_chkAudio->isChecked();
+    s.showClickIndicator  = m_chkClickIndicator->isChecked();
+    s.iconsOnly           = m_chkIconsOnly->isChecked();
     s.largeButtons    = m_chkLargeButtons->isChecked();
     s.buttonLayout    = static_cast<ButtonLayout>(m_cmbLayout->currentIndex());
     s.language        = m_cmbLanguage->currentData().toString();

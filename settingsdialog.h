@@ -68,6 +68,9 @@ struct AppSettings {
     // Audio feedback
     bool audioFeedback   = false;
 
+    // Click indicator — brief expanding ring at the cursor when a click fires
+    bool showClickIndicator = true;
+
     // Audio click — fire the selected action on a loud sound instead of the
     // dwell timer.  Off by default.  Threshold is 1–100 (higher = louder needed).
     bool    audioClickEnabled   = false;
@@ -182,6 +185,7 @@ private:
     QCheckBox*   m_chkXMinimizesApp;
     QCheckBox*   m_chkLaunchOnStartup;
     QCheckBox*   m_chkAudio;
+    QCheckBox*   m_chkClickIndicator;
     QCheckBox*   m_chkIconsOnly;
     QCheckBox*   m_chkLargeButtons;
     QComboBox*   m_cmbLayout;

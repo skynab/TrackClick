@@ -106,6 +106,10 @@ private:
     // Custom hotkey action buttons (up to 3)
     QPushButton*  m_hotkeyBtns[3] = {};
 
+    // Click confirmation overlay
+    class ClickIndicatorOverlay;
+    ClickIndicatorOverlay* m_clickIndicator = nullptr;
+
     // ── State ─────────────────────────────────────────────────
     ClickType   m_selectedType = ClickType::LeftClick;
     int         m_modifiers    = ModNone;

@@ -52,6 +52,8 @@
 </context>
 <context>
     <name>SettingsDialog</name>
+    <message><source>Input device:</source><translation>ইনপুট ডিভাইস:</translation></message>
+    <message><source>System default</source><translation>সিস্টেম ডিফল্ট</translation></message>
     <message><source>Audio Click</source><translation>অডিও ক্লিক</translation></message>
     <message><source>Trigger the selected action with a loud sound</source><translation>জোরে শব্দ দিয়ে নির্বাচিত ক্রিয়া চালান</translation></message>
     <message><source>When enabled, the selected action fires when the microphone hears a loud sound (such as a clap or a pop) instead of waiting for the dwell timer. Turn on Dwell Active to start listening. Any loud noise triggers the action — speech is not interpreted.</source><translation>সক্ষম করা হলে, ডোয়েল টাইমারের জন্য অপেক্ষা না করে মাইক্রোফোন যখন জোরে শব্দ (যেমন হাততালি বা পপ) শোনে তখনই নির্বাচিত ক্রিয়াটি চালু হয়। শোনা শুরু করতে ডোয়েল অ্যাকটিভ চালু করুন। যেকোনো জোরে শব্দ ক্রিয়াটি চালায় — কথা ব্যাখ্যা করা হয় না।</translation></message>

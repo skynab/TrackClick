@@ -4,6 +4,15 @@
 #include <QAudioFormat>
 #include <QTimer>
 #include <QtGlobal>
+#include <QString>
+#include <QList>
+
+// One selectable microphone input.  `id` is the stable key persisted in
+// settings; `name` is the human-readable label shown in the picker.
+struct AudioInputInfo {
+    QString id;
+    QString name;
+};
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 class QAudioSource;
@@ -23,6 +32,14 @@ class AudioClickListener : public QObject
 public:
     explicit AudioClickListener(QObject* parent = nullptr);
     ~AudioClickListener() override;
+
+    // Enumerates the available microphone inputs (empty if none / no backend).
+    static QList<AudioInputInfo> availableInputs();
+
+    // Selects which input to capture from.  Empty id = system default (with a
+    // fall back to the first enumerated device).  Takes effect on the next
+    // start(); call stop()/start() to switch while running.
+    void setPreferredDeviceId(const QString& id) { m_preferredId = id; }
 
     // Begins capturing.  Returns false if there is no usable input device.
     bool start();
@@ -57,6 +74,7 @@ private:
     QAudioInput*  m_source = nullptr;
 #endif
     QIODevice* m_io         = nullptr;
+    QString    m_preferredId;         // empty = system default
     double     m_threshold  = 0.5;
     qint64     m_cooldownMs = 350;
     qint64     m_lastFireMs = 0;

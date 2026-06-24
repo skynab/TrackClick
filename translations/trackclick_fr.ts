@@ -47,6 +47,8 @@
 </context>
 <context>
     <name>SettingsDialog</name>
+    <message><source>Input device:</source><translation>Périphérique d'entrée :</translation></message>
+    <message><source>System default</source><translation>Périphérique par défaut</translation></message>
     <message><source>Audio Click</source><translation>Clic audio</translation></message>
     <message><source>Trigger the selected action with a loud sound</source><translation>Déclencher l'action sélectionnée avec un son fort</translation></message>
     <message><source>When enabled, the selected action fires when the microphone hears a loud sound (such as a clap or a pop) instead of waiting for the dwell timer. Turn on Dwell Active to start listening. Any loud noise triggers the action — speech is not interpreted.</source><translation>Lorsque cette option est activée, l'action sélectionnée se déclenche dès que le microphone entend un son fort (comme un claquement ou un pop) au lieu d'attendre le minuteur de survol. Activez Survol actif pour commencer l'écoute. Tout bruit fort déclenche l'action — la parole n'est pas interprétée.</translation></message>

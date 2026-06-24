@@ -61,8 +61,9 @@ struct AppSettings {
 
     // Audio click — fire the selected action on a loud sound instead of the
     // dwell timer.  Off by default.  Threshold is 1–100 (higher = louder needed).
-    bool audioClickEnabled   = false;
-    int  audioClickThreshold = 50;
+    bool    audioClickEnabled   = false;
+    int     audioClickThreshold = 50;
+    QString audioInputDevice;   // microphone id; empty = system default
 
     // Button appearance
     bool iconsOnly           = false;
@@ -182,6 +183,8 @@ private:
     // Audio Click tab
     QCheckBox*    m_chkAudioClick     = nullptr;
     QLabel*       m_lblAudioClickInfo = nullptr;
+    QLabel*       m_lblAudioDevice    = nullptr;
+    QComboBox*    m_cmbAudioDevice    = nullptr;
     QLabel*       m_lblAudioThreshold = nullptr;
     QSlider*      m_audioThreshSlider = nullptr;
     QLabel*       m_audioThreshValue  = nullptr;

@@ -47,6 +47,8 @@
 </context>
 <context>
     <name>SettingsDialog</name>
+    <message><source>Input device:</source><translation>入力デバイス:</translation></message>
+    <message><source>System default</source><translation>システムの既定</translation></message>
     <message><source>Audio Click</source><translation>音声クリック</translation></message>
     <message><source>Trigger the selected action with a loud sound</source><translation>大きな音で選択した操作を実行する</translation></message>
     <message><source>When enabled, the selected action fires when the microphone hears a loud sound (such as a clap or a pop) instead of waiting for the dwell timer. Turn on Dwell Active to start listening. Any loud noise triggers the action — speech is not interpreted.</source><translation>有効にすると、ドウェルタイマーを待たずに、マイクが大きな音（手をたたく音やポンという音など）を検出したときに選択した操作が実行されます。「ドウェル有効」をオンにすると待ち受けを開始します。大きな音であれば何でも操作が実行されます — 音声は認識されません。</translation></message>

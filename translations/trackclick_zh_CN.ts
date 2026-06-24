@@ -47,6 +47,8 @@
 </context>
 <context>
     <name>SettingsDialog</name>
+    <message><source>Input device:</source><translation>输入设备：</translation></message>
+    <message><source>System default</source><translation>系统默认</translation></message>
     <message><source>Audio Click</source><translation>声音点击</translation></message>
     <message><source>Trigger the selected action with a loud sound</source><translation>用响亮的声音触发所选操作</translation></message>
     <message><source>When enabled, the selected action fires when the microphone hears a loud sound (such as a clap or a pop) instead of waiting for the dwell timer. Turn on Dwell Active to start listening. Any loud noise triggers the action — speech is not interpreted.</source><translation>启用后，所选操作将在麦克风听到响亮的声音（例如拍手声或爆破声）时触发，而不是等待停留计时器。打开“停留激活”即可开始监听。任何响亮的声音都会触发操作 — 不会识别语音。</translation></message>

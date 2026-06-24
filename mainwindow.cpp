@@ -213,6 +213,7 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     m_settings.audioFeedback   = m_persist.value("audio/enabled",    false).toBool();
     m_settings.audioClickEnabled   = m_persist.value("audioClick/enabled",   false).toBool();
     m_settings.audioClickThreshold = m_persist.value("audioClick/threshold",    50).toInt();
+    m_settings.audioInputDevice    = m_persist.value("audioClick/device",       "").toString();
     m_settings.iconsOnly       = m_persist.value("show/iconsOnly",    false).toBool();
     m_settings.largeButtons    = m_persist.value("show/largeButtons", false).toBool();
     m_settings.buttonLayout    = static_cast<ButtonLayout>(m_persist.value("show/buttonLayout", static_cast<int>(ButtonLayout::Vertical)).toInt());
@@ -1157,13 +1158,17 @@ void MainWindow::updateAudioClick()
 
     if (m_audioClick) {
         m_audioClick->setThreshold(m_settings.audioClickThreshold / 100.0);
+        m_audioClick->setPreferredDeviceId(m_settings.audioInputDevice);
         // Only hold the microphone open while it can actually be used: audio
         // click enabled AND dwell-active on.
         const bool shouldListen = wantAudio && m_autoEnabled;
-        if (shouldListen && !m_audioClick->isRunning())
+        if (shouldListen) {
+            // Restart if already running so a changed device/threshold applies.
+            if (m_audioClick->isRunning()) m_audioClick->stop();
             m_audioClick->start();
-        else if (!shouldListen && m_audioClick->isRunning())
+        } else if (m_audioClick->isRunning()) {
             m_audioClick->stop();
+        }
     }
 #else
     // No audio support: make sure the dwell timer keeps working normally.
@@ -1344,6 +1349,7 @@ void MainWindow::applySettings(const AppSettings& s)
     m_persist.setValue("audio/enabled",      s.audioFeedback);
     m_persist.setValue("audioClick/enabled",   s.audioClickEnabled);
     m_persist.setValue("audioClick/threshold", s.audioClickThreshold);
+    m_persist.setValue("audioClick/device",    s.audioInputDevice);
     m_persist.setValue("show/noClick",        s.showNoClick);
     m_persist.setValue("show/leftClick",     s.showLeftClick);
     m_persist.setValue("show/leftDouble",    s.showLeftDouble);

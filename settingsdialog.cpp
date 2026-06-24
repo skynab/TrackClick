@@ -507,6 +507,8 @@ void SettingsDialog::retranslateUi()
     m_tabs->setTabText(3, tr("Audio Click"));
     m_chkAudioClick->setText(tr("Trigger the selected action with a loud sound"));
     m_lblAudioClickInfo->setText(audioClickInfoText());
+    m_lblAudioDevice->setText(tr("Input device:"));
+    m_cmbAudioDevice->setItemText(0, tr("System default"));
     m_lblAudioThreshold->setText(tr("Loudness threshold:"));
     m_lblAudioMeter->setText(tr("Input level:"));
 }
@@ -528,8 +530,11 @@ void SettingsDialog::startAudioMeter()
 {
 #ifdef HAVE_MULTIMEDIA
     if (!m_meterListener) return;
-    if (!m_meterListener->isRunning())
+    if (!m_meterListener->isRunning()) {
+        // Capture from whichever device is selected in the picker.
+        m_meterListener->setPreferredDeviceId(m_cmbAudioDevice->currentData().toString());
         m_meterListener->start();   // harmless if there is no input device
+    }
     m_meterTimer.start();
 #endif
 }
@@ -857,19 +862,35 @@ void SettingsDialog::buildUi()
     m_lblAudioClickInfo->setText(audioClickInfoText());
     aufl->addWidget(m_lblAudioClickInfo);
 
-    // Threshold slider and live input meter share one grid so the slider handle
-    // lines up directly above the meter bar (both run on the same 0–100 scale),
-    // letting the user set the threshold just below where their noise peaks.
+    // Device picker, threshold slider and live input meter share one grid so the
+    // controls line up in a column (the slider handle sits directly above the
+    // meter bar — both run on the same 0–100 scale — letting the user set the
+    // threshold just below where their noise peaks).
     auto* calGrid = new QGridLayout;
     calGrid->setHorizontalSpacing(8);
+
+    m_lblAudioDevice = new QLabel(tr("Input device:"));
+    m_cmbAudioDevice = new QComboBox;
+    // Fill the grid column rather than growing the dialog to the widest device
+    // name (Linux device descriptions can be very long).
+    m_cmbAudioDevice->setMinimumWidth(180);
+    m_cmbAudioDevice->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    m_cmbAudioDevice->addItem(tr("System default"), QString());   // empty id
+#ifdef HAVE_MULTIMEDIA
+    for (const AudioInputInfo& d : AudioClickListener::availableInputs())
+        m_cmbAudioDevice->addItem(d.name, d.id);
+#endif
+    calGrid->addWidget(m_lblAudioDevice, 0, 0);
+    calGrid->addWidget(m_cmbAudioDevice, 0, 1, 1, 2);
+
     m_lblAudioThreshold = new QLabel(tr("Loudness threshold:"));
     m_audioThreshSlider = new QSlider(Qt::Horizontal);
     m_audioThreshSlider->setRange(1, 100);
     m_audioThreshValue  = new QLabel("50%");
     m_audioThreshValue->setFixedWidth(36);
-    calGrid->addWidget(m_lblAudioThreshold, 0, 0);
-    calGrid->addWidget(m_audioThreshSlider, 0, 1);
-    calGrid->addWidget(m_audioThreshValue,  0, 2);
+    calGrid->addWidget(m_lblAudioThreshold, 1, 0);
+    calGrid->addWidget(m_audioThreshSlider, 1, 1);
+    calGrid->addWidget(m_audioThreshValue,  1, 2);
 
     m_lblAudioMeter = new QLabel(tr("Input level:"));
     m_audioMeter    = new QProgressBar;
@@ -880,14 +901,25 @@ void SettingsDialog::buildUi()
     m_audioMeter->setStyleSheet(
         "QProgressBar{background:#1A1A1A;border:1px solid #555;border-radius:3px;}"
         "QProgressBar::chunk{background:#FFA600;border-radius:2px;}");
-    calGrid->addWidget(m_lblAudioMeter, 1, 0);
-    calGrid->addWidget(m_audioMeter,    1, 1);
+    calGrid->addWidget(m_lblAudioMeter, 2, 0);
+    calGrid->addWidget(m_audioMeter,    2, 1);
     calGrid->setColumnStretch(1, 1);
     aufl->addLayout(calGrid);
     aufl->addStretch(1);
 
     connect(m_audioThreshSlider, &QSlider::valueChanged, this, [this](int v){
         m_audioThreshValue->setText(QString::number(v) + "%");
+    });
+    // Switching the input device while the meter is live restarts capture on the
+    // newly-chosen microphone so calibration reflects it immediately.
+    connect(m_cmbAudioDevice, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, [this](int){
+#ifdef HAVE_MULTIMEDIA
+        if (m_meterListener && m_meterListener->isRunning()) {
+            stopAudioMeter();
+            startAudioMeter();
+        }
+#endif
     });
     // The threshold only matters when audio click is enabled.
     auto updateAudioEnabled = [this](bool on){
@@ -902,6 +934,7 @@ void SettingsDialog::buildUi()
     // and hide the live meter (there is nothing to display).
     m_chkAudioClick->setEnabled(false);
     m_audioThreshSlider->setEnabled(false);
+    m_cmbAudioDevice->setEnabled(false);
     m_lblAudioMeter->hide();
     m_audioMeter->hide();
 #endif
@@ -1046,6 +1079,11 @@ void SettingsDialog::loadFrom(const AppSettings& s)
     m_lblAudioThreshold->setEnabled(s.audioClickEnabled);
     m_audioThreshSlider->setEnabled(s.audioClickEnabled);
     m_audioThreshValue->setEnabled(s.audioClickEnabled);
+
+    // Select the saved input device (index 0 / "System default" if not found,
+    // e.g. the device was unplugged or the id came from another machine).
+    int devIdx = m_cmbAudioDevice->findData(s.audioInputDevice);
+    m_cmbAudioDevice->setCurrentIndex(devIdx >= 0 ? devIdx : 0);
 }
 
 AppSettings SettingsDialog::readUi() const
@@ -1091,6 +1129,7 @@ AppSettings SettingsDialog::readUi() const
 
     s.audioClickEnabled   = m_chkAudioClick->isChecked();
     s.audioClickThreshold = m_audioThreshSlider->value();
+    s.audioInputDevice    = m_cmbAudioDevice->currentData().toString();
     return s;
 }
 

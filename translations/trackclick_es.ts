@@ -47,6 +47,8 @@
 </context>
 <context>
     <name>SettingsDialog</name>
+    <message><source>Input device:</source><translation>Dispositivo de entrada:</translation></message>
+    <message><source>System default</source><translation>Predeterminado del sistema</translation></message>
     <message><source>Audio Click</source><translation>Clic por sonido</translation></message>
     <message><source>Trigger the selected action with a loud sound</source><translation>Activar la acción seleccionada con un sonido fuerte</translation></message>
     <message><source>When enabled, the selected action fires when the microphone hears a loud sound (such as a clap or a pop) instead of waiting for the dwell timer. Turn on Dwell Active to start listening. Any loud noise triggers the action — speech is not interpreted.</source><translation>Cuando está activado, la acción seleccionada se ejecuta cuando el micrófono detecta un sonido fuerte (como una palmada o un chasquido) en lugar de esperar al temporizador de permanencia. Activa Permanencia activa para empezar a escuchar. Cualquier sonido fuerte activa la acción — el habla no se interpreta.</translation></message>

@@ -48,6 +48,22 @@ AudioClickListener::AudioClickListener(QObject* parent) : QObject(parent)
 
 AudioClickListener::~AudioClickListener() { stop(); }
 
+QList<AudioInputInfo> AudioClickListener::availableInputs()
+{
+    QList<AudioInputInfo> out;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    const QList<QAudioDevice> devs = QMediaDevices::audioInputs();
+    for (const QAudioDevice& d : devs)
+        out.append({ QString::fromUtf8(d.id()), d.description() });
+#else
+    const QList<QAudioDeviceInfo> devs =
+        QAudioDeviceInfo::availableDevices(QAudio::AudioInput);
+    for (const QAudioDeviceInfo& d : devs)
+        out.append({ d.deviceName(), d.deviceName() });
+#endif
+    return out;
+}
+
 void AudioClickListener::setThreshold(double level01)
 {
     m_threshold = qBound(0.01, level01, 1.0);
@@ -58,14 +74,18 @@ bool AudioClickListener::start()
     if (m_io) return true;
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    // Prefer the system default input, but fall back to the first enumerated
-    // input device — on Linux the "default" can be null even when a usable
+    // Use the explicitly-chosen device if one is set; otherwise prefer the
+    // system default, then fall back to the first enumerated input — on Linux
+    // the "default" can be null or the wrong source even when a usable
     // microphone (e.g. a webcam mic) exists.
-    QAudioDevice dev = QMediaDevices::defaultAudioInput();
-    if (dev.isNull()) {
-        const QList<QAudioDevice> inputs = QMediaDevices::audioInputs();
-        if (!inputs.isEmpty()) dev = inputs.first();
+    QAudioDevice dev;
+    const QList<QAudioDevice> inputs = QMediaDevices::audioInputs();
+    if (!m_preferredId.isEmpty()) {
+        for (const QAudioDevice& d : inputs)
+            if (QString::fromUtf8(d.id()) == m_preferredId) { dev = d; break; }
     }
+    if (dev.isNull()) dev = QMediaDevices::defaultAudioInput();
+    if (dev.isNull() && !inputs.isEmpty()) dev = inputs.first();
     if (dev.isNull()) {
         qWarning("TrackClick audio: no input device available");
         return false;
@@ -82,12 +102,15 @@ bool AudioClickListener::start()
         connect(m_source, &QAudioSource::stateChanged, this,
                 [](QAudio::State st){ qWarning() << "TrackClick audio state:" << st; });
 #else
-    QAudioDeviceInfo info = QAudioDeviceInfo::defaultInputDevice();
-    if (info.isNull()) {
-        const QList<QAudioDeviceInfo> inputs =
-            QAudioDeviceInfo::availableDevices(QAudio::AudioInput);
-        if (!inputs.isEmpty()) info = inputs.first();
+    QAudioDeviceInfo info;
+    const QList<QAudioDeviceInfo> inputs =
+        QAudioDeviceInfo::availableDevices(QAudio::AudioInput);
+    if (!m_preferredId.isEmpty()) {
+        for (const QAudioDeviceInfo& d : inputs)
+            if (d.deviceName() == m_preferredId) { info = d; break; }
     }
+    if (info.isNull()) info = QAudioDeviceInfo::defaultInputDevice();
+    if (info.isNull() && !inputs.isEmpty()) info = inputs.first();
     if (info.isNull()) {
         qWarning("TrackClick audio: no input device available");
         return false;

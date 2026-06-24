@@ -52,6 +52,8 @@
 </context>
 <context>
     <name>SettingsDialog</name>
+    <message><source>Input device:</source><translation>جهاز الإدخال:</translation></message>
+    <message><source>System default</source><translation>افتراضي النظام</translation></message>
     <message><source>Audio Click</source><translation>النقر الصوتي</translation></message>
     <message><source>Trigger the selected action with a loud sound</source><translation>تشغيل الإجراء المحدد بصوت عالٍ</translation></message>
     <message><source>When enabled, the selected action fires when the microphone hears a loud sound (such as a clap or a pop) instead of waiting for the dwell timer. Turn on Dwell Active to start listening. Any loud noise triggers the action — speech is not interpreted.</source><translation>عند التمكين، يُنفَّذ الإجراء المحدد عندما يسمع الميكروفون صوتًا عاليًا (مثل تصفيقة أو طقطقة) بدلاً من انتظار مؤقت التحويم. شغّل «التحويم النشط» لبدء الاستماع. أي صوت عالٍ يُشغّل الإجراء — لا يتم تفسير الكلام.</translation></message>

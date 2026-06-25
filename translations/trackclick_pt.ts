@@ -52,6 +52,8 @@
 </context>
 <context>
     <name>SettingsDialog</name>
+    <message><source>Input device:</source><translation>Dispositivo de entrada:</translation></message>
+    <message><source>System default</source><translation>Padrão do sistema</translation></message>
     <message><source>Audio Click</source><translation>Clique por som</translation></message>
     <message><source>Trigger the selected action with a loud sound</source><translation>Acionar a ação selecionada com um som alto</translation></message>
     <message><source>When enabled, the selected action fires when the microphone hears a loud sound (such as a clap or a pop) instead of waiting for the dwell timer. Turn on Dwell Active to start listening. Any loud noise triggers the action — speech is not interpreted.</source><translation>Quando ativado, a ação selecionada é executada quando o microfone ouve um som alto (como uma palma ou um estalo) em vez de esperar pelo temporizador de permanência. Ative Permanência ativa para começar a ouvir. Qualquer som alto aciona a ação — a fala não é interpretada.</translation></message>
@@ -113,6 +115,12 @@
     <message><source>No on-screen keyboard was found.
 Please install 'onboard' or 'florence'.</source><translation>Nenhum teclado virtual foi encontrado.
 Instale 'onboard' ou 'florence'.</translation></message>
+    <message><source>Custom Hotkeys</source><translation>Atalhos personalizados</translation></message>
+    <message><source>Hotkey %1</source><translation>Atalho %1</translation></message>
+    <message><source>Label (optional)</source><translation>Rótulo (opcional)</translation></message>
+    <message><source>Show click indicator ring (Windows)</source><translation>Mostrar anel indicador de clique (Windows)</translation></message>
+    <message><source>OK</source><translation>OK</translation></message>
+    <message><source>Cancel</source><translation>Cancelar</translation></message>
 </context>
 <context>
     <name>SensitivityTesterDialog</name>

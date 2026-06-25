@@ -2,7 +2,17 @@
 #ifdef HAVE_MULTIMEDIA
 #include <QObject>
 #include <QAudioFormat>
+#include <QTimer>
 #include <QtGlobal>
+#include <QString>
+#include <QList>
+
+// One selectable microphone input.  `id` is the stable key persisted in
+// settings; `name` is the human-readable label shown in the picker.
+struct AudioInputInfo {
+    QString id;
+    QString name;
+};
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 class QAudioSource;
@@ -23,6 +33,14 @@ public:
     explicit AudioClickListener(QObject* parent = nullptr);
     ~AudioClickListener() override;
 
+    // Enumerates the available microphone inputs (empty if none / no backend).
+    static QList<AudioInputInfo> availableInputs();
+
+    // Selects which input to capture from.  Empty id = system default (with a
+    // fall back to the first enumerated device).  Takes effect on the next
+    // start(); call stop()/start() to switch while running.
+    void setPreferredDeviceId(const QString& id) { m_preferredId = id; }
+
     // Begins capturing.  Returns false if there is no usable input device.
     bool start();
     void stop();
@@ -40,11 +58,15 @@ signals:
     void level(double level01);
 
 private slots:
-    void onReadyRead();
+    // Reads whatever the device has captured and processes it.  Driven by a
+    // timer rather than QIODevice::readyRead, which is unreliable in pull mode
+    // on some Linux audio backends (PulseAudio/PipeWire).
+    void poll();
 
 private:
     double peakLevel(const char* data, qint64 len) const;
 
+    QTimer       m_pollTimer;
     QAudioFormat m_format;
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     QAudioSource* m_source = nullptr;
@@ -52,8 +74,10 @@ private:
     QAudioInput*  m_source = nullptr;
 #endif
     QIODevice* m_io         = nullptr;
+    QString    m_preferredId;         // empty = system default
     double     m_threshold  = 0.5;
     qint64     m_cooldownMs = 350;
     qint64     m_lastFireMs = 0;
+    int        m_dbgPeaksLogged = 0;  // limits debug peak logging per capture
 };
 #endif // HAVE_MULTIMEDIA

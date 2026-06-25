@@ -52,6 +52,8 @@
 </context>
 <context>
     <name>SettingsDialog</name>
+    <message><source>Input device:</source><translation>جهاز الإدخال:</translation></message>
+    <message><source>System default</source><translation>افتراضي النظام</translation></message>
     <message><source>Audio Click</source><translation>النقر الصوتي</translation></message>
     <message><source>Trigger the selected action with a loud sound</source><translation>تشغيل الإجراء المحدد بصوت عالٍ</translation></message>
     <message><source>When enabled, the selected action fires when the microphone hears a loud sound (such as a clap or a pop) instead of waiting for the dwell timer. Turn on Dwell Active to start listening. Any loud noise triggers the action — speech is not interpreted.</source><translation>عند التمكين، يُنفَّذ الإجراء المحدد عندما يسمع الميكروفون صوتًا عاليًا (مثل تصفيقة أو طقطقة) بدلاً من انتظار مؤقت التحويم. شغّل «التحويم النشط» لبدء الاستماع. أي صوت عالٍ يُشغّل الإجراء — لا يتم تفسير الكلام.</translation></message>
@@ -113,6 +115,12 @@
     <message><source>No on-screen keyboard was found.
 Please install 'onboard' or 'florence'.</source><translation>لم يتم العثور على لوحة مفاتيح على الشاشة.
 يرجى تثبيت 'onboard' أو 'florence'.</translation></message>
+    <message><source>Custom Hotkeys</source><translation>اختصارات مخصصة</translation></message>
+    <message><source>Hotkey %1</source><translation>اختصار %1</translation></message>
+    <message><source>Label (optional)</source><translation>التسمية (اختياري)</translation></message>
+    <message><source>Show click indicator ring (Windows)</source><translation>إظهار حلقة مؤشر النقر (Windows)</translation></message>
+    <message><source>OK</source><translation>موافق</translation></message>
+    <message><source>Cancel</source><translation>إلغاء</translation></message>
 </context>
 <context>
     <name>SensitivityTesterDialog</name>

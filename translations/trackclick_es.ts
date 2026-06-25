@@ -47,6 +47,8 @@
 </context>
 <context>
     <name>SettingsDialog</name>
+    <message><source>Input device:</source><translation>Dispositivo de entrada:</translation></message>
+    <message><source>System default</source><translation>Predeterminado del sistema</translation></message>
     <message><source>Audio Click</source><translation>Clic por sonido</translation></message>
     <message><source>Trigger the selected action with a loud sound</source><translation>Activar la acción seleccionada con un sonido fuerte</translation></message>
     <message><source>When enabled, the selected action fires when the microphone hears a loud sound (such as a clap or a pop) instead of waiting for the dwell timer. Turn on Dwell Active to start listening. Any loud noise triggers the action — speech is not interpreted.</source><translation>Cuando está activado, la acción seleccionada se ejecuta cuando el micrófono detecta un sonido fuerte (como una palmada o un chasquido) en lugar de esperar al temporizador de permanencia. Activa Permanencia activa para empezar a escuchar. Cualquier sonido fuerte activa la acción — el habla no se interpreta.</translation></message>
@@ -107,6 +109,13 @@ Instale 'onboard' o 'florence'.</translation></message>
     <message><source>Left edge</source><translation>Borde izquierdo</translation></message>
     <message><source>Right edge</source><translation>Borde derecho</translation></message>
     <message><source>Sensitivity Tester…</source><translation>Probador de sensibilidad…</translation></message>
+    <message><source>Custom Hotkeys</source><translation>Atajos personalizados</translation></message>
+    <message><source>Hotkey %1</source><translation>Atajo %1</translation></message>
+    <message><source>Label (optional)</source><translation>Etiqueta (opcional)</translation></message>
+    <message><source>Show click indicator ring (Windows)</source><translation>Mostrar indicador de clic (Windows)</translation></message>
+    <message><source>Reset to Defaults</source><translation>Restablecer valores predeterminados</translation></message>
+    <message><source>OK</source><translation>Aceptar</translation></message>
+    <message><source>Cancel</source><translation>Cancelar</translation></message>
 </context>
 <context>
     <name>SensitivityTesterDialog</name>

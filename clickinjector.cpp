@@ -1,4 +1,8 @@
 #include "clickinjector.h"
+#include <QKeySequence>
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#  include <QKeyCombination>
+#endif
 
 // ─────────────────────────────────────────────────────────────
 //  WINDOWS
@@ -120,6 +124,63 @@ void ClickInjector::performClick(ClickType type, QPoint pos, int mods)
     }
 
     releaseModifiers(mods);
+}
+
+static WORD qtKeyToVK(int qtKey)
+{
+    if (qtKey >= Qt::Key_A && qtKey <= Qt::Key_Z)
+        return static_cast<WORD>('A' + (qtKey - Qt::Key_A));
+    if (qtKey >= Qt::Key_0 && qtKey <= Qt::Key_9)
+        return static_cast<WORD>('0' + (qtKey - Qt::Key_0));
+    if (qtKey >= Qt::Key_F1 && qtKey <= Qt::Key_F24)
+        return static_cast<WORD>(VK_F1 + (qtKey - Qt::Key_F1));
+    switch (qtKey) {
+    case Qt::Key_Escape:    return VK_ESCAPE;
+    case Qt::Key_Tab:       return VK_TAB;
+    case Qt::Key_Return:
+    case Qt::Key_Enter:     return VK_RETURN;
+    case Qt::Key_Space:     return VK_SPACE;
+    case Qt::Key_Backspace: return VK_BACK;
+    case Qt::Key_Delete:    return VK_DELETE;
+    case Qt::Key_Insert:    return VK_INSERT;
+    case Qt::Key_Home:      return VK_HOME;
+    case Qt::Key_End:       return VK_END;
+    case Qt::Key_PageUp:    return VK_PRIOR;
+    case Qt::Key_PageDown:  return VK_NEXT;
+    case Qt::Key_Left:      return VK_LEFT;
+    case Qt::Key_Right:     return VK_RIGHT;
+    case Qt::Key_Up:        return VK_UP;
+    case Qt::Key_Down:      return VK_DOWN;
+    case Qt::Key_Print:     return VK_PRINT;
+    case Qt::Key_Pause:     return VK_PAUSE;
+    default:                return 0;
+    }
+}
+
+void ClickInjector::injectKeySequence(const QKeySequence& seq)
+{
+    if (seq.isEmpty()) return;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QKeyCombination combo = seq[0];
+    int qtKey = static_cast<int>(combo.key());
+    Qt::KeyboardModifiers qtMods = combo.keyboardModifiers();
+#else
+    int combined = seq[0];
+    int qtKey = combined & ~Qt::KeyboardModifierMask;
+    Qt::KeyboardModifiers qtMods = Qt::KeyboardModifiers(combined & Qt::KeyboardModifierMask);
+#endif
+    WORD vk = qtKeyToVK(qtKey);
+    if (!vk) return;
+    if (qtMods & Qt::ControlModifier) sendKeyEvent(VK_CONTROL, true);
+    if (qtMods & Qt::AltModifier)     sendKeyEvent(VK_MENU,    true);
+    if (qtMods & Qt::ShiftModifier)   sendKeyEvent(VK_SHIFT,   true);
+    if (qtMods & Qt::MetaModifier)    sendKeyEvent(VK_LWIN,    true);
+    sendKeyEvent(vk, true);
+    sendKeyEvent(vk, false);
+    if (qtMods & Qt::MetaModifier)    sendKeyEvent(VK_LWIN,    false);
+    if (qtMods & Qt::ShiftModifier)   sendKeyEvent(VK_SHIFT,   false);
+    if (qtMods & Qt::AltModifier)     sendKeyEvent(VK_MENU,    false);
+    if (qtMods & Qt::ControlModifier) sendKeyEvent(VK_CONTROL, false);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -246,6 +307,70 @@ void ClickInjector::performClick(ClickType type, QPoint pos, int mods)
     }
 }
 
+static CGKeyCode qtKeyToCGKeyCode(int qtKey)
+{
+    // US-layout key codes for letters (position-based; layout-independent for modifiers+letter)
+    static const CGKeyCode letterCodes[26] = {
+        0,11,8,2,14,3,5,4,34,38,40,37,46,45,31,35,12,15,1,17,32,9,13,7,16,6
+    };
+    if (qtKey >= Qt::Key_A && qtKey <= Qt::Key_Z)
+        return letterCodes[qtKey - Qt::Key_A];
+
+    static const CGKeyCode digitCodes[10] = {29,18,19,20,21,23,22,26,28,25};
+    if (qtKey >= Qt::Key_0 && qtKey <= Qt::Key_9)
+        return digitCodes[qtKey - Qt::Key_0];
+
+    static const CGKeyCode fKeyCodes[20] = {
+        122,120,99,118,96,97,98,100,101,109,103,111,  // F1–F12
+        105,107,113,106,64,79,80,90                    // F13–F20
+    };
+    if (qtKey >= Qt::Key_F1 && qtKey <= Qt::Key_F20)
+        return fKeyCodes[qtKey - Qt::Key_F1];
+
+    switch (qtKey) {
+    case Qt::Key_Escape:    return 53;
+    case Qt::Key_Tab:       return 48;
+    case Qt::Key_Return:
+    case Qt::Key_Enter:     return 36;
+    case Qt::Key_Space:     return 49;
+    case Qt::Key_Backspace: return 51;
+    case Qt::Key_Delete:    return 117;
+    case Qt::Key_Home:      return 115;
+    case Qt::Key_End:       return 119;
+    case Qt::Key_PageUp:    return 116;
+    case Qt::Key_PageDown:  return 121;
+    case Qt::Key_Left:      return 123;
+    case Qt::Key_Right:     return 124;
+    case Qt::Key_Up:        return 126;
+    case Qt::Key_Down:      return 125;
+    default:                return 0xFFFF;
+    }
+}
+
+void ClickInjector::injectKeySequence(const QKeySequence& seq)
+{
+    if (seq.isEmpty()) return;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QKeyCombination combo = seq[0];
+    int qtKey = static_cast<int>(combo.key());
+    Qt::KeyboardModifiers qtMods = combo.keyboardModifiers();
+#else
+    int combined = seq[0];
+    int qtKey = combined & ~Qt::KeyboardModifierMask;
+    Qt::KeyboardModifiers qtMods = Qt::KeyboardModifiers(combined & Qt::KeyboardModifierMask);
+#endif
+    CGKeyCode kc = qtKeyToCGKeyCode(qtKey);
+    if (kc == 0xFFFF) return;
+    // On macOS, Qt maps physical Cmd → Qt::ControlModifier, physical Ctrl → Qt::MetaModifier
+    CGEventFlags flags = 0;
+    if (qtMods & Qt::ControlModifier) flags |= kCGEventFlagMaskCommand;
+    if (qtMods & Qt::MetaModifier)    flags |= kCGEventFlagMaskControl;
+    if (qtMods & Qt::AltModifier)     flags |= kCGEventFlagMaskAlternate;
+    if (qtMods & Qt::ShiftModifier)   flags |= kCGEventFlagMaskShift;
+    postKey(kc, true,  flags);
+    postKey(kc, false, flags);
+}
+
 // ─────────────────────────────────────────────────────────────
 //  Linux — uinput (Wayland + X11) with XTest fallback (X11 only)
 // ─────────────────────────────────────────────────────────────
@@ -320,7 +445,7 @@ struct UInputDev {
         ev.type  = type;
         ev.code  = code;
         ev.value = val;
-        ::write(fd, &ev, sizeof(ev));
+        (void)::write(fd, &ev, sizeof(ev));
     }
 
     void syn() const { send(EV_SYN, SYN_REPORT, 0); }
@@ -368,11 +493,11 @@ struct UInputKeyDev {
         ev.type  = EV_KEY;
         ev.code  = static_cast<uint16_t>(code);
         ev.value = down ? 1 : 0;
-        ::write(fd, &ev, sizeof(ev));
+        (void)::write(fd, &ev, sizeof(ev));
         struct input_event syn{};
         syn.type  = EV_SYN;
         syn.code  = SYN_REPORT;
-        ::write(fd, &syn, sizeof(syn));
+        (void)::write(fd, &syn, sizeof(syn));
     }
 };
 
@@ -759,6 +884,72 @@ void ClickInjector::performClick(ClickType type, QPoint pos, int mods)
     }
 }
 
+static KeySym qtKeyToKeySym(int qtKey)
+{
+    if (qtKey >= Qt::Key_A && qtKey <= Qt::Key_Z)
+        return XK_a + (qtKey - Qt::Key_A);
+    if (qtKey >= Qt::Key_0 && qtKey <= Qt::Key_9)
+        return XK_0 + (qtKey - Qt::Key_0);
+    if (qtKey >= Qt::Key_F1  && qtKey <= Qt::Key_F12)
+        return XK_F1  + (qtKey - Qt::Key_F1);
+    if (qtKey >= Qt::Key_F13 && qtKey <= Qt::Key_F24)
+        return XK_F13 + (qtKey - Qt::Key_F13);
+    switch (qtKey) {
+    case Qt::Key_Escape:    return XK_Escape;
+    case Qt::Key_Tab:       return XK_Tab;
+    case Qt::Key_Return:
+    case Qt::Key_Enter:     return XK_Return;
+    case Qt::Key_Space:     return XK_space;
+    case Qt::Key_Backspace: return XK_BackSpace;
+    case Qt::Key_Delete:    return XK_Delete;
+    case Qt::Key_Insert:    return XK_Insert;
+    case Qt::Key_Home:      return XK_Home;
+    case Qt::Key_End:       return XK_End;
+    case Qt::Key_PageUp:    return XK_Page_Up;
+    case Qt::Key_PageDown:  return XK_Page_Down;
+    case Qt::Key_Left:      return XK_Left;
+    case Qt::Key_Right:     return XK_Right;
+    case Qt::Key_Up:        return XK_Up;
+    case Qt::Key_Down:      return XK_Down;
+    case Qt::Key_Print:     return XK_Print;
+    case Qt::Key_Pause:     return XK_Pause;
+    default:                return NoSymbol;
+    }
+}
+
+void ClickInjector::injectKeySequence(const QKeySequence& seq)
+{
+    if (seq.isEmpty()) return;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QKeyCombination combo = seq[0];
+    int qtKey = static_cast<int>(combo.key());
+    Qt::KeyboardModifiers qtMods = combo.keyboardModifiers();
+#else
+    int combined = seq[0];
+    int qtKey = combined & ~Qt::KeyboardModifierMask;
+    Qt::KeyboardModifiers qtMods = Qt::KeyboardModifiers(combined & Qt::KeyboardModifierMask);
+#endif
+    // Use XTest for key injection — works on X11 and XWayland.
+    // On pure Wayland without XWayland, getDisplay() returns nullptr and this is a no-op.
+    Display* dpy = getDisplay();
+    if (!dpy) return;
+    KeySym ks = qtKeyToKeySym(qtKey);
+    if (ks == NoSymbol) return;
+    KeyCode kc = XKeysymToKeycode(dpy, ks);
+    if (!kc) return;
+    if (qtMods & Qt::ControlModifier) XTestFakeKeyEvent(dpy, XKeysymToKeycode(dpy, XK_Control_L), True,  0);
+    if (qtMods & Qt::AltModifier)     XTestFakeKeyEvent(dpy, XKeysymToKeycode(dpy, XK_Alt_L),     True,  0);
+    if (qtMods & Qt::ShiftModifier)   XTestFakeKeyEvent(dpy, XKeysymToKeycode(dpy, XK_Shift_L),   True,  0);
+    if (qtMods & Qt::MetaModifier)    XTestFakeKeyEvent(dpy, XKeysymToKeycode(dpy, XK_Super_L),   True,  0);
+    XTestFakeKeyEvent(dpy, kc, True,  0);
+    XTestFakeKeyEvent(dpy, kc, False, 0);
+    if (qtMods & Qt::MetaModifier)    XTestFakeKeyEvent(dpy, XKeysymToKeycode(dpy, XK_Super_L),   False, 0);
+    if (qtMods & Qt::ShiftModifier)   XTestFakeKeyEvent(dpy, XKeysymToKeycode(dpy, XK_Shift_L),   False, 0);
+    if (qtMods & Qt::AltModifier)     XTestFakeKeyEvent(dpy, XKeysymToKeycode(dpy, XK_Alt_L),     False, 0);
+    if (qtMods & Qt::ControlModifier) XTestFakeKeyEvent(dpy, XKeysymToKeycode(dpy, XK_Control_L), False, 0);
+    XFlush(dpy);
+}
+
 // ─────────────────────────────────────────────────────────────
 //  Fallback (unsupported platform — no-op)
 // ─────────────────────────────────────────────────────────────
@@ -774,5 +965,10 @@ bool ClickInjector::hasInputDeviceAccess() { return true; }
 void ClickInjector::performClick(ClickType, QPoint, int)
 {
     qWarning() << "ClickInjector: unsupported platform — click not sent";
+}
+
+void ClickInjector::injectKeySequence(const QKeySequence&)
+{
+    qWarning() << "ClickInjector::injectKeySequence: unsupported platform";
 }
 #endif

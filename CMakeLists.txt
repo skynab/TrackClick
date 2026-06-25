@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(TrackClick VERSION 0.9.3 LANGUAGES CXX)
+project(TrackClick VERSION 0.9.4 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -7,22 +7,40 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
+# Compiling .ts → .qm requires Qt LinguistTools, which is genuinely optional here:
+# the .ts files are embedded in resources.qrc and parsed at runtime (see below),
+# so .qm is only a startup optimisation.  Some distros ship a *broken* LinguistTools
+# CMake package — the config is present but its lrelease/lprodump helper binaries
+# are missing or live outside the path the config hardcodes — and in that state
+# find_package(LinguistTools) aborts with a hard error (an imported target
+# "references the file …/lprodump but this file does not exist") that OPTIONAL/QUIET
+# cannot suppress.  On such systems, configure with -DCOMPILE_QM=OFF.
+option(COMPILE_QM "Compile .ts translations to .qm (requires Qt LinguistTools)" ON)
+
 # ── Qt version detection ──────────────────────────────────────────────────────
 # Prefer Qt6; fall back to Qt5 (5.12+) if Qt6 is not available.
 find_package(Qt6 QUIET COMPONENTS Core Gui Widgets)
 if(Qt6_FOUND)
     set(QT Qt6)
     find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Svg)
-    find_package(Qt6 OPTIONAL_COMPONENTS Multimedia LinguistTools QUIET)
-    set(LINGUIST_FOUND ${Qt6LinguistTools_FOUND})
+    find_package(Qt6 OPTIONAL_COMPONENTS Multimedia QUIET)
     set(MULTIMEDIA_FOUND ${Qt6Multimedia_FOUND})
+    # Keep LinguistTools in its own find_package, gated on COMPILE_QM, so a broken
+    # install can never take down configuration (it would otherwise hard-error).
+    if(COMPILE_QM)
+        find_package(Qt6 OPTIONAL_COMPONENTS LinguistTools QUIET)
+        set(LINGUIST_FOUND ${Qt6LinguistTools_FOUND})
+    endif()
     message(STATUS "TrackClick: building with Qt6 ${Qt6_VERSION}")
 else()
     find_package(Qt5 5.12 REQUIRED COMPONENTS Core Gui Widgets Svg)
     set(QT Qt5)
-    find_package(Qt5 OPTIONAL_COMPONENTS Multimedia LinguistTools QUIET)
-    set(LINGUIST_FOUND ${Qt5LinguistTools_FOUND})
+    find_package(Qt5 OPTIONAL_COMPONENTS Multimedia QUIET)
     set(MULTIMEDIA_FOUND ${Qt5Multimedia_FOUND})
+    if(COMPILE_QM)
+        find_package(Qt5 OPTIONAL_COMPONENTS LinguistTools QUIET)
+        set(LINGUIST_FOUND ${Qt5LinguistTools_FOUND})
+    endif()
     message(STATUS "TrackClick: building with Qt5 ${Qt5_VERSION}")
 endif()
 
@@ -57,7 +75,12 @@ elseif(APPLE)
         MACOSX_PACKAGE_LOCATION Resources)
     add_executable(TrackClick MACOSX_BUNDLE ${SOURCES} ${HEADERS} ${MACOSX_ICON})
     set_target_properties(TrackClick PROPERTIES
-        MACOSX_BUNDLE_ICON_FILE TrackClick.icns)
+        MACOSX_BUNDLE_INFO_PLIST            "${CMAKE_CURRENT_SOURCE_DIR}/installer/MacOSXBundleInfo.plist.in"
+        MACOSX_BUNDLE_ICON_FILE             "TrackClick.icns"
+        MACOSX_BUNDLE_BUNDLE_NAME           "TrackClick"
+        MACOSX_BUNDLE_GUI_IDENTIFIER        "com.trackclick.TrackClick"
+        MACOSX_BUNDLE_BUNDLE_VERSION        "${PROJECT_VERSION}"
+        MACOSX_BUNDLE_SHORT_VERSION_STRING  "${PROJECT_VERSION}")
 else()
     add_executable(TrackClick ${SOURCES} ${HEADERS})
 endif()
@@ -146,6 +169,12 @@ set(TS_FILES
     translations/trackclick_zh_CN.ts
     translations/trackclick_ja.ts
     translations/trackclick_ko.ts
+    translations/trackclick_hi.ts
+    translations/trackclick_ar.ts
+    translations/trackclick_bn.ts
+    translations/trackclick_pt.ts
+    translations/trackclick_ru.ts
+    translations/trackclick_ur.ts
 )
 
 # .ts files are embedded in resources.qrc and parsed at runtime by TsTranslator
@@ -182,7 +211,9 @@ endif()
 # The .deb installs to /usr and ships the udev rule, so input-device access is
 # set up automatically at install time (the postinst reloads udev) and the
 # on-screen keyboard is pulled in via Recommends — no terminal steps needed.
-# The AppImage (built separately in CI) remains the portable cross-distro option.
+# The .deb is the supported Linux package (the CI AppImage was dropped because its
+# bundled older Qt broke runtime language switching); these CPack settings still
+# work for a locally built AppImage should one be reintroduced with a pinned Qt.
 if(UNIX AND NOT APPLE)
     set(CPACK_PACKAGE_NAME "trackclick")
     set(CPACK_PACKAGE_VENDOR "TrackClick")
@@ -199,8 +230,17 @@ if(UNIX AND NOT APPLE)
     # Auto-derive linked-library dependencies from the binary; recommend the
     # on-screen keyboard and polkit (pkexec) which are used at runtime but not
     # captured by shared-library scanning.
+    #
+    # The audio-click feature also needs Qt Multimedia's runtime *backend*, which
+    # Qt loads dynamically (dlopen) — so shlibdeps cannot see it.  On Qt 6.2/6.4
+    # (Ubuntu 22.04) that backend is GStreamer, and audio capture from PulseAudio/
+    # PipeWire comes via gst-plugins-good's pulsesrc.  Without these the input
+    # meter stays flat and no audio cue ever fires, even though the binary links
+    # libQt6Multimedia fine.  Recommended (not required) so the app still installs
+    # on systems where audio click isn't wanted.
     set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
-    set(CPACK_DEBIAN_PACKAGE_RECOMMENDS "onboard, policykit-1")
+    set(CPACK_DEBIAN_PACKAGE_RECOMMENDS
+        "onboard, policykit-1, gstreamer1.0-plugins-base, gstreamer1.0-plugins-good")
     set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
     set(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
 

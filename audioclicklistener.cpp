@@ -1,6 +1,7 @@
 #include "audioclicklistener.h"
 #ifdef HAVE_MULTIMEDIA
 #include <QDateTime>
+#include <QDebug>
 #include <QIODevice>
 #include <cmath>
 #include <cstring>
@@ -13,6 +14,15 @@
 #  include <QAudioInput>
 #  include <QAudioDeviceInfo>
 #endif
+
+// Set TRACKCLICK_AUDIO_DEBUG=1 to log the chosen device, format and the first
+// few captured peak levels — useful for diagnosing "the meter doesn't move",
+// especially on Linux where the default input may be the wrong/muted source.
+static bool audioDebug()
+{
+    static const bool on = !qEnvironmentVariableIsEmpty("TRACKCLICK_AUDIO_DEBUG");
+    return on;
+}
 
 AudioClickListener::AudioClickListener(QObject* parent) : QObject(parent)
 {
@@ -29,9 +39,30 @@ AudioClickListener::AudioClickListener(QObject* parent) : QObject(parent)
     m_format.setByteOrder(QAudioFormat::LittleEndian);
     m_format.setSampleType(QAudioFormat::SignedInt);
 #endif
+
+    // Poll the capture buffer ~33×/second.  Connected once here (not in start())
+    // so repeated start()/stop() cycles don't stack duplicate connections.
+    m_pollTimer.setInterval(30);
+    connect(&m_pollTimer, &QTimer::timeout, this, &AudioClickListener::poll);
 }
 
 AudioClickListener::~AudioClickListener() { stop(); }
+
+QList<AudioInputInfo> AudioClickListener::availableInputs()
+{
+    QList<AudioInputInfo> out;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    const QList<QAudioDevice> devs = QMediaDevices::audioInputs();
+    for (const QAudioDevice& d : devs)
+        out.append({ QString::fromUtf8(d.id()), d.description() });
+#else
+    const QList<QAudioDeviceInfo> devs =
+        QAudioDeviceInfo::availableDevices(QAudio::AudioInput);
+    for (const QAudioDeviceInfo& d : devs)
+        out.append({ d.deviceName(), d.deviceName() });
+#endif
+    return out;
+}
 
 void AudioClickListener::setThreshold(double level01)
 {
@@ -43,39 +74,88 @@ bool AudioClickListener::start()
     if (m_io) return true;
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    const QAudioDevice dev = QMediaDevices::defaultAudioInput();
-    if (dev.isNull()) return false;
+    // Use the explicitly-chosen device if one is set; otherwise prefer the
+    // system default, then fall back to the first enumerated input — on Linux
+    // the "default" can be null or the wrong source even when a usable
+    // microphone (e.g. a webcam mic) exists.
+    //
+    // On macOS, QMediaDevices::audioInputs() returns an empty list when
+    // microphone permission has not yet been granted.  defaultAudioInput()
+    // still returns a valid (non-null) default device descriptor even before
+    // permission is granted, so we prefer that path.  The OS permission dialog
+    // is triggered when QAudioSource::start() is called below.
+    QAudioDevice dev;
+    const QList<QAudioDevice> inputs = QMediaDevices::audioInputs();
+    if (!m_preferredId.isEmpty()) {
+        for (const QAudioDevice& d : inputs)
+            if (QString::fromUtf8(d.id()) == m_preferredId) { dev = d; break; }
+    }
+    if (dev.isNull()) dev = QMediaDevices::defaultAudioInput();
+    if (dev.isNull() && !inputs.isEmpty()) dev = inputs.first();
+    if (dev.isNull()) {
+        qWarning("TrackClick audio: no input device available");
+        return false;
+    }
     QAudioFormat fmt = m_format;
     if (!dev.isFormatSupported(fmt)) fmt = dev.preferredFormat();
     m_format = fmt;
+    if (audioDebug())
+        qWarning() << "TrackClick audio: using" << dev.description()
+                   << "rate" << fmt.sampleRate() << "ch" << fmt.channelCount()
+                   << "sampleFormat" << int(fmt.sampleFormat());
     m_source = new QAudioSource(dev, fmt, this);
+    if (audioDebug())
+        connect(m_source, &QAudioSource::stateChanged, this,
+                [](QAudio::State st){ qWarning() << "TrackClick audio state:" << st; });
 #else
-    const QAudioDeviceInfo info = QAudioDeviceInfo::defaultInputDevice();
-    if (info.isNull()) return false;
+    QAudioDeviceInfo info;
+    const QList<QAudioDeviceInfo> inputs =
+        QAudioDeviceInfo::availableDevices(QAudio::AudioInput);
+    if (!m_preferredId.isEmpty()) {
+        for (const QAudioDeviceInfo& d : inputs)
+            if (d.deviceName() == m_preferredId) { info = d; break; }
+    }
+    if (info.isNull()) info = QAudioDeviceInfo::defaultInputDevice();
+    if (info.isNull() && !inputs.isEmpty()) info = inputs.first();
+    if (info.isNull()) {
+        qWarning("TrackClick audio: no input device available");
+        return false;
+    }
     QAudioFormat fmt = m_format;
     if (!info.isFormatSupported(fmt)) fmt = info.nearestFormat(fmt);
     m_format = fmt;
+    if (audioDebug())
+        qWarning() << "TrackClick audio: using" << info.deviceName()
+                   << "rate" << fmt.sampleRate() << "ch" << fmt.channelCount()
+                   << "size" << fmt.sampleSize();
     m_source = new QAudioInput(info, fmt, this);
+    if (audioDebug())
+        connect(m_source, &QAudioInput::stateChanged, this,
+                [](QAudio::State st){ qWarning() << "TrackClick audio state:" << st; });
 #endif
 
     m_io = m_source->start();   // QAudioSource/QAudioInput owns the QIODevice
     if (!m_io) {
+        qWarning() << "TrackClick audio: failed to start capture, error"
+                   << m_source->error();
         m_source->deleteLater();
         m_source = nullptr;
         return false;
     }
-    connect(m_io, &QIODevice::readyRead, this, &AudioClickListener::onReadyRead);
+    m_dbgPeaksLogged = 0;
+    m_pollTimer.start();
     return true;
 }
 
 void AudioClickListener::stop()
 {
+    m_pollTimer.stop();
     if (m_source) m_source->stop();
-    if (m_io) { m_io->disconnect(this); m_io = nullptr; }
+    if (m_io) m_io = nullptr;   // owned by m_source; invalidated by stop()
     if (m_source) { m_source->deleteLater(); m_source = nullptr; }
 }
 
-void AudioClickListener::onReadyRead()
+void AudioClickListener::poll()
 {
     if (!m_io) return;
     const QByteArray chunk = m_io->readAll();
@@ -83,6 +163,11 @@ void AudioClickListener::onReadyRead()
 
     const double peak = peakLevel(chunk.constData(), chunk.size());
     emit level(peak);   // drives the calibration meter
+
+    if (audioDebug() && m_dbgPeaksLogged < 10) {
+        ++m_dbgPeaksLogged;
+        qWarning() << "TrackClick audio: peak" << peak << "bytes" << chunk.size();
+    }
 
     if (peak < m_threshold) return;
 

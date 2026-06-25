@@ -49,6 +49,8 @@
 </context>
 <context>
     <name>SettingsDialog</name>
+    <message><source>Input device:</source><translation>Vstupní zařízení:</translation></message>
+    <message><source>System default</source><translation>Výchozí systémové</translation></message>
     <message><source>Audio Click</source><translation>Zvukové kliknutí</translation></message>
     <message><source>Trigger the selected action with a loud sound</source><translation>Spustit vybranou akci hlasitým zvukem</translation></message>
     <message><source>When enabled, the selected action fires when the microphone hears a loud sound (such as a clap or a pop) instead of waiting for the dwell timer. Turn on Dwell Active to start listening. Any loud noise triggers the action — speech is not interpreted.</source><translation>Když je zapnuto, vybraná akce se spustí, jakmile mikrofon zaslechne hlasitý zvuk (například tlesknutí nebo lupnutí), místo čekání na časovač prodlevy. Naslouchání spustíte zapnutím Aktivní prodlevy. Jakýkoli hlasitý zvuk spustí akci — řeč se nevyhodnocuje.</translation></message>
@@ -109,6 +111,13 @@ Nainstalujte prosím 'onboard' nebo 'florence'.</translation></message>
     <message><source>Left edge</source><translation>Levý okraj</translation></message>
     <message><source>Right edge</source><translation>Pravý okraj</translation></message>
     <message><source>Sensitivity Tester…</source><translation>Test citlivosti…</translation></message>
+    <message><source>Custom Hotkeys</source><translation>Vlastní zkratky</translation></message>
+    <message><source>Hotkey %1</source><translation>Zkratka %1</translation></message>
+    <message><source>Label (optional)</source><translation>Popisek (volitelný)</translation></message>
+    <message><source>Show click indicator ring (Windows)</source><translation>Zobrazit indikátor kliknutí (Windows)</translation></message>
+    <message><source>Reset to Defaults</source><translation>Obnovit výchozí nastavení</translation></message>
+    <message><source>OK</source><translation>OK</translation></message>
+    <message><source>Cancel</source><translation>Zrušit</translation></message>
 </context>
 <context>
     <name>SensitivityTesterDialog</name>

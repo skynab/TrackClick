@@ -5,6 +5,13 @@ on:
     branches: ["**"]
   pull_request:
 
+# Run JavaScript actions on Node 24. The runner still defaults Node-20-targeted
+# actions (checkout, upload-artifact, install-qt-action) to Node 20, which now
+# emits a deprecation warning. Forcing Node 24 silences it and is forward-
+# compatible with the upcoming removal of Node 20 from the runners.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   test:
     name: Unit Tests (${{ matrix.name }})
@@ -84,6 +91,12 @@ jobs:
         if: matrix.name == 'Linux'
         run: |
           sudo apt-get update -q
+          # NOTE: we deliberately do NOT install qt6-tools-dev / qt6-l10n-tools.
+          # On this runner that pair ships a broken Qt6 LinguistTools CMake package
+          # (the config references …/libexec/lprodump, but the binary isn't there),
+          # which makes find_package(LinguistTools) abort configure with a hard
+          # error.  We don't need them: the .ts files are embedded in resources.qrc
+          # and parsed at runtime, so .qm compilation is only a startup optimisation.
           sudo apt-get install -y \
             qt6-base-dev \
             libqt6svg6-dev \
@@ -130,30 +143,12 @@ jobs:
       - name: Build
         run: cmake --build build --config Release --parallel
 
-      # ── Package: Linux ────────────────────────────────────────────────────────
-      - name: Package (Linux)
-        if: matrix.name == 'Linux'
-        run: |
-          # Download linuxdeploy + Qt plugin
-          wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
-          wget -q https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
-          chmod +x linuxdeploy-x86_64.AppImage linuxdeploy-plugin-qt-x86_64.AppImage
-
-          # Install the binary so linuxdeploy can find it
-          DESTDIR=AppDir cmake --install build --prefix /usr
-
-          # linuxdeploy requires the icon filename to match the Icon= entry in the desktop file
-          cp icons/app.svg icons/TrackClick.svg
-
-          # Build the AppImage
-          QMAKE=$(which qmake6 || which qmake) \
-          OUTPUT=TrackClick-Linux.AppImage \
-          ./linuxdeploy-x86_64.AppImage \
-            --appdir AppDir \
-            --plugin qt \
-            --output appimage \
-            --desktop-file installer/TrackClick.desktop \
-            --icon-file icons/TrackClick.svg
+      # NOTE: The Linux AppImage (TrackClick-Linux) was dropped from the auto-builds.
+      # It bundled whatever Qt the runner happened to ship (Ubuntu 22.04 / Qt 6.2),
+      # and under that older bundled Qt the runtime language switching didn't take
+      # effect — a problem the .deb never had because it links the user's system Qt.
+      # The .deb is the supported Linux package; re-add an AppImage only with a
+      # pinned, known-good Qt if a portable build is needed again.
 
       # ── Package: macOS ────────────────────────────────────────────────────────
       - name: Package (macOS)
@@ -198,19 +193,11 @@ jobs:
           wix build installer\Bundle.wxs -b . -ext WixToolset.Bal.wixext -d BuildNumber=${{ github.run_number }} -o TrackClick-Windows-Setup.exe
 
       # ── Upload artifacts ──────────────────────────────────────────────────────
-      - name: Upload (Linux)
-        if: matrix.name == 'Linux'
-        uses: actions/upload-artifact@v4
-        with:
-          name: TrackClick-Linux
-          path: TrackClick-Linux.AppImage
-
       - name: Package .deb (Linux)
         if: matrix.name == 'Linux'
         run: |
           # Build the Debian/Ubuntu package from the CPack config generated at
-          # configure time.  Runs after the AppImage upload so a packaging hiccup
-          # never costs the AppImage artifact.
+          # configure time.
           cpack --config build/CPackConfig.cmake -G DEB -B dist-packages
           ls -la dist-packages
 

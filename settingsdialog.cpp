@@ -1,7 +1,9 @@
 #include "settingsdialog.h"
 #include "translations/tsparser.h"
 #include "audioclicklistener.h"
+#include "clickinjector.h"
 #include <QApplication>
+#include <QKeySequenceEdit>
 #include <QCursor>
 #include <QEvent>
 #include <QFrame>
@@ -61,12 +63,15 @@ QCheckBox::indicator {
 QCheckBox::indicator:checked {
     image: url(:/icons/toggle_on.svg);
 }
-QSpinBox, QDoubleSpinBox, QComboBox {
+QSpinBox, QDoubleSpinBox, QComboBox, QLineEdit, QKeySequenceEdit {
     background: #1A1A1A;
     color: #979797;
     border: 1px solid #555;
     border-radius: 3px;
     padding: 2px 4px;
+}
+QLineEdit:focus, QKeySequenceEdit:focus {
+    border: 1px solid #FFA600;
 }
 QComboBox::drop-down { border: none; width: 18px; }
 QComboBox QAbstractItemView {
@@ -481,6 +486,12 @@ void SettingsDialog::retranslateUi()
     m_chkQuitButton->setText(tr("Quit Button"));
     m_chkDwellActiveBtn->setText(tr("Dwell Active Button"));
 
+    m_lblCustomHotkeys->setText(tr("Custom Hotkeys"));
+    for (int i = 0; i < 3; ++i) {
+        m_chkHotkey[i]->setText(tr("Hotkey %1").arg(i + 1));
+        m_edtHotkeyLabel[i]->setPlaceholderText(tr("Label (optional)"));
+    }
+
     m_tabs->setTabText(2, tr("Window"));
     m_lblEdgeLock->setText(tr("Lock to screen edge:"));
     m_cmbEdgeLock->setItemText(0, tr("None"));
@@ -492,6 +503,7 @@ void SettingsDialog::retranslateUi()
     m_chkXMinimizesApp->setText(tr("Top X minimizes app"));
     m_chkLaunchOnStartup->setText(tr("Launch on system startup (Windows)"));
     m_chkAudio->setText(tr("Audio feedback on click"));
+    m_chkClickIndicator->setText(tr("Show click indicator ring (Windows)"));
     m_chkIconsOnly->setText(tr("Icons only (hide button labels)"));
     m_chkLargeButtons->setText(tr("Large buttons"));
     m_lblOpacity->setText(tr("Opacity:"));
@@ -501,12 +513,16 @@ void SettingsDialog::retranslateUi()
     m_cmbLayout->setItemText(2, tr("Vertical (one column)"));
     m_cmbLayout->setItemText(3, tr("Vertical (two columns)"));
     m_lblLanguage->setText(tr("Language:"));
+    m_okBtn->setText(tr("OK"));
+    m_cancelBtn->setText(tr("Cancel"));
     m_resetBtn->setText(tr("Reset to Defaults"));
     m_btnOnScreenKbd->setText(tr("Open On-Screen Keyboard"));
 
     m_tabs->setTabText(3, tr("Audio Click"));
     m_chkAudioClick->setText(tr("Trigger the selected action with a loud sound"));
     m_lblAudioClickInfo->setText(audioClickInfoText());
+    m_lblAudioDevice->setText(tr("Input device:"));
+    m_cmbAudioDevice->setItemText(0, tr("System default"));
     m_lblAudioThreshold->setText(tr("Loudness threshold:"));
     m_lblAudioMeter->setText(tr("Input level:"));
 }
@@ -528,8 +544,11 @@ void SettingsDialog::startAudioMeter()
 {
 #ifdef HAVE_MULTIMEDIA
     if (!m_meterListener) return;
-    if (!m_meterListener->isRunning())
+    if (!m_meterListener->isRunning()) {
+        // Capture from whichever device is selected in the picker.
+        m_meterListener->setPreferredDeviceId(m_cmbAudioDevice->currentData().toString());
         m_meterListener->start();   // harmless if there is no input device
+    }
     m_meterTimer.start();
 #endif
 }
@@ -592,9 +611,9 @@ void SettingsDialog::buildUi()
 #ifdef BUILD_NUMBER
 #  define TC_STR_(x) #x
 #  define TC_STR(x) TC_STR_(x)
-    auto* versionLbl = new QLabel("Version 0.9.3 (build " TC_STR(BUILD_NUMBER) ")");
+    auto* versionLbl = new QLabel("Version 0.9.4 (build " TC_STR(BUILD_NUMBER) ")");
 #else
-    auto* versionLbl = new QLabel("Version 0.9.3");
+    auto* versionLbl = new QLabel("Version 0.9.4");
 #endif
     versionLbl->setStyleSheet(
         "color: #666666; font-size: 11px; background: transparent;");
@@ -628,6 +647,7 @@ void SettingsDialog::buildUi()
     m_lblLanguage = new QLabel(tr("Language:"));
 
     auto* langRow = new QHBoxLayout;
+    langRow->addStretch(1);
     langRow->addWidget(m_lblLanguage);
     langRow->addWidget(m_cmbLanguage);
     langRow->addStretch(1);
@@ -730,10 +750,47 @@ void SettingsDialog::buildUi()
     addChk(m_chkModAlt);      addChk(m_chkModShift);    addChk(m_chkExitButton);
     addChk(m_chkQuitButton);  addChk(m_chkDwellActiveBtn);
 
-    // Absorb any leftover vertical space in a trailing empty row so the tab's
-    // extra height doesn't get spread across the content rows (which otherwise
-    // makes the title row balloon to fill half the tab).
-    grid->setRowStretch(row + 1, 1);
+    // Ensure we're at the start of a fresh row for the hotkeys section
+    if (col > 0) { col = 0; row++; }
+
+    // ── Custom Hotkeys section ────────────────────────────────
+    auto* hotkeysSep = new QFrame;
+    hotkeysSep->setFrameShape(QFrame::HLine);
+    hotkeysSep->setStyleSheet("QFrame { color: #555; }");
+    grid->addWidget(hotkeysSep, row++, 0, 1, 3);
+
+    m_lblCustomHotkeys = new QLabel(tr("Custom Hotkeys"));
+    m_lblCustomHotkeys->setStyleSheet(
+        "color: #FFA600; font-weight: bold; background: transparent;");
+    grid->addWidget(m_lblCustomHotkeys, row++, 0, 1, 3);
+
+    for (int i = 0; i < 3; ++i) {
+        m_chkHotkey[i] = new QCheckBox(tr("Hotkey %1").arg(i + 1));
+
+        m_edtHotkeyLabel[i] = new QLineEdit;
+        m_edtHotkeyLabel[i]->setPlaceholderText(tr("Label (optional)"));
+        m_edtHotkeyLabel[i]->setToolTip(
+            tr("Button label shown on the toolbar. Defaults to the key name if left blank."));
+
+        m_kseHotkey[i] = new QKeySequenceEdit;
+        m_kseHotkey[i]->setToolTip(
+            tr("Click here and press the desired key combination (e.g. F12, Ctrl+A, Alt+Z)."));
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+        m_kseHotkey[i]->setMaximumSequenceLength(1);
+#endif
+        auto updateRowEnabled = [this, i](bool on) {
+            m_edtHotkeyLabel[i]->setEnabled(on);
+            m_kseHotkey[i]->setEnabled(on);
+        };
+        connect(m_chkHotkey[i], &QCheckBox::toggled, this, updateRowEnabled);
+
+        grid->addWidget(m_chkHotkey[i],      row, 0);
+        grid->addWidget(m_edtHotkeyLabel[i], row, 1);
+        grid->addWidget(m_kseHotkey[i],      row, 2);
+        row++;
+    }
+
+    grid->setRowStretch(row, 1);
 
     m_tabs->addTab(pageBtns, tr("Buttons"));
 
@@ -772,8 +829,9 @@ void SettingsDialog::buildUi()
     m_chkStartMinimized = new QCheckBox(tr("Start minimized to tray"));
     m_chkXMinimizesApp  = new QCheckBox(tr("Top X minimizes app"));
     m_chkLaunchOnStartup= new QCheckBox(tr("Launch on system startup (Windows)"));
-    m_chkAudio         = new QCheckBox(tr("Audio feedback on click"));
-    m_chkIconsOnly     = new QCheckBox(tr("Icons only (hide button labels)"));
+    m_chkAudio          = new QCheckBox(tr("Audio feedback on click"));
+    m_chkClickIndicator = new QCheckBox(tr("Show click indicator ring (Windows)"));
+    m_chkIconsOnly      = new QCheckBox(tr("Icons only (hide button labels)"));
     m_chkLargeButtons  = new QCheckBox(tr("Large buttons"));
 
     m_cmbLayout = new QComboBox;
@@ -795,6 +853,7 @@ void SettingsDialog::buildUi()
     wfl->addRow(m_chkXMinimizesApp);
     wfl->addRow(m_chkLaunchOnStartup);
     wfl->addRow(m_chkAudio);
+    wfl->addRow(m_chkClickIndicator);
     wfl->addRow(m_chkIconsOnly);
     wfl->addRow(m_chkLargeButtons);
     wfl->addRow(m_lblBtnLayout, m_cmbLayout);
@@ -856,19 +915,35 @@ void SettingsDialog::buildUi()
     m_lblAudioClickInfo->setText(audioClickInfoText());
     aufl->addWidget(m_lblAudioClickInfo);
 
-    // Threshold slider and live input meter share one grid so the slider handle
-    // lines up directly above the meter bar (both run on the same 0–100 scale),
-    // letting the user set the threshold just below where their noise peaks.
+    // Device picker, threshold slider and live input meter share one grid so the
+    // controls line up in a column (the slider handle sits directly above the
+    // meter bar — both run on the same 0–100 scale — letting the user set the
+    // threshold just below where their noise peaks).
     auto* calGrid = new QGridLayout;
     calGrid->setHorizontalSpacing(8);
+
+    m_lblAudioDevice = new QLabel(tr("Input device:"));
+    m_cmbAudioDevice = new QComboBox;
+    // Fill the grid column rather than growing the dialog to the widest device
+    // name (Linux device descriptions can be very long).
+    m_cmbAudioDevice->setMinimumWidth(180);
+    m_cmbAudioDevice->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    m_cmbAudioDevice->addItem(tr("System default"), QString());   // empty id
+#ifdef HAVE_MULTIMEDIA
+    for (const AudioInputInfo& d : AudioClickListener::availableInputs())
+        m_cmbAudioDevice->addItem(d.name, d.id);
+#endif
+    calGrid->addWidget(m_lblAudioDevice, 0, 0);
+    calGrid->addWidget(m_cmbAudioDevice, 0, 1, 1, 2);
+
     m_lblAudioThreshold = new QLabel(tr("Loudness threshold:"));
     m_audioThreshSlider = new QSlider(Qt::Horizontal);
     m_audioThreshSlider->setRange(1, 100);
     m_audioThreshValue  = new QLabel("50%");
     m_audioThreshValue->setFixedWidth(36);
-    calGrid->addWidget(m_lblAudioThreshold, 0, 0);
-    calGrid->addWidget(m_audioThreshSlider, 0, 1);
-    calGrid->addWidget(m_audioThreshValue,  0, 2);
+    calGrid->addWidget(m_lblAudioThreshold, 1, 0);
+    calGrid->addWidget(m_audioThreshSlider, 1, 1);
+    calGrid->addWidget(m_audioThreshValue,  1, 2);
 
     m_lblAudioMeter = new QLabel(tr("Input level:"));
     m_audioMeter    = new QProgressBar;
@@ -879,14 +954,25 @@ void SettingsDialog::buildUi()
     m_audioMeter->setStyleSheet(
         "QProgressBar{background:#1A1A1A;border:1px solid #555;border-radius:3px;}"
         "QProgressBar::chunk{background:#FFA600;border-radius:2px;}");
-    calGrid->addWidget(m_lblAudioMeter, 1, 0);
-    calGrid->addWidget(m_audioMeter,    1, 1);
+    calGrid->addWidget(m_lblAudioMeter, 2, 0);
+    calGrid->addWidget(m_audioMeter,    2, 1);
     calGrid->setColumnStretch(1, 1);
     aufl->addLayout(calGrid);
     aufl->addStretch(1);
 
     connect(m_audioThreshSlider, &QSlider::valueChanged, this, [this](int v){
         m_audioThreshValue->setText(QString::number(v) + "%");
+    });
+    // Switching the input device while the meter is live restarts capture on the
+    // newly-chosen microphone so calibration reflects it immediately.
+    connect(m_cmbAudioDevice, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, [this](int){
+#ifdef HAVE_MULTIMEDIA
+        if (m_meterListener && m_meterListener->isRunning()) {
+            stopAudioMeter();
+            startAudioMeter();
+        }
+#endif
     });
     // The threshold only matters when audio click is enabled.
     auto updateAudioEnabled = [this](bool on){
@@ -901,6 +987,7 @@ void SettingsDialog::buildUi()
     // and hide the live meter (there is nothing to display).
     m_chkAudioClick->setEnabled(false);
     m_audioThreshSlider->setEnabled(false);
+    m_cmbAudioDevice->setEnabled(false);
     m_lblAudioMeter->hide();
     m_audioMeter->hide();
 #endif
@@ -908,13 +995,10 @@ void SettingsDialog::buildUi()
     m_tabs->addTab(pageAudio, tr("Audio Click"));
 
     // ── Buttons ───────────────────────────────────────────────
-    m_buttons  = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-#ifdef Q_OS_LINUX
-    // On Linux/GTK the system theme injects icons into standard buttons; remove them.
-    for (QAbstractButton* btn : m_buttons->buttons())
-        btn->setIcon(QIcon());
-#endif
-    m_resetBtn = m_buttons->addButton(tr("Reset to Defaults"), QDialogButtonBox::ResetRole);
+    m_buttons   = new QDialogButtonBox();
+    m_okBtn     = m_buttons->addButton(tr("OK"),     QDialogButtonBox::AcceptRole);
+    m_cancelBtn = m_buttons->addButton(tr("Cancel"), QDialogButtonBox::RejectRole);
+    m_resetBtn  = m_buttons->addButton(tr("Reset to Defaults"), QDialogButtonBox::ResetRole);
     root->addWidget(m_buttons);
 }
 
@@ -1029,6 +1113,7 @@ void SettingsDialog::loadFrom(const AppSettings& s)
     m_chkXMinimizesApp->setChecked(s.xMinimizesApp);
     m_chkLaunchOnStartup->setChecked(s.launchOnStartup);
     m_chkAudio->setChecked(s.audioFeedback);
+    m_chkClickIndicator->setChecked(s.showClickIndicator);
     m_chkIconsOnly->setChecked(s.iconsOnly);
     m_chkLargeButtons->setChecked(s.largeButtons);
     m_cmbLayout->setCurrentIndex(static_cast<int>(s.buttonLayout));
@@ -1045,6 +1130,19 @@ void SettingsDialog::loadFrom(const AppSettings& s)
     m_lblAudioThreshold->setEnabled(s.audioClickEnabled);
     m_audioThreshSlider->setEnabled(s.audioClickEnabled);
     m_audioThreshValue->setEnabled(s.audioClickEnabled);
+
+    // Select the saved input device (index 0 / "System default" if not found,
+    // e.g. the device was unplugged or the id came from another machine).
+    int devIdx = m_cmbAudioDevice->findData(s.audioInputDevice);
+    m_cmbAudioDevice->setCurrentIndex(devIdx >= 0 ? devIdx : 0);
+
+    for (int i = 0; i < 3; ++i) {
+        m_chkHotkey[i]->setChecked(s.hotkeys[i].enabled);
+        m_edtHotkeyLabel[i]->setText(s.hotkeys[i].label);
+        m_kseHotkey[i]->setKeySequence(QKeySequence(s.hotkeys[i].keySequence));
+        m_edtHotkeyLabel[i]->setEnabled(s.hotkeys[i].enabled);
+        m_kseHotkey[i]->setEnabled(s.hotkeys[i].enabled);
+    }
 }
 
 AppSettings SettingsDialog::readUi() const
@@ -1082,14 +1180,23 @@ AppSettings SettingsDialog::readUi() const
     s.startMinimized   = m_chkStartMinimized->isChecked();
     s.xMinimizesApp    = m_chkXMinimizesApp->isChecked();
     s.launchOnStartup  = m_chkLaunchOnStartup->isChecked();
-    s.audioFeedback   = m_chkAudio->isChecked();
-    s.iconsOnly       = m_chkIconsOnly->isChecked();
+    s.audioFeedback       = m_chkAudio->isChecked();
+    s.showClickIndicator  = m_chkClickIndicator->isChecked();
+    s.iconsOnly           = m_chkIconsOnly->isChecked();
     s.largeButtons    = m_chkLargeButtons->isChecked();
     s.buttonLayout    = static_cast<ButtonLayout>(m_cmbLayout->currentIndex());
     s.language        = m_cmbLanguage->currentData().toString();
 
     s.audioClickEnabled   = m_chkAudioClick->isChecked();
     s.audioClickThreshold = m_audioThreshSlider->value();
+    s.audioInputDevice    = m_cmbAudioDevice->currentData().toString();
+
+    for (int i = 0; i < 3; ++i) {
+        s.hotkeys[i].enabled     = m_chkHotkey[i]->isChecked();
+        s.hotkeys[i].label       = m_edtHotkeyLabel[i]->text().trimmed();
+        s.hotkeys[i].keySequence = m_kseHotkey[i]->keySequence()
+                                       .toString(QKeySequence::PortableText);
+    }
     return s;
 }
 

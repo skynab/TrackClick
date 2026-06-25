@@ -52,6 +52,8 @@
 </context>
 <context>
     <name>SettingsDialog</name>
+    <message><source>Input device:</source><translation>Устройство ввода:</translation></message>
+    <message><source>System default</source><translation>Системное по умолчанию</translation></message>
     <message><source>Audio Click</source><translation>Звуковой щелчок</translation></message>
     <message><source>Trigger the selected action with a loud sound</source><translation>Выполнять выбранное действие громким звуком</translation></message>
     <message><source>When enabled, the selected action fires when the microphone hears a loud sound (such as a clap or a pop) instead of waiting for the dwell timer. Turn on Dwell Active to start listening. Any loud noise triggers the action — speech is not interpreted.</source><translation>Когда включено, выбранное действие выполняется, как только микрофон слышит громкий звук (например, хлопок или щелчок), не дожидаясь таймера задержки. Включите «Задержку активной», чтобы начать прослушивание. Любой громкий звук запускает действие — речь не распознаётся.</translation></message>
@@ -113,6 +115,12 @@
     <message><source>No on-screen keyboard was found.
 Please install 'onboard' or 'florence'.</source><translation>Экранная клавиатура не найдена.
 Установите 'onboard' или 'florence'.</translation></message>
+    <message><source>Custom Hotkeys</source><translation>Пользовательские горячие клавиши</translation></message>
+    <message><source>Hotkey %1</source><translation>Горячая клавиша %1</translation></message>
+    <message><source>Label (optional)</source><translation>Метка (необязательно)</translation></message>
+    <message><source>Show click indicator ring (Windows)</source><translation>Показать кольцо индикатора щелчка (Windows)</translation></message>
+    <message><source>OK</source><translation>ОК</translation></message>
+    <message><source>Cancel</source><translation>Отмена</translation></message>
 </context>
 <context>
     <name>SensitivityTesterDialog</name>

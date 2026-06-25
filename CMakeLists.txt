@@ -7,22 +7,40 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
+# Compiling .ts → .qm requires Qt LinguistTools, which is genuinely optional here:
+# the .ts files are embedded in resources.qrc and parsed at runtime (see below),
+# so .qm is only a startup optimisation.  Some distros ship a *broken* LinguistTools
+# CMake package — the config is present but its lrelease/lprodump helper binaries
+# are missing or live outside the path the config hardcodes — and in that state
+# find_package(LinguistTools) aborts with a hard error (an imported target
+# "references the file …/lprodump but this file does not exist") that OPTIONAL/QUIET
+# cannot suppress.  On such systems, configure with -DCOMPILE_QM=OFF.
+option(COMPILE_QM "Compile .ts translations to .qm (requires Qt LinguistTools)" ON)
+
 # ── Qt version detection ──────────────────────────────────────────────────────
 # Prefer Qt6; fall back to Qt5 (5.12+) if Qt6 is not available.
 find_package(Qt6 QUIET COMPONENTS Core Gui Widgets)
 if(Qt6_FOUND)
     set(QT Qt6)
     find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Svg)
-    find_package(Qt6 OPTIONAL_COMPONENTS Multimedia LinguistTools QUIET)
-    set(LINGUIST_FOUND ${Qt6LinguistTools_FOUND})
+    find_package(Qt6 OPTIONAL_COMPONENTS Multimedia QUIET)
     set(MULTIMEDIA_FOUND ${Qt6Multimedia_FOUND})
+    # Keep LinguistTools in its own find_package, gated on COMPILE_QM, so a broken
+    # install can never take down configuration (it would otherwise hard-error).
+    if(COMPILE_QM)
+        find_package(Qt6 OPTIONAL_COMPONENTS LinguistTools QUIET)
+        set(LINGUIST_FOUND ${Qt6LinguistTools_FOUND})
+    endif()
     message(STATUS "TrackClick: building with Qt6 ${Qt6_VERSION}")
 else()
     find_package(Qt5 5.12 REQUIRED COMPONENTS Core Gui Widgets Svg)
     set(QT Qt5)
-    find_package(Qt5 OPTIONAL_COMPONENTS Multimedia LinguistTools QUIET)
-    set(LINGUIST_FOUND ${Qt5LinguistTools_FOUND})
+    find_package(Qt5 OPTIONAL_COMPONENTS Multimedia QUIET)
     set(MULTIMEDIA_FOUND ${Qt5Multimedia_FOUND})
+    if(COMPILE_QM)
+        find_package(Qt5 OPTIONAL_COMPONENTS LinguistTools QUIET)
+        set(LINGUIST_FOUND ${Qt5LinguistTools_FOUND})
+    endif()
     message(STATUS "TrackClick: building with Qt5 ${Qt5_VERSION}")
 endif()
 

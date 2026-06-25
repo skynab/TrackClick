@@ -91,10 +91,14 @@ jobs:
         if: matrix.name == 'Linux'
         run: |
           sudo apt-get update -q
+          # NOTE: we deliberately do NOT install qt6-tools-dev / qt6-l10n-tools.
+          # On this runner that pair ships a broken Qt6 LinguistTools CMake package
+          # (the config references …/libexec/lprodump, but the binary isn't there),
+          # which makes find_package(LinguistTools) abort configure with a hard
+          # error.  We don't need them: the .ts files are embedded in resources.qrc
+          # and parsed at runtime, so .qm compilation is only a startup optimisation.
           sudo apt-get install -y \
             qt6-base-dev \
-            qt6-tools-dev \
-            qt6-l10n-tools \
             libqt6svg6-dev \
             libgl1-mesa-dev \
             libx11-dev \

@@ -197,8 +197,16 @@ public:
         });
     }
 
-    void flash(QPoint globalPos) {
-        move(globalPos.x() - SIZE / 2, globalPos.y() - SIZE / 2);
+    void flash() {
+        // Position from QCursor::pos() rather than the click-injection position.
+        // QWidget::move() expects device-independent (logical) coordinates, but
+        // the click path works in native/physical X11 pixels (XQueryPointer /
+        // XTest).  On a scaled display (HiDPI or fractional scaling) those two
+        // diverge, putting the ring away from the cursor even though the click
+        // lands correctly.  QCursor::pos() is already in logical coordinates and,
+        // since a click just fired, sits exactly at the click location.
+        const QPoint p = QCursor::pos();
+        move(p.x() - SIZE / 2, p.y() - SIZE / 2);
         m_step = 0;
         update();
         show();
@@ -1249,7 +1257,7 @@ void MainWindow::onClickButtonPressed(ClickType type)
         for (int i = 0; i < reps; ++i)
             ClickInjector::performClick(type, pos, m_modifiers);
         if (m_settings.showClickIndicator)
-            m_clickIndicator->flash(pos);
+            m_clickIndicator->flash();
 #ifdef HAVE_MULTIMEDIA
         if (m_settings.audioFeedback) m_clickSound->play();
 #endif
@@ -1325,7 +1333,7 @@ void MainWindow::onHotkeySelected(int i)
         // Manual mode: inject immediately, same as clicking a mouse-action button
         ClickInjector::injectKeySequence(seq);
         if (m_settings.showClickIndicator)
-            m_clickIndicator->flash(QCursor::pos());
+            m_clickIndicator->flash();
 #ifdef HAVE_MULTIMEDIA
         if (m_settings.audioFeedback && m_clickSound) m_clickSound->play();
 #endif
@@ -1384,7 +1392,7 @@ void MainWindow::onDwellProgress(float frac)
     }
 }
 
-void MainWindow::onDwellFired(QPoint pos, ClickType /*type*/)
+void MainWindow::onDwellFired(QPoint /*pos*/, ClickType /*type*/)
 {
     // Hotkey selected: DwellManager fired NoClick (no mouse action); inject key now.
     if (m_selectedHotkey >= 0 && m_selectedHotkey < 3) {
@@ -1396,7 +1404,7 @@ void MainWindow::onDwellFired(QPoint pos, ClickType /*type*/)
     }
 
     if (m_settings.showClickIndicator)
-        m_clickIndicator->flash(pos);
+        m_clickIndicator->flash();
 #ifdef HAVE_MULTIMEDIA
     if (m_settings.audioFeedback) m_clickSound->play();
 #endif

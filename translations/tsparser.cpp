@@ -1,9 +1,18 @@
 #include "tsparser.h"
 #include <QCoreApplication>
+#include <QDebug>
 #include <QFile>
 #include <QStandardPaths>
 #include <QTranslator>
 #include <QXmlStreamReader>
+
+// Set TRACKCLICK_I18N_DEBUG=1 to log where each language's translator is loaded
+// from (or why it failed) — useful when "translations stopped working".
+static bool i18nDebug()
+{
+    static const bool on = !qEnvironmentVariableIsEmpty("TRACKCLICK_I18N_DEBUG");
+    return on;
+}
 
 TsTranslator::TsTranslator(QObject* parent) : QTranslator(parent) {}
 
@@ -21,15 +30,19 @@ bool TsTranslator::loadTs(const QString& path)
         if (!xml.isStartElement()) continue;
 
         const auto tag = xml.name();
+        // Use IncludeChildElements so an unexpected child element never raises a
+        // parse error that would discard the entire file (and thus the whole
+        // language).  Our entries are plain text, but this keeps one odd entry
+        // from taking down every translation.
         if (tag == u"name") {
-            ctx = xml.readElementText();
+            ctx = xml.readElementText(QXmlStreamReader::IncludeChildElements);
         } else if (tag == u"source") {
-            source = xml.readElementText();
+            source = xml.readElementText(QXmlStreamReader::IncludeChildElements);
         } else if (tag == u"translation") {
             // Skip placeholder entries ("unfinished" or "obsolete")
             const auto type = xml.attributes().value("type");
             if (type != u"unfinished" && type != u"obsolete") {
-                const QString t = xml.readElementText();
+                const QString t = xml.readElementText(QXmlStreamReader::IncludeChildElements);
                 if (!t.isEmpty() && !ctx.isEmpty() && !source.isEmpty())
                     m_data[ctx][source] = t;
             }
@@ -74,18 +87,38 @@ QTranslator* loadBestTranslator(const QString& lang, QObject* parent)
     // available), otherwise accept a plain .ts XML file (always editable).
     for (const QString& dir : dirs) {
         auto* qt = new QTranslator(parent);
-        if (qt->load(dir + "/" + stem + ".qm")) return qt;
+        if (qt->load(dir + "/" + stem + ".qm")) {
+            if (i18nDebug()) qWarning() << "TrackClick i18n:" << lang
+                                        << "loaded .qm from" << dir;
+            return qt;
+        }
         delete qt;
 
+        const QString tsPath = dir + "/" + stem + ".ts";
         auto* ts = new TsTranslator(parent);
-        if (ts->loadTs(dir + "/" + stem + ".ts")) return ts;
+        if (ts->loadTs(tsPath)) {
+            if (i18nDebug()) qWarning() << "TrackClick i18n:" << lang
+                                        << "loaded .ts from" << dir;
+            return ts;
+        }
         delete ts;
+        if (i18nDebug() && QFile::exists(tsPath))
+            qWarning() << "TrackClick i18n:" << lang
+                       << "FAILED to parse existing" << tsPath;
     }
 
     // Embedded resource: guaranteed fallback, never missing.
+    const QString embedded = ":/translations/" + stem + ".ts";
     auto* ts = new TsTranslator(parent);
-    if (ts->loadTs(":/translations/" + stem + ".ts")) return ts;
+    if (ts->loadTs(embedded)) {
+        if (i18nDebug()) qWarning() << "TrackClick i18n:" << lang
+                                    << "loaded embedded" << embedded;
+        return ts;
+    }
     delete ts;
 
+    if (i18nDebug())
+        qWarning() << "TrackClick i18n:" << lang
+                   << "NO translator found (embedded parse failed or resource missing)";
     return nullptr;
 }

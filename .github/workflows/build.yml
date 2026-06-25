@@ -143,34 +143,12 @@ jobs:
       - name: Build
         run: cmake --build build --config Release --parallel
 
-      # ── Package: Linux ────────────────────────────────────────────────────────
-      - name: Package (Linux)
-        if: matrix.name == 'Linux'
-        run: |
-          # Download linuxdeploy + Qt plugin
-          wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
-          wget -q https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
-          chmod +x linuxdeploy-x86_64.AppImage linuxdeploy-plugin-qt-x86_64.AppImage
-
-          # Install the binary so linuxdeploy can find it
-          DESTDIR=AppDir cmake --install build --prefix /usr
-
-          # linuxdeploy requires the icon filename to match the Icon= entry in the desktop file
-          cp icons/app.svg icons/TrackClick.svg
-
-          # Build the AppImage.
-          # EXTRA_QT_PLUGINS=multimedia forces linuxdeploy-plugin-qt to bundle the
-          # Qt Multimedia backend plugin (and its libs) — without it the audio-click
-          # microphone capture has no backend at runtime and silently does nothing.
-          QMAKE=$(which qmake6 || which qmake) \
-          EXTRA_QT_PLUGINS="multimedia" \
-          OUTPUT=TrackClick-Linux.AppImage \
-          ./linuxdeploy-x86_64.AppImage \
-            --appdir AppDir \
-            --plugin qt \
-            --output appimage \
-            --desktop-file installer/TrackClick.desktop \
-            --icon-file icons/TrackClick.svg
+      # NOTE: The Linux AppImage (TrackClick-Linux) was dropped from the auto-builds.
+      # It bundled whatever Qt the runner happened to ship (Ubuntu 22.04 / Qt 6.2),
+      # and under that older bundled Qt the runtime language switching didn't take
+      # effect — a problem the .deb never had because it links the user's system Qt.
+      # The .deb is the supported Linux package; re-add an AppImage only with a
+      # pinned, known-good Qt if a portable build is needed again.
 
       # ── Package: macOS ────────────────────────────────────────────────────────
       - name: Package (macOS)
@@ -215,19 +193,11 @@ jobs:
           wix build installer\Bundle.wxs -b . -ext WixToolset.Bal.wixext -d BuildNumber=${{ github.run_number }} -o TrackClick-Windows-Setup.exe
 
       # ── Upload artifacts ──────────────────────────────────────────────────────
-      - name: Upload (Linux)
-        if: matrix.name == 'Linux'
-        uses: actions/upload-artifact@v4
-        with:
-          name: TrackClick-Linux
-          path: TrackClick-Linux.AppImage
-
       - name: Package .deb (Linux)
         if: matrix.name == 'Linux'
         run: |
           # Build the Debian/Ubuntu package from the CPack config generated at
-          # configure time.  Runs after the AppImage upload so a packaging hiccup
-          # never costs the AppImage artifact.
+          # configure time.
           cpack --config build/CPackConfig.cmake -G DEB -B dist-packages
           ls -la dist-packages
 

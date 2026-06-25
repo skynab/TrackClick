@@ -211,7 +211,9 @@ endif()
 # The .deb installs to /usr and ships the udev rule, so input-device access is
 # set up automatically at install time (the postinst reloads udev) and the
 # on-screen keyboard is pulled in via Recommends — no terminal steps needed.
-# The AppImage (built separately in CI) remains the portable cross-distro option.
+# The .deb is the supported Linux package (the CI AppImage was dropped because its
+# bundled older Qt broke runtime language switching); these CPack settings still
+# work for a locally built AppImage should one be reintroduced with a pinned Qt.
 if(UNIX AND NOT APPLE)
     set(CPACK_PACKAGE_NAME "trackclick")
     set(CPACK_PACKAGE_VENDOR "TrackClick")

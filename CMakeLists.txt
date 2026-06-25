@@ -151,6 +151,12 @@ set(TS_FILES
     translations/trackclick_zh_CN.ts
     translations/trackclick_ja.ts
     translations/trackclick_ko.ts
+    translations/trackclick_hi.ts
+    translations/trackclick_ar.ts
+    translations/trackclick_bn.ts
+    translations/trackclick_pt.ts
+    translations/trackclick_ru.ts
+    translations/trackclick_ur.ts
 )
 
 # .ts files are embedded in resources.qrc and parsed at runtime by TsTranslator

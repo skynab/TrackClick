@@ -118,7 +118,7 @@ Please install 'onboard' or 'florence'.</source><translation>Экранная к
     <message><source>Custom Hotkeys</source><translation>Пользовательские горячие клавиши</translation></message>
     <message><source>Hotkey %1</source><translation>Горячая клавиша %1</translation></message>
     <message><source>Label (optional)</source><translation>Метка (необязательно)</translation></message>
-    <message><source>Show click indicator ring</source><translation>Показать кольцо индикатора щелчка</translation></message>
+    <message><source>Show click indicator ring (Windows)</source><translation>Показать кольцо индикатора щелчка (Windows)</translation></message>
     <message><source>OK</source><translation>ОК</translation></message>
     <message><source>Cancel</source><translation>Отмена</translation></message>
 </context>

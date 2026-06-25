@@ -68,8 +68,15 @@ struct AppSettings {
     // Audio feedback
     bool audioFeedback   = false;
 
-    // Click indicator — brief expanding ring at the cursor when a click fires
+    // Click indicator — brief expanding ring at the cursor when a click fires.
+    // On by default on Windows, where the cursor position is reliable; off by
+    // default elsewhere (on Linux/Wayland the ring can land on the wrong monitor),
+    // hence the "(Windows)" tag on the setting.
+#ifdef Q_OS_WIN
     bool showClickIndicator = true;
+#else
+    bool showClickIndicator = false;
+#endif
 
     // Audio click — fire the selected action on a loud sound instead of the
     // dwell timer.  Off by default.  Threshold is 1–100 (higher = louder needed).

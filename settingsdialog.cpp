@@ -503,7 +503,7 @@ void SettingsDialog::retranslateUi()
     m_chkXMinimizesApp->setText(tr("Top X minimizes app"));
     m_chkLaunchOnStartup->setText(tr("Launch on system startup (Windows)"));
     m_chkAudio->setText(tr("Audio feedback on click"));
-    m_chkClickIndicator->setText(tr("Show click indicator ring"));
+    m_chkClickIndicator->setText(tr("Show click indicator ring (Windows)"));
     m_chkIconsOnly->setText(tr("Icons only (hide button labels)"));
     m_chkLargeButtons->setText(tr("Large buttons"));
     m_lblOpacity->setText(tr("Opacity:"));
@@ -830,7 +830,7 @@ void SettingsDialog::buildUi()
     m_chkXMinimizesApp  = new QCheckBox(tr("Top X minimizes app"));
     m_chkLaunchOnStartup= new QCheckBox(tr("Launch on system startup (Windows)"));
     m_chkAudio          = new QCheckBox(tr("Audio feedback on click"));
-    m_chkClickIndicator = new QCheckBox(tr("Show click indicator ring"));
+    m_chkClickIndicator = new QCheckBox(tr("Show click indicator ring (Windows)"));
     m_chkIconsOnly      = new QCheckBox(tr("Icons only (hide button labels)"));
     m_chkLargeButtons  = new QCheckBox(tr("Large buttons"));
 

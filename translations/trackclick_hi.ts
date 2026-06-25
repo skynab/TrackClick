@@ -118,7 +118,7 @@ Please install 'onboard' or 'florence'.</source><translation>कोई ऑन-�
     <message><source>Custom Hotkeys</source><translation>कस्टम हॉटकी</translation></message>
     <message><source>Hotkey %1</source><translation>हॉटकी %1</translation></message>
     <message><source>Label (optional)</source><translation>लेबल (वैकल्पिक)</translation></message>
-    <message><source>Show click indicator ring</source><translation>क्लिक संकेतक रिंग दिखाएं</translation></message>
+    <message><source>Show click indicator ring (Windows)</source><translation>क्लिक संकेतक रिंग दिखाएं (Windows)</translation></message>
     <message><source>OK</source><translation>ठीक है</translation></message>
     <message><source>Cancel</source><translation>रद्द करें</translation></message>
 </context>

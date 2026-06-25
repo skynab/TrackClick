@@ -311,7 +311,7 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     m_settings.xMinimizesApp    = m_persist.value("window/xMinimizesApp",    false).toBool();
     m_settings.launchOnStartup  = m_persist.value("window/launchOnStartup",  false).toBool();
     m_settings.audioFeedback       = m_persist.value("audio/enabled",          false).toBool();
-    m_settings.showClickIndicator  = m_persist.value("visual/clickIndicator",  true).toBool();
+    m_settings.showClickIndicator  = m_persist.value("visual/clickIndicator",  AppSettings{}.showClickIndicator).toBool();
     m_settings.audioClickEnabled   = m_persist.value("audioClick/enabled",   false).toBool();
     m_settings.audioClickThreshold = m_persist.value("audioClick/threshold",    50).toInt();
     m_settings.audioInputDevice    = m_persist.value("audioClick/device",       "").toString();

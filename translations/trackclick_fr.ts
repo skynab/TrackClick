@@ -112,7 +112,7 @@ Veuillez installer 'onboard' ou 'florence'.</translation></message>
     <message><source>Custom Hotkeys</source><translation>Raccourcis personnalisés</translation></message>
     <message><source>Hotkey %1</source><translation>Raccourci %1</translation></message>
     <message><source>Label (optional)</source><translation>Étiquette (facultative)</translation></message>
-    <message><source>Show click indicator ring</source><translation>Afficher l'anneau indicateur de clic</translation></message>
+    <message><source>Show click indicator ring (Windows)</source><translation>Afficher l'anneau indicateur de clic (Windows)</translation></message>
     <message><source>Reset to Defaults</source><translation>Réinitialiser les valeurs par défaut</translation></message>
     <message><source>OK</source><translation>OK</translation></message>
     <message><source>Cancel</source><translation>Annuler</translation></message>

@@ -343,7 +343,9 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     m_hoverTimer = new QTimer(this);
     m_hoverTimer->setSingleShot(true);
     connect(m_hoverTimer, &QTimer::timeout, this, [this](){
-        if (m_hoveredType != ClickType::None) {
+        if (m_hoveredHotkey >= 0) {
+            onHotkeySelected(m_hoveredHotkey);
+        } else if (m_hoveredType != ClickType::None) {
             setClickType(m_hoveredType);
             if (m_autoEnabled)
                 m_dwell->arm(m_hoveredType, m_modifiers);
@@ -600,36 +602,42 @@ private:
     const int* m_dwellMs;
 };
 
-// Attaches dwell-hover fire behaviour to a hotkey QPushButton.
-// On hover, waits dwellMs then calls the provided action.
+// Forwards Enter/Leave events for a hotkey button to lambdas so the shared
+// hover-select timer can select the hotkey just like a ClickButton selection.
 class HotkeyHoverFilter : public QObject {
 public:
-    HotkeyHoverFilter(QPushButton* btn, const int* dwellMs,
-                      std::function<void()> action)
-        : QObject(btn), m_dwellMs(dwellMs), m_action(std::move(action))
-    {
-        m_timer = new QTimer(this);
-        m_timer->setSingleShot(true);
-        QObject::connect(m_timer, &QTimer::timeout, this,
-                         [this]{ m_action(); });
-        btn->installEventFilter(this);
-    }
+    HotkeyHoverFilter(QWidget* btn,
+                      std::function<void()> onEnter,
+                      std::function<void()> onLeave)
+        : QObject(btn), m_onEnter(std::move(onEnter)), m_onLeave(std::move(onLeave))
+    { btn->installEventFilter(this); }
 
 protected:
     bool eventFilter(QObject*, QEvent* ev) override
     {
-        if (ev->type() == QEvent::Enter)
-            m_timer->start(*m_dwellMs);
-        else if (ev->type() == QEvent::Leave)
-            m_timer->stop();
+        if      (ev->type() == QEvent::Enter) m_onEnter();
+        else if (ev->type() == QEvent::Leave) m_onLeave();
         return false;
     }
 
 private:
-    QTimer*               m_timer;
-    const int*            m_dwellMs;
-    std::function<void()> m_action;
+    std::function<void()> m_onEnter, m_onLeave;
 };
+
+// Returns the stylesheet for a modifier/hotkey button in its selected or
+// unselected state.  Used by rebuildButtons, setClickType, and onHotkeySelected.
+static QString modBtnStyle(bool selected, bool large)
+{
+    const char* fs  = large ? "14px" : "11px";
+    const char* pad = large ? "4px"  : "2px";
+    return selected
+        ? QString("QPushButton { background:#FFA600; color:#1A1A1A; border:2px solid #FFB833; "
+                  "border-radius:4px; font-weight:bold; font-size:%1; padding:%2; }"
+                  "QPushButton:hover { background:#FFB833; }").arg(fs).arg(pad)
+        : QString("QPushButton { background:#3A3A3A; color:#AAA; border:1px solid #555; "
+                  "border-radius:4px; font-size:%1; padding:%2; }"
+                  "QPushButton:hover { background:#4A4A4A; border:1px solid #FFA600; color:#FFA600; }").arg(fs).arg(pad);
+}
 
 void MainWindow::rebuildButtons()
 {
@@ -737,17 +745,7 @@ void MainWindow::rebuildButtons()
 
     // ── Modifier row ──────────────────────────────────────────
     const bool large = m_settings.largeButtons;
-    auto modStyle = [large](bool on) -> QString {
-        const char* fs  = large ? "14px" : "11px";
-        const char* pad = large ? "4px"  : "2px";
-        return on
-            ? QString("QPushButton { background:#FFA600; color:#1A1A1A; border:2px solid #FFB833; "
-                      "border-radius:4px; font-weight:bold; font-size:%1; padding:%2; }"
-                      "QPushButton:hover { background:#FFB833; }").arg(fs).arg(pad)
-            : QString("QPushButton { background:#3A3A3A; color:#AAA; border:1px solid #555; "
-                      "border-radius:4px; font-size:%1; padding:%2; }"
-                      "QPushButton:hover { background:#4A4A4A; border:1px solid #FFA600; color:#FFA600; }").arg(fs).arg(pad);
-    };
+    auto modStyle = [large](bool on) -> QString { return modBtnStyle(on, large); };
 
     // Place a modifier button using the same column-wrap logic as click buttons.
     auto addMod = [&](QPushButton* btn) {
@@ -785,16 +783,12 @@ void MainWindow::rebuildButtons()
         auto* btn = new QPushButton(displayLabel, m_btnArea);
         btn->setMinimumHeight(large ? 48 : 36);
         btn->setToolTip(seq.toString(QKeySequence::NativeText));
-        btn->setStyleSheet(modStyle(false));
+        btn->setStyleSheet(modBtnStyle(m_selectedHotkey == i, large));
 
-        auto fireHotkey = [this, seq]() {
-            ClickInjector::injectKeySequence(seq);
-#ifdef HAVE_MULTIMEDIA
-            if (m_settings.audioFeedback && m_clickSound) m_clickSound->play();
-#endif
-        };
-        connect(btn, &QPushButton::clicked, this, fireHotkey);
-        new HotkeyHoverFilter(btn, &m_settings.dwellMs, fireHotkey);
+        connect(btn, &QPushButton::clicked, this, [this, i]{ onHotkeySelected(i); });
+        new HotkeyHoverFilter(btn,
+            [this, i]{ m_hoveredHotkey = i; m_hoverTimer->start(m_settings.dwellMs * 6 / 10); },
+            [this]   { m_hoveredHotkey = -1; m_hoverTimer->stop(); });
 
         m_hotkeyBtns[i] = btn;
 
@@ -934,9 +928,13 @@ void MainWindow::rebuildButtons()
         connect(quitBtn, &QPushButton::clicked, qApp, &QApplication::quit);
     }
 
-    // Update selection highlight
-    for (auto* b : m_clickButtons) {
-        b->setSelected(b->clickType() == m_selectedType);
+    // Update selection highlight — suppress ClickButton highlight when a hotkey is selected
+    const ClickType selForBtns = (m_selectedHotkey >= 0) ? ClickType::None : m_selectedType;
+    for (auto* b : m_clickButtons)
+        b->setSelected(b->clickType() == selForBtns);
+    for (int i = 0; i < 3; ++i) {
+        if (m_hotkeyBtns[i])
+            m_hotkeyBtns[i]->setStyleSheet(modBtnStyle(m_selectedHotkey == i, large));
     }
 
     adjustSize();
@@ -1266,6 +1264,14 @@ void MainWindow::onClickButtonPressed(ClickType type)
 
 void MainWindow::setClickType(ClickType t)
 {
+    // Deselect any hotkey button that was previously selected
+    if (m_selectedHotkey >= 0) {
+        if (m_hotkeyBtns[m_selectedHotkey])
+            m_hotkeyBtns[m_selectedHotkey]->setStyleSheet(
+                modBtnStyle(false, m_settings.largeButtons));
+        m_selectedHotkey = -1;
+    }
+
     m_selectedType = t;
     for (auto* b : m_clickButtons) {
         b->setSelected(b->clickType() == t);
@@ -1288,6 +1294,42 @@ void MainWindow::setClickType(ClickType t)
         {ClickType::ScrollRight,      tr("Scroll Right")},
     };
     m_statusLabel->setText(tr("Selected: ") + names.value(t, "?"));
+}
+
+void MainWindow::onHotkeySelected(int i)
+{
+    // Deselect all click buttons
+    for (auto* b : m_clickButtons)
+        b->setSelected(false);
+
+    // Deselect previously selected hotkey button
+    if (m_selectedHotkey >= 0 && m_selectedHotkey < 3 && m_hotkeyBtns[m_selectedHotkey])
+        m_hotkeyBtns[m_selectedHotkey]->setStyleSheet(modBtnStyle(false, m_settings.largeButtons));
+
+    m_selectedHotkey = i;
+    if (m_hotkeyBtns[i])
+        m_hotkeyBtns[i]->setStyleSheet(modBtnStyle(true, m_settings.largeButtons));
+
+    // Update status label with hotkey display name
+    const auto& slot = m_settings.hotkeys[i];
+    const QKeySequence seq(slot.keySequence, QKeySequence::PortableText);
+    const QString name = slot.label.isEmpty()
+        ? seq.toString(QKeySequence::NativeText) : slot.label;
+    m_statusLabel->setText(tr("Selected: ") + name);
+
+    if (m_autoEnabled) {
+        // Armed with NoClick so DwellManager performs no mouse action;
+        // the actual key injection happens in onDwellFired.
+        m_dwell->arm(ClickType::NoClick, m_modifiers);
+    } else {
+        // Manual mode: inject immediately, same as clicking a mouse-action button
+        ClickInjector::injectKeySequence(seq);
+        if (m_settings.showClickIndicator)
+            m_clickIndicator->flash(QCursor::pos());
+#ifdef HAVE_MULTIMEDIA
+        if (m_settings.audioFeedback && m_clickSound) m_clickSound->play();
+#endif
+    }
 }
 
 void MainWindow::onAutoToggled(bool on)
@@ -1320,7 +1362,10 @@ void MainWindow::onAutoToggled(bool on)
     m_statusLabel->setVisible(on);
 
     if (on) {
-        m_dwell->arm(m_selectedType, m_modifiers);
+        if (m_selectedHotkey >= 0)
+            m_dwell->arm(ClickType::NoClick, m_modifiers);
+        else
+            m_dwell->arm(m_selectedType, m_modifiers);
     } else {
         m_dwell->disarm();
         m_dwellBar->setValue(0);
@@ -1341,6 +1386,15 @@ void MainWindow::onDwellProgress(float frac)
 
 void MainWindow::onDwellFired(QPoint pos, ClickType /*type*/)
 {
+    // Hotkey selected: DwellManager fired NoClick (no mouse action); inject key now.
+    if (m_selectedHotkey >= 0 && m_selectedHotkey < 3) {
+        const auto& slot = m_settings.hotkeys[m_selectedHotkey];
+        if (!slot.keySequence.isEmpty()) {
+            QKeySequence seq(slot.keySequence, QKeySequence::PortableText);
+            ClickInjector::injectKeySequence(seq);
+        }
+    }
+
     if (m_settings.showClickIndicator)
         m_clickIndicator->flash(pos);
 #ifdef HAVE_MULTIMEDIA

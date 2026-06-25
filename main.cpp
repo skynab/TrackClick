@@ -9,6 +9,19 @@
 
 int main(int argc, char* argv[])
 {
+#ifdef Q_OS_LINUX
+    // TrackClick is an X11 application: it injects clicks with XTest, tracks the
+    // pointer with XQueryPointer, and places the click-indicator overlay at
+    // global screen coordinates.  The native Wayland platform plugin supports
+    // none of that — it forbids a client from positioning its own top-level
+    // windows (so the overlay ends up glued to the main window) and does not
+    // expose XTest.  All of it works under XWayland, so prefer the xcb plugin on
+    // Linux, falling back to Wayland only if X is genuinely unavailable.  A user
+    // who sets QT_QPA_PLATFORM explicitly is always respected.
+    if (qEnvironmentVariableIsEmpty("QT_QPA_PLATFORM"))
+        qputenv("QT_QPA_PLATFORM", "xcb;wayland");
+#endif
+
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     // High-DPI is always enabled in Qt6 — no extra setup needed
 #endif

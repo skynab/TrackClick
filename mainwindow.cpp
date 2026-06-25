@@ -189,7 +189,9 @@ public:
     {
         setAttribute(Qt::WA_TranslucentBackground);
         setAttribute(Qt::WA_ShowWithoutActivating);
-        resize(SIZE, SIZE);
+        // Belt-and-braces click-through: the overlay spans the whole screen, so
+        // it must never intercept input meant for windows beneath it.
+        setAttribute(Qt::WA_TransparentForMouseEvents);
         m_timer.setInterval(STEP_MS);
         connect(&m_timer, &QTimer::timeout, this, [this]{
             if (++m_step >= STEPS) { m_timer.stop(); hide(); }
@@ -198,15 +200,20 @@ public:
     }
 
     void flash() {
-        // Position from QCursor::pos() rather than the click-injection position.
-        // QWidget::move() expects device-independent (logical) coordinates, but
-        // the click path works in native/physical X11 pixels (XQueryPointer /
-        // XTest).  On a scaled display (HiDPI or fractional scaling) those two
-        // diverge, putting the ring away from the cursor even though the click
-        // lands correctly.  QCursor::pos() is already in logical coordinates and,
-        // since a click just fired, sits exactly at the click location.
-        const QPoint p = QCursor::pos();
-        move(p.x() - SIZE / 2, p.y() - SIZE / 2);
+        // Cover the whole screen the cursor is on and draw the ring at the
+        // cursor's position *within* this window, instead of moving a small
+        // window to the cursor.  Positioning a top-level at chosen global
+        // coordinates is unreliable on Wayland — the compositor controls
+        // placement, so a small Qt::Tool window ends up glued to the main
+        // window rather than at the cursor.  A screen-sized overlay has
+        // unambiguous placement and also avoids HiDPI logical-vs-native offsets.
+        const QPoint gp = QCursor::pos();              // logical global coords
+        QScreen* scr = QGuiApplication::screenAt(gp);
+        if (!scr) scr = QGuiApplication::primaryScreen();
+        if (!scr) return;
+        const QRect g = scr->geometry();
+        setGeometry(g);
+        m_center = gp - g.topLeft();                   // position inside the overlay
         m_step = 0;
         update();
         show();
@@ -216,36 +223,37 @@ public:
 
 protected:
     void paintEvent(QPaintEvent*) override {
+        // Leave the window fully transparent (WA_TranslucentBackground clears it
+        // each frame); only the ring + dot are painted, so nothing else is
+        // visible and the whole surface stays click-through.
         QPainter p(this);
         p.setRenderHint(QPainter::Antialiasing);
-        p.fillRect(rect(), Qt::transparent);
 
         const float t      = float(m_step) / float(STEPS);
         const int   radius = int(MIN_R + t * (MAX_R - MIN_R));
         const int   alpha  = int(255 * (1.0f - t));
-        const int   cx     = SIZE / 2;
 
         // Outer expanding ring
         QPen pen(QColor(0xFF, 0xA6, 0x00, alpha), 3);
         p.setPen(pen);
         p.setBrush(Qt::NoBrush);
-        p.drawEllipse(QPoint(cx, cx), radius, radius);
+        p.drawEllipse(m_center, radius, radius);
 
         // Small solid centre dot that fades quickly
         const int dotAlpha = int(255 * qMax(0.0f, 1.0f - t * 2.5f));
         if (dotAlpha > 0) {
             p.setPen(Qt::NoPen);
             p.setBrush(QColor(0xFF, 0xA6, 0x00, dotAlpha));
-            p.drawEllipse(QPoint(cx, cx), 4, 4);
+            p.drawEllipse(m_center, 4, 4);
         }
     }
 
 private:
     QTimer m_timer;
     int    m_step = 0;
+    QPoint m_center;                     // ring centre, in overlay-local coords
     static constexpr int STEPS   = 24;   // ~384 ms total
     static constexpr int STEP_MS = 16;   // ~60 fps
-    static constexpr int SIZE    = 100;  // widget size (pixels)
     static constexpr int MIN_R   = 6;
     static constexpr int MAX_R   = 42;
 };

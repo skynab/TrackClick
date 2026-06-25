@@ -207,7 +207,23 @@ public:
         // placement, so a small Qt::Tool window ends up glued to the main
         // window rather than at the cursor.  A screen-sized overlay has
         // unambiguous placement and also avoids HiDPI logical-vs-native offsets.
-        const QPoint gp = QCursor::pos();              // logical global coords
+        //
+        // Use the app's authoritative pointer position, NOT QCursor::pos():
+        // under XWayland QCursor::pos() freezes while the cursor is over a
+        // native Wayland surface (it relies on XQueryPointer), which pinned the
+        // ring to a single spot.  ClickInjector::cursorPos() is the same
+        // evdev/XI2-tracked position the click itself uses.
+        QPoint gp = ClickInjector::cursorPos();
+#ifdef Q_OS_LINUX
+        // There cursorPos() is in native/physical X11 pixels; convert to Qt
+        // logical coordinates (the units window geometry uses) via the display
+        // scale.  No-op on unscaled displays; assumes uniform scaling.
+        if (QScreen* primary = QGuiApplication::primaryScreen()) {
+            const qreal dpr = primary->devicePixelRatio();
+            if (dpr > 1.0)
+                gp = QPoint(qRound(gp.x() / dpr), qRound(gp.y() / dpr));
+        }
+#endif
         QScreen* scr = QGuiApplication::screenAt(gp);
         if (!scr) scr = QGuiApplication::primaryScreen();
         if (!scr) return;

@@ -16,6 +16,7 @@
 #include <QPainter>
 #include <QScreen>
 #include <QGuiApplication>
+#include <QDebug>
 #include <QToolTip>
 #include <QAction>
 #include <QMessageBox>
@@ -200,32 +201,38 @@ public:
     }
 
     void flash() {
-        // Draw the ring inside a screen-sized, click-through overlay rather than
-        // moving a small window to the cursor: positioning a top-level at chosen
-        // global coordinates is unreliable on Wayland (the compositor controls
-        // placement), so a full-screen overlay gives the ring an unambiguous home.
+        // Draw the ring inside a click-through overlay that spans the ENTIRE
+        // virtual desktop (all monitors), anchored at the desktop origin, and
+        // paint the ring at the cursor's offset within it.
         //
-        // Position from QCursor::pos(), which Qt already reports in logical
-        // coordinates mapped to the correct screen.  This is what puts the ring on
-        // the right monitor: the previous path used the native X11 pointer
-        // position and converted it by dividing the *global* coordinate by only
-        // the primary screen's scale factor, so on a multi-monitor or
-        // fractional-scaling layout (where each screen has its own scale and
-        // native offset) the ring jumped to the wrong screen and wrong spot.
+        // Spanning everything — rather than sizing the overlay to the cursor's
+        // monitor — is the key to landing on the right screen.  Moving a
+        // top-level window onto a specific, non-primary monitor is unreliable:
+        // under Wayland/XWayland the compositor controls placement and routinely
+        // drops the window back onto the primary monitor, so the ring showed up
+        // on the wrong screen no matter how correctly its coordinates were
+        // computed.  A single window covering the whole desktop has only one
+        // possible position (the desktop origin), so there is no placement
+        // decision left for the compositor to get wrong; the ring then appears
+        // wherever the cursor is, on any monitor.
         //
-        // Trade-off: under XWayland, QCursor::pos() freezes while the cursor is
-        // over a native Wayland surface, so a dwell-click fired there can flash
-        // the ring at the last X position.  That is the one case a native point
-        // also can't be mapped to logical coords without Qt's private headers, so
-        // QCursor::pos() is the best available source; the lag is cosmetic only
-        // and the click itself still lands at the right place.
-        const QPoint gp = QCursor::pos();
-        QScreen* scr = QGuiApplication::screenAt(gp);
+        // QCursor::pos() is Qt logical coordinates already mapped to the correct
+        // screen.  (Caveat: under XWayland it freezes while the cursor is over a
+        // native Wayland surface — the click still lands correctly, only the ring
+        // may lag.)
+        QScreen* scr = QGuiApplication::screenAt(QCursor::pos());
         if (!scr) scr = QGuiApplication::primaryScreen();
         if (!scr) return;
-        const QRect g = scr->geometry();
-        setGeometry(g);
-        m_center = gp - g.topLeft();                   // position inside the overlay
+        const QRect  vg = scr->virtualGeometry();   // union of all monitors (logical)
+        const QPoint gp = QCursor::pos();
+        setGeometry(vg);
+        m_center = gp - vg.topLeft();               // ring centre, overlay-local coords
+
+        if (qEnvironmentVariableIntValue("TRACKCLICK_CLICK_DEBUG"))
+            qWarning() << "TrackClick click-ring: cursor" << gp
+                       << "| screen" << scr->name() << scr->geometry()
+                       << "| virtual" << vg << "| center" << m_center;
+
         m_step = 0;
         update();
         show();

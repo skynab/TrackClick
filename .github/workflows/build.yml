@@ -5,6 +5,13 @@ on:
     branches: ["**"]
   pull_request:
 
+# Run JavaScript actions on Node 24. The runner still defaults Node-20-targeted
+# actions (checkout, upload-artifact, install-qt-action) to Node 20, which now
+# emits a deprecation warning. Forcing Node 24 silences it and is forward-
+# compatible with the upcoming removal of Node 20 from the runners.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   test:
     name: Unit Tests (${{ matrix.name }})

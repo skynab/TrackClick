@@ -109,6 +109,13 @@ Please install 'onboard' or 'florence'.</source><translation>화상 키보드를
     <message><source>Left edge</source><translation>왼쪽 가장자리</translation></message>
     <message><source>Right edge</source><translation>오른쪽 가장자리</translation></message>
     <message><source>Sensitivity Tester…</source><translation>감도 테스터…</translation></message>
+    <message><source>Custom Hotkeys</source><translation>사용자 지정 단축키</translation></message>
+    <message><source>Hotkey %1</source><translation>단축키 %1</translation></message>
+    <message><source>Label (optional)</source><translation>레이블 (선택사항)</translation></message>
+    <message><source>Show click indicator ring</source><translation>클릭 표시기 링 표시</translation></message>
+    <message><source>Reset to Defaults</source><translation>기본값으로 재설정</translation></message>
+    <message><source>OK</source><translation>확인</translation></message>
+    <message><source>Cancel</source><translation>취소</translation></message>
 </context>
 <context>
     <name>SensitivityTesterDialog</name>

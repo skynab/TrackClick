@@ -109,6 +109,13 @@ Veuillez installer 'onboard' ou 'florence'.</translation></message>
     <message><source>Left edge</source><translation>Bord gauche</translation></message>
     <message><source>Right edge</source><translation>Bord droit</translation></message>
     <message><source>Sensitivity Tester…</source><translation>Testeur de sensibilité…</translation></message>
+    <message><source>Custom Hotkeys</source><translation>Raccourcis personnalisés</translation></message>
+    <message><source>Hotkey %1</source><translation>Raccourci %1</translation></message>
+    <message><source>Label (optional)</source><translation>Étiquette (facultative)</translation></message>
+    <message><source>Show click indicator ring</source><translation>Afficher l'anneau indicateur de clic</translation></message>
+    <message><source>Reset to Defaults</source><translation>Réinitialiser les valeurs par défaut</translation></message>
+    <message><source>OK</source><translation>OK</translation></message>
+    <message><source>Cancel</source><translation>Annuler</translation></message>
 </context>
 <context>
     <name>SensitivityTesterDialog</name>

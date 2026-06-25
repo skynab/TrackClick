@@ -59,6 +59,7 @@ private:
     void buildTray();
     void rebuildButtons();
     void setClickType(ClickType t);
+    void onHotkeySelected(int index);
     void saveWindowSettings();
     void loadWindowSettings();
     void retranslateUi();
@@ -106,6 +107,10 @@ private:
     // Custom hotkey action buttons (up to 3)
     QPushButton*  m_hotkeyBtns[3] = {};
 
+    // Click confirmation overlay
+    class ClickIndicatorOverlay;
+    ClickIndicatorOverlay* m_clickIndicator = nullptr;
+
     // ── State ─────────────────────────────────────────────────
     ClickType   m_selectedType = ClickType::LeftClick;
     int         m_modifiers    = ModNone;
@@ -117,8 +122,10 @@ private:
     QRect       m_resizeGeo;             // window geometry when resize began
 
     // ── Hover-select timer ────────────────────────────────────
-    QTimer*    m_hoverTimer  = nullptr;
-    ClickType  m_hoveredType = ClickType::None;
+    QTimer*    m_hoverTimer    = nullptr;
+    ClickType  m_hoveredType   = ClickType::None;
+    int        m_hoveredHotkey  = -1;  // index of hotkey btn being hovered (-1 = none)
+    int        m_selectedHotkey = -1;  // index of currently selected hotkey (-1 = none)
 
     // ── Edge lock / slide-hide ─────────────────────────────────
     QTimer*             m_edgePollTimer   = nullptr;

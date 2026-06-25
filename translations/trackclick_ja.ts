@@ -109,6 +109,13 @@ Please install 'onboard' or 'florence'.</source><translation>スクリーンキ�
     <message><source>Left edge</source><translation>左端</translation></message>
     <message><source>Right edge</source><translation>右端</translation></message>
     <message><source>Sensitivity Tester…</source><translation>感度テスター…</translation></message>
+    <message><source>Custom Hotkeys</source><translation>カスタムホットキー</translation></message>
+    <message><source>Hotkey %1</source><translation>ホットキー %1</translation></message>
+    <message><source>Label (optional)</source><translation>ラベル（任意）</translation></message>
+    <message><source>Show click indicator ring</source><translation>クリックインジケーターリングを表示</translation></message>
+    <message><source>Reset to Defaults</source><translation>デフォルトに戻す</translation></message>
+    <message><source>OK</source><translation>OK</translation></message>
+    <message><source>Cancel</source><translation>キャンセル</translation></message>
 </context>
 <context>
     <name>SensitivityTesterDialog</name>

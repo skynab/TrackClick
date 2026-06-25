@@ -78,6 +78,12 @@ bool AudioClickListener::start()
     // system default, then fall back to the first enumerated input — on Linux
     // the "default" can be null or the wrong source even when a usable
     // microphone (e.g. a webcam mic) exists.
+    //
+    // On macOS, QMediaDevices::audioInputs() returns an empty list when
+    // microphone permission has not yet been granted.  defaultAudioInput()
+    // still returns a valid (non-null) default device descriptor even before
+    // permission is granted, so we prefer that path.  The OS permission dialog
+    // is triggered when QAudioSource::start() is called below.
     QAudioDevice dev;
     const QList<QAudioDevice> inputs = QMediaDevices::audioInputs();
     if (!m_preferredId.isEmpty()) {

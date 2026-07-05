@@ -248,6 +248,20 @@ protected:
         // Leave the window fully transparent (WA_TranslucentBackground clears it
         // each frame); only the ring + dot are painted, so nothing else is
         // visible and the whole surface stays click-through.
+        // One-off diagnostic (first frame only): where did the overlay window
+        // ACTUALLY land?  If mapToGlobal(0,0) is not the virtual-desktop origin,
+        // the compositor/WM has repositioned the window and the ring is offset by
+        // that amount regardless of how correct m_center is.  devicePixelRatio
+        // surfaces any fractional-scaling mismatch between the injected position
+        // (physical) and the overlay's logical paint coordinates.
+        if (m_step == 0 && qEnvironmentVariableIntValue("TRACKCLICK_CLICK_DEBUG"))
+            qWarning() << "TrackClick click-ring PAINT: window origin (global)"
+                       << mapToGlobal(QPoint(0, 0))
+                       << "| geometry" << geometry()
+                       << "| frameGeometry" << frameGeometry()
+                       << "| dpr" << devicePixelRatioF()
+                       << "| m_center" << m_center;
+
         QPainter p(this);
         p.setRenderHint(QPainter::Antialiasing);
 

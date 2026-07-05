@@ -1,0 +1,28 @@
+title,suite,priority,severity,type,preconditions,steps_actions,steps_expected_result
+Clean install launches without crash,Pre-flight,high,critical,smoke,Fresh build/install for the target OS,Launch TrackClick,App starts and the floating toolbar is displayed with no crash or error dialog
+First-launch permissions,Pre-flight,high,critical,smoke,First run on a clean profile,"On macOS, grant Accessibility when prompted; on Linux, confirm X11/XWayland and libXtst present",Clicks are inert until Accessibility is granted (macOS); app injects clicks normally once permission/deps are satisfied
+Version matches release,Pre-flight,medium,minor,smoke,Release build under test,Open About / check app version,Displayed version matches the release tag
+Toolbar appears and is draggable,Smoke,high,critical,smoke,App running,Drag the floating toolbar around the screen,Toolbar is frameless and always-on-top and can be repositioned and stays on top of other windows
+Left/Right/Middle click fire correctly,Smoke,high,critical,smoke,A target window is focused,Trigger Left then Right then Middle click on a target control,Each click type registers on the correct target (e.g. context menu on right-click)
+Click lands at cursor location,Smoke,high,blocker,regression,"Test on multi-monitor and with display scaling",Move cursor to a known point and trigger a click,"Click is delivered at the exact cursor position on all monitors and scaling levels (known Linux regression area)"
+Clean exit with no stuck state,Smoke,high,major,smoke,App running,Quit the application,App exits cleanly with no orphan process and no stuck modifier keys
+Single / double / drag clicks,Click & Scroll,high,major,functional,A target window is focused,Perform single click,Single click registers
+,,,,,,Perform double click,Double click registers (e.g. opens item / selects word)
+,,,,,,Perform drag start then drag stop across text or an icon,Selection or move occurs between drag start and stop points
+Scroll in all directions,Click & Scroll,medium,normal,functional,A scrollable window is focused,Trigger Scroll Up / Down / Left / Right,Focused window scrolls in the corresponding direction
+Modifier toggles are one-shot,Click & Scroll,medium,normal,functional,App running,Enable Ctrl then perform one click,Ctrl applies to that click then auto-clears (toggle resets)
+,,,,,,Repeat with Alt and Shift including a modifier+click combo (e.g. Ctrl+click multi-select),Each modifier applies to the next click only and combos behave correctly
+Dwell click triggers after delay,AutoMouse (Dwell),high,critical,functional,AutoMouse enabled,Hover over a target and hold still,A click fires automatically after the configured dwell delay
+Dwell progress bar and cancel,AutoMouse (Dwell),medium,normal,functional,AutoMouse enabled,Hover to start the countdown then move the cursor before it completes,Orange progress bar shows accurate countdown and moving the cursor cancels the dwell with no click
+Dwell settings take effect live,AutoMouse (Dwell),medium,normal,functional,Settings dialog open,Change dwell time and sensitivity then hover,New dwell time/sensitivity is applied immediately without restart
+Settings persist,Settings,high,major,functional,Settings dialog open,"Change dwell time, sensitivity, visible buttons, opacity, and icon-only mode then close",All changed settings are retained
+,,,,,,Restart the app and re-open Settings,All previously changed settings survive the restart
+Button layouts render,Settings,medium,normal,functional,Settings dialog open,Switch layout to Rectangle then Horizontal then Vertical,"Toolbar re-renders as grid, single row, and single column respectively"
+Opacity and hide buttons,Settings,low,minor,functional,Settings dialog open,Adjust opacity slider and uncheck some visible buttons,Toolbar transparency changes visibly and hidden buttons are removed from the toolbar
+Language switches live,Localization,medium,normal,functional,App running,"Switch language through each option (EN, CS, FR, ES, zh-CN, ja, ko)",UI updates immediately with no restart for every language
+No truncated or untranslated strings,Localization,low,minor,usability,App running,Inspect toolbar and Settings dialog in each language,No truncated/overflowing labels and no untranslated strings
+Minimize to tray and restore,Tray & Persistence,medium,normal,functional,App running,Minimize to system tray then double-click the tray icon,App minimizes to tray and restores on double-click
+Preferences survive reboot,Tray & Persistence,medium,major,functional,Settings configured,Reboot the OS and relaunch TrackClick,Window position and all preferences are restored after reboot
+Windows-only visual feature,Platform-specific,medium,normal,compatibility,Windows build,Verify the Windows-only visual feature on Windows and confirm absence on macOS/Linux,Feature displays correctly on Windows and is not present on other platforms
+macOS permission revocation,Platform-specific,medium,major,compatibility,macOS build,Revoke Accessibility permission while app is running,App degrades gracefully with no crash
+Linux .deb install and click accuracy,Platform-specific,high,major,compatibility,Linux build,Install the .deb then verify click position under scaling and multi-monitor,Package installs and launches and clicks land at the correct location

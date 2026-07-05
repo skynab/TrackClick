@@ -76,11 +76,16 @@ security-sensitive — review carefully and keep inputs app-controlled.
 
 ## 4. Platform footguns
 
-- **Click indicator ring is Windows-only by default.** On Linux/Wayland the
-  cursor position is unreliable enough that the ring lands on the wrong monitor —
-  hence the "(Windows)" tag and the `#ifdef Q_OS_WIN` default in `AppSettings`.
-  This was the subject of several recent Linux fixes; **regression-test click
-  position on multi-monitor + scaling every release.**
+- **Click indicator ring is Windows-only by default** (the "(Windows)" tag and
+  the `#ifdef Q_OS_WIN` default in `AppSettings`). The historical Linux breakage
+  was that `ClickIndicatorOverlay::flash()` read `QCursor::pos()`, which freezes
+  under XWayland once the pointer leaves an XWayland surface (see §2) — so the
+  ring lagged to the last spot the cursor hovered a TrackClick window (looked
+  like it was glued near the UI). **Fixed:** `flash(QPoint)` now takes the
+  injected click position (`ClickInjector::cursorPos()` / the dwell-fired `pos`)
+  so the ring marks where the click actually landed. Never reintroduce a
+  `QCursor::pos()` read inside `flash()`. **Regression-test click position on
+  multi-monitor + scaling every release.**
 - **Don't move the cursor before clicking** (`clickinjector.cpp` ~808). For a
   dwell clicker the cursor is already where it should be, and the delta math is
   wrong on Wayland.

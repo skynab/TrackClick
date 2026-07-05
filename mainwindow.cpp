@@ -200,7 +200,7 @@ public:
         });
     }
 
-    void flash() {
+    void flash(QPoint gp) {
         // Draw the ring inside a click-through overlay that spans the ENTIRE
         // virtual desktop (all monitors), anchored at the desktop origin, and
         // paint the ring at the cursor's offset within it.
@@ -216,15 +216,18 @@ public:
         // decision left for the compositor to get wrong; the ring then appears
         // wherever the cursor is, on any monitor.
         //
-        // QCursor::pos() is Qt logical coordinates already mapped to the correct
-        // screen.  (Caveat: under XWayland it freezes while the cursor is over a
-        // native Wayland surface — the click still lands correctly, only the ring
-        // may lag.)
-        QScreen* scr = QGuiApplication::screenAt(QCursor::pos());
+        // `gp` is the global position the click was actually injected at, passed
+        // in by the caller.  It MUST NOT be re-read here from QCursor::pos():
+        // under XWayland that value freezes the instant the pointer leaves an
+        // XWayland surface (see docs/INTERNAL.md §2), so it lags behind to the
+        // last spot the cursor hovered a TrackClick window — the ring then landed
+        // between the real cursor and the UI on Ubuntu.  The click position comes
+        // from ClickInjector::cursorPos() (evdev/XI2), which stays accurate, so
+        // the ring now marks exactly where the click happened.
+        QScreen* scr = QGuiApplication::screenAt(gp);
         if (!scr) scr = QGuiApplication::primaryScreen();
         if (!scr) return;
         const QRect  vg = scr->virtualGeometry();   // union of all monitors (logical)
-        const QPoint gp = QCursor::pos();
         setGeometry(vg);
         m_center = gp - vg.topLeft();               // ring centre, overlay-local coords
 
@@ -1284,7 +1287,7 @@ void MainWindow::onClickButtonPressed(ClickType type)
         for (int i = 0; i < reps; ++i)
             ClickInjector::performClick(type, pos, m_modifiers);
         if (m_settings.showClickIndicator)
-            m_clickIndicator->flash();
+            m_clickIndicator->flash(pos);
 #ifdef HAVE_MULTIMEDIA
         if (m_settings.audioFeedback) m_clickSound->play();
 #endif
@@ -1360,7 +1363,7 @@ void MainWindow::onHotkeySelected(int i)
         // Manual mode: inject immediately, same as clicking a mouse-action button
         ClickInjector::injectKeySequence(seq);
         if (m_settings.showClickIndicator)
-            m_clickIndicator->flash();
+            m_clickIndicator->flash(ClickInjector::cursorPos());
 #ifdef HAVE_MULTIMEDIA
         if (m_settings.audioFeedback && m_clickSound) m_clickSound->play();
 #endif
@@ -1419,7 +1422,7 @@ void MainWindow::onDwellProgress(float frac)
     }
 }
 
-void MainWindow::onDwellFired(QPoint /*pos*/, ClickType /*type*/)
+void MainWindow::onDwellFired(QPoint pos, ClickType /*type*/)
 {
     // Hotkey selected: DwellManager fired NoClick (no mouse action); inject key now.
     if (m_selectedHotkey >= 0 && m_selectedHotkey < 3) {
@@ -1431,7 +1434,7 @@ void MainWindow::onDwellFired(QPoint /*pos*/, ClickType /*type*/)
     }
 
     if (m_settings.showClickIndicator)
-        m_clickIndicator->flash();
+        m_clickIndicator->flash(pos);   // accurate injected position (evdev on Wayland)
 #ifdef HAVE_MULTIMEDIA
     if (m_settings.audioFeedback) m_clickSound->play();
 #endif

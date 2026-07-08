@@ -7,6 +7,7 @@
 #include <QCursor>
 #include <QEvent>
 #include <QFrame>
+#include <QGraphicsOpacityEffect>
 #include <QProgressBar>
 #include <QTimer>
 #include <QVBoxLayout>
@@ -568,6 +569,19 @@ void SettingsDialog::stopAudioMeter()
 
 // ── UI construction ───────────────────────────────────────────────────────────
 
+// Renders a settings checkbox read-only: unchecked, disabled, and dimmed so it
+// clearly can't be toggled. Used for options we currently keep locked off but
+// leave visible (Right Double, Right Drag, Top X minimizes app) so they can be
+// re-enabled in code later — see the call sites and loadFrom().
+static void makeCheckboxReadOnly(QCheckBox* c)
+{
+    c->setChecked(false);
+    c->setEnabled(false);
+    auto* fade = new QGraphicsOpacityEffect(c);
+    fade->setOpacity(0.4);   // dim to signal the disabled/read-only state
+    c->setGraphicsEffect(fade);
+}
+
 void SettingsDialog::buildUi()
 {
     auto* root = new QVBoxLayout(this);
@@ -744,6 +758,13 @@ void SettingsDialog::buildUi()
     m_chkQuitButton      = new QCheckBox(tr("Quit Button"));
     m_chkDwellActiveBtn  = new QCheckBox(tr("Dwell Active Button"));
 
+    // Right Double and Right Drag are unusual actions we currently keep turned
+    // off. The options stay visible (so they can be re-enabled in code if a use
+    // case arises) but are read-only and dimmed so it's clear they can't be
+    // toggled. To re-enable, drop these calls and restore their loadFrom() lines.
+    makeCheckboxReadOnly(m_chkRightDouble);
+    makeCheckboxReadOnly(m_chkRightDrag);
+
     int row = 1, col = 0;   // row 0 holds the "Visible Buttons" section header
     auto addChk = [&](QCheckBox* c){
         grid->addWidget(c, row, col);
@@ -836,6 +857,9 @@ void SettingsDialog::buildUi()
     m_chkAlwaysOnTop    = new QCheckBox(tr("Always on top"));
     m_chkStartMinimized = new QCheckBox(tr("Start minimized to tray"));
     m_chkXMinimizesApp  = new QCheckBox(tr("Top X minimizes app"));
+    // Kept read-only for now: the top X always quits (see makeCheckboxReadOnly).
+    // To re-enable, drop this call and restore its loadFrom() line.
+    makeCheckboxReadOnly(m_chkXMinimizesApp);
     m_chkLaunchOnStartup= new QCheckBox(tr("Launch on system startup (Windows)"));
     m_chkAudio          = new QCheckBox(tr("Audio feedback on click"));
     m_chkClickIndicator = new QCheckBox(tr("Show click indicator ring (Windows)"));
@@ -1098,8 +1122,9 @@ void SettingsDialog::loadFrom(const AppSettings& s)
     m_chkLeftDouble->setChecked(s.showLeftDouble);
     m_chkLeftDrag->setChecked(s.showLeftDrag);
     m_chkRightClick->setChecked(s.showRightClick);
-    m_chkRightDouble->setChecked(s.showRightDouble);
-    m_chkRightDrag->setChecked(s.showRightDrag);
+    // Right Double / Right Drag are intentionally left read-only and unchecked
+    // (see buildUi); don't drive them from settings. Restore these two lines to
+    // re-enable the options.
     m_chkMiddleClick->setChecked(s.showMiddleClick);
     m_chkMiddleDouble->setChecked(s.showMiddleDouble);
     m_chkScrollUp->setChecked(s.showScrollUp);
@@ -1119,7 +1144,8 @@ void SettingsDialog::loadFrom(const AppSettings& s)
     m_opacitySlider->setValue(static_cast<int>(s.windowOpacity * 100));
     m_chkAlwaysOnTop->setChecked(s.alwaysOnTop);
     m_chkStartMinimized->setChecked(s.startMinimized);
-    m_chkXMinimizesApp->setChecked(s.xMinimizesApp);
+    // Top X minimizes app is intentionally left read-only and unchecked (see
+    // buildUi); don't drive it from settings. Restore this line to re-enable.
     m_chkLaunchOnStartup->setChecked(s.launchOnStartup);
     m_chkAudio->setChecked(s.audioFeedback);
     m_chkClickIndicator->setChecked(s.showClickIndicator);

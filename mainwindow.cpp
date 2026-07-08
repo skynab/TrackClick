@@ -313,6 +313,12 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     m_settings.showRightClick  = m_persist.value("show/rightClick",  true).toBool();
     m_settings.showRightDouble = m_persist.value("show/rightDouble", true).toBool();
     m_settings.showRightDrag   = m_persist.value("show/rightDrag",   true).toBool();
+    // Right Double / Right Drag are disabled actions (unusual). Force them off
+    // regardless of any persisted or default "on" value, so the toolbar buttons
+    // never appear and the (read-only) Settings checkboxes stay unchecked. To
+    // re-enable, remove these two overrides — see settingsdialog.cpp buildUi.
+    m_settings.showRightDouble = false;
+    m_settings.showRightDrag   = false;
     m_settings.showMiddleClick = m_persist.value("show/middleClick", true).toBool();
     m_settings.showMiddleDouble= m_persist.value("show/middleDouble",false).toBool();
     m_settings.showScrollUp    = m_persist.value("show/scrollUp",    true).toBool();
@@ -326,6 +332,10 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     m_settings.showDwellActiveBtn= m_persist.value("show/dwellActiveBtn", true).toBool();
     m_settings.startMinimized   = m_persist.value("window/startMin",         false).toBool();
     m_settings.xMinimizesApp    = m_persist.value("window/xMinimizesApp",    false).toBool();
+    // Top X minimizes app is a read-only option locked off: the top X always
+    // quits. Force it off regardless of any persisted value. To re-enable,
+    // remove this override — see settingsdialog.cpp buildUi.
+    m_settings.xMinimizesApp    = false;
     m_settings.launchOnStartup  = m_persist.value("window/launchOnStartup",  false).toBool();
     m_settings.audioFeedback       = m_persist.value("audio/enabled",          false).toBool();
     m_settings.showClickIndicator  = m_persist.value("visual/clickIndicator",  AppSettings{}.showClickIndicator).toBool();

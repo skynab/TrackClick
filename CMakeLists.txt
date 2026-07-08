@@ -22,7 +22,7 @@ option(COMPILE_QM "Compile .ts translations to .qm (requires Qt LinguistTools)" 
 find_package(Qt6 QUIET COMPONENTS Core Gui Widgets)
 if(Qt6_FOUND)
     set(QT Qt6)
-    find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Svg)
+    find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Svg Network)
     find_package(Qt6 OPTIONAL_COMPONENTS Multimedia QUIET)
     set(MULTIMEDIA_FOUND ${Qt6Multimedia_FOUND})
     # Keep LinguistTools in its own find_package, gated on COMPILE_QM, so a broken
@@ -33,7 +33,7 @@ if(Qt6_FOUND)
     endif()
     message(STATUS "TrackClick: building with Qt6 ${Qt6_VERSION}")
 else()
-    find_package(Qt5 5.12 REQUIRED COMPONENTS Core Gui Widgets Svg)
+    find_package(Qt5 5.12 REQUIRED COMPONENTS Core Gui Widgets Svg Network)
     set(QT Qt5)
     find_package(Qt5 OPTIONAL_COMPONENTS Multimedia QUIET)
     set(MULTIMEDIA_FOUND ${Qt5Multimedia_FOUND})
@@ -90,6 +90,7 @@ target_link_libraries(TrackClick PRIVATE
     ${QT}::Gui
     ${QT}::Widgets
     ${QT}::Svg
+    ${QT}::Network
 )
 
 if(DEFINED BUILD_NUMBER)

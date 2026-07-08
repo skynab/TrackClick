@@ -59,6 +59,8 @@
     <message><source>Dwell Clicking</source><translation>Clic por permanencia</translation></message>
     <message><source>Dwell time:</source><translation>Tiempo de permanencia:</translation></message>
     <message><source>Sensitivity:</source><translation>Sensibilidad:</translation></message>
+    <message><source>Hover to switch:</source><translation>Pasar para cambiar:</translation></message>
+    <message><source>How long a toolbar button must be hovered before the selection switches to it, as a percentage of the dwell time.</source><translation>Cuánto tiempo debe pasar el cursor sobre un botón de la barra de herramientas antes de que la selección cambie a él, como porcentaje del tiempo de permanencia.</translation></message>
     <message><source>Permissions:</source><translation>Permisos:</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>Abrir configuración de accesibilidad…</translation></message>
     <message><source>Visible Buttons</source><translation>Botones visibles</translation></message>

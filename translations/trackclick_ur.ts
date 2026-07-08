@@ -64,6 +64,8 @@
     <message><source>Dwell Clicking</source><translation>ڈویل کلکنگ</translation></message>
     <message><source>Dwell time:</source><translation>ڈویل وقت:</translation></message>
     <message><source>Sensitivity:</source><translation>حساسیت:</translation></message>
+    <message><source>Hover to switch:</source><translation>تبدیلی کے لیے ہوور:</translation></message>
+    <message><source>How long a toolbar button must be hovered before the selection switches to it, as a percentage of the dwell time.</source><translation>انتخاب کسی ٹول بار بٹن پر منتقل ہونے سے پہلے اس پر کتنی دیر ہوور کرنا ضروری ہے، ڈویل وقت کے فیصد کے طور پر۔</translation></message>
     <message><source>Sensitivity Tester…</source><translation>حساسیت ٹیسٹر…</translation></message>
     <message><source>Scroll repeat:</source><translation>اسکرول دہرائیں:</translation></message>
     <message><source>Repeat click:</source><translation>کلک دہرائیں:</translation></message>

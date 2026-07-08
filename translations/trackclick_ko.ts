@@ -59,6 +59,8 @@
     <message><source>Dwell Clicking</source><translation>머물기 클릭</translation></message>
     <message><source>Dwell time:</source><translation>머물기 시간:</translation></message>
     <message><source>Sensitivity:</source><translation>머물기 감도:</translation></message>
+    <message><source>Hover to switch:</source><translation>머물러 전환:</translation></message>
+    <message><source>How long a toolbar button must be hovered before the selection switches to it, as a percentage of the dwell time.</source><translation>선택이 도구 모음 버튼으로 전환되기까지 마우스를 올려 두어야 하는 시간(머물기 시간의 백분율).</translation></message>
     <message><source>Permissions:</source><translation>권한:</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>접근성 설정 열기…</translation></message>
     <message><source>Visible Buttons</source><translation>표시 버튼</translation></message>

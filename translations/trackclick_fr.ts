@@ -59,6 +59,8 @@
     <message><source>Dwell Clicking</source><translation>Clic par survol</translation></message>
     <message><source>Dwell time:</source><translation>Durée de survol :</translation></message>
     <message><source>Sensitivity:</source><translation>Sensibilité :</translation></message>
+    <message><source>Hover to switch:</source><translation>Survol pour changer :</translation></message>
+    <message><source>How long a toolbar button must be hovered before the selection switches to it, as a percentage of the dwell time.</source><translation>Durée pendant laquelle un bouton de la barre d'outils doit être survolé avant que la sélection y passe, en pourcentage de la durée de survol.</translation></message>
     <message><source>Permissions:</source><translation>Autorisations :</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>Ouvrir les réglages d'accessibilité…</translation></message>
     <message><source>Visible Buttons</source><translation>Boutons visibles</translation></message>

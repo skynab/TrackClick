@@ -59,6 +59,8 @@
     <message><source>Dwell Clicking</source><translation>悬停点击</translation></message>
     <message><source>Dwell time:</source><translation>悬停时间：</translation></message>
     <message><source>Sensitivity:</source><translation>灵敏度：</translation></message>
+    <message><source>Hover to switch:</source><translation>悬停切换：</translation></message>
+    <message><source>How long a toolbar button must be hovered before the selection switches to it, as a percentage of the dwell time.</source><translation>在选择切换到某个工具栏按钮之前，需要在其上悬停的时长，以悬停时间的百分比表示。</translation></message>
     <message><source>Permissions:</source><translation>辅助功能权限：</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>打开辅助功能设置…</translation></message>
     <message><source>Visible Buttons</source><translation>可见按钮</translation></message>

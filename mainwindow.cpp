@@ -338,6 +338,7 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     m_settings.language        = m_persist.value("language",          "en").toString();
     m_settings.scrollRepeat    = m_persist.value("scroll/repeat",      7).toInt();
     m_settings.repeatOnDwell   = m_persist.value("dwell/repeatOnDwell", false).toBool();
+    m_settings.hoverSelectPercent = m_persist.value("dwell/hoverSelectPercent", 60).toInt();
     m_settings.edgeLock = static_cast<EdgeLock>(m_persist.value("window/edgeLock", 0).toInt());
     m_settings.edgeHide = m_persist.value("window/edgeHide", false).toBool();
     for (int i = 0; i < 3; ++i) {
@@ -626,12 +627,15 @@ void MainWindow::buildUi()
     adjustSize();
 }
 
-// Attaches dwell-hover toggle behaviour to a modifier QPushButton.
+// Attaches hover-toggle behaviour to a modifier QPushButton: the button toggles
+// once the cursor has rested on it for the hover-select interval — the same
+// timing used to switch the active click type (see hoverSelectMs()).  The
+// interval is supplied as a callback so it is read fresh on each hover.
 // Parented to the button so it is deleted automatically with it.
 class ModHoverFilter : public QObject {
 public:
-    explicit ModHoverFilter(QPushButton* btn, const int* dwellMs)
-        : QObject(btn), m_dwellMs(dwellMs)
+    explicit ModHoverFilter(QPushButton* btn, std::function<int()> intervalFn)
+        : QObject(btn), m_intervalFn(std::move(intervalFn))
     {
         m_timer = new QTimer(this);
         m_timer->setSingleShot(true);
@@ -643,15 +647,15 @@ protected:
     bool eventFilter(QObject*, QEvent* ev) override
     {
         if (ev->type() == QEvent::Enter)
-            m_timer->start(*m_dwellMs);
+            m_timer->start(m_intervalFn());
         else if (ev->type() == QEvent::Leave)
             m_timer->stop();
         return false;
     }
 
 private:
-    QTimer*    m_timer;
-    const int* m_dwellMs;
+    QTimer*              m_timer;
+    std::function<int()> m_intervalFn;
 };
 
 // Forwards Enter/Leave events for a hotkey button to lambdas so the shared
@@ -742,7 +746,7 @@ void MainWindow::rebuildButtons()
         connect(btn, &ClickButton::clickTypePressed, this, &MainWindow::onClickButtonPressed);
         connect(btn, &ClickButton::clickTypeHovered, this, [this](ClickType type){
             m_hoveredType = type;
-            m_hoverTimer->start(m_settings.dwellMs * 6 / 10);
+            m_hoverTimer->start(hoverSelectMs());
         });
         connect(btn, &ClickButton::clickTypeLeft, this, [this](){
             m_hoverTimer->stop();
@@ -839,7 +843,7 @@ void MainWindow::rebuildButtons()
 
         connect(btn, &QPushButton::clicked, this, [this, i]{ onHotkeySelected(i); });
         new HotkeyHoverFilter(btn,
-            [this, i]{ m_hoveredHotkey = i; m_hoverTimer->start(m_settings.dwellMs * 6 / 10); },
+            [this, i]{ m_hoveredHotkey = i; m_hoverTimer->start(hoverSelectMs()); },
             [this]   { m_hoveredHotkey = -1; m_hoverTimer->stop(); });
 
         m_hotkeyBtns[i] = btn;
@@ -869,7 +873,7 @@ void MainWindow::rebuildButtons()
             m_ctrlBtn->setStyleSheet(modStyle(on));
             if (m_autoEnabled) m_dwell->setModifiers(m_modifiers);
         });
-        new ModHoverFilter(m_ctrlBtn, &m_settings.dwellMs);
+        new ModHoverFilter(m_ctrlBtn, [this]{ return hoverSelectMs(); });
     }
     if (m_settings.showModAlt) {
         m_altBtn = new QPushButton("Alt");
@@ -882,7 +886,7 @@ void MainWindow::rebuildButtons()
             m_altBtn->setStyleSheet(modStyle(on));
             if (m_autoEnabled) m_dwell->setModifiers(m_modifiers);
         });
-        new ModHoverFilter(m_altBtn, &m_settings.dwellMs);
+        new ModHoverFilter(m_altBtn, [this]{ return hoverSelectMs(); });
     }
     if (m_settings.showModShift) {
         m_shiftBtn = new QPushButton("Shift");
@@ -895,7 +899,7 @@ void MainWindow::rebuildButtons()
             m_shiftBtn->setStyleSheet(modStyle(on));
             if (m_autoEnabled) m_dwell->setModifiers(m_modifiers);
         });
-        new ModHoverFilter(m_shiftBtn, &m_settings.dwellMs);
+        new ModHoverFilter(m_shiftBtn, [this]{ return hoverSelectMs(); });
     }
 
     // ── Dwell Active button ───────────────────────────────────
@@ -925,7 +929,7 @@ void MainWindow::rebuildButtons()
             m_autoBtn->setChecked(on);
         });
 
-        new ModHoverFilter(m_dwellActiveBtn, &m_settings.dwellMs);
+        new ModHoverFilter(m_dwellActiveBtn, [this]{ return hoverSelectMs(); });
     }
 
     // ── Place modifier + dwell-active buttons ─────────────────
@@ -1681,6 +1685,7 @@ void MainWindow::applySettings(const AppSettings& s)
     m_persist.setValue("language",           s.language);
     m_persist.setValue("scroll/repeat",      s.scrollRepeat);
     m_persist.setValue("dwell/repeatOnDwell", s.repeatOnDwell);
+    m_persist.setValue("dwell/hoverSelectPercent", s.hoverSelectPercent);
     m_persist.setValue("window/edgeLock",    static_cast<int>(s.edgeLock));
     m_persist.setValue("window/edgeHide",    s.edgeHide);
     for (int i = 0; i < 3; ++i) {

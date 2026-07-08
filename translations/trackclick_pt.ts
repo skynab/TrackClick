@@ -64,6 +64,8 @@
     <message><source>Dwell Clicking</source><translation>Clique por permanência</translation></message>
     <message><source>Dwell time:</source><translation>Tempo de permanência:</translation></message>
     <message><source>Sensitivity:</source><translation>Sensibilidade:</translation></message>
+    <message><source>Hover to switch:</source><translation>Passar para alternar:</translation></message>
+    <message><source>How long a toolbar button must be hovered before the selection switches to it, as a percentage of the dwell time.</source><translation>Quanto tempo é preciso passar o cursor sobre um botão da barra de ferramentas antes de a seleção mudar para ele, como porcentagem do tempo de permanência.</translation></message>
     <message><source>Sensitivity Tester…</source><translation>Testador de sensibilidade…</translation></message>
     <message><source>Scroll repeat:</source><translation>Repetição de rolagem:</translation></message>
     <message><source>Repeat click:</source><translation>Repetir clique:</translation></message>

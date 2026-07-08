@@ -458,6 +458,9 @@ void SettingsDialog::retranslateUi()
     m_lblDwellTime->setText(tr("Dwell time:"));
     m_lblSensitivity->setText(tr("Sensitivity:"));
     m_btnSensTester->setText(tr("Sensitivity Tester…"));
+    m_lblHoverSelect->setText(tr("Hover to switch:"));
+    m_hoverSelectPct->setToolTip(tr("How long a toolbar button must be hovered before the "
+                                    "selection switches to it, as a percentage of the dwell time."));
     m_lblScrollRepeat->setText(tr("Scroll repeat:"));
     m_lblRepeatMode->setText(tr("Repeat click:"));
 #ifdef Q_OS_MAC
@@ -667,12 +670,16 @@ void SettingsDialog::buildUi()
 
     m_dwellMs      = new QSpinBox; m_dwellMs->setRange(100, 10000); m_dwellMs->setSuffix(" ms");
     m_sensitivPx   = new QSpinBox; m_sensitivPx->setRange(1, 100);  m_sensitivPx->setSuffix(" px");
+    m_hoverSelectPct = new QSpinBox; m_hoverSelectPct->setRange(10, 100); m_hoverSelectPct->setSuffix(" %");
+    m_hoverSelectPct->setToolTip(tr("How long a toolbar button must be hovered before the "
+                                    "selection switches to it, as a percentage of the dwell time."));
     m_scrollRepeat = new QSpinBox; m_scrollRepeat->setRange(1, 20);
 
     m_chkRepeatMode = new QCheckBox;
 
     m_lblDwellTime    = new QLabel(tr("Dwell time:"));
     m_lblSensitivity  = new QLabel(tr("Sensitivity:"));
+    m_lblHoverSelect  = new QLabel(tr("Hover to switch:"));
     m_lblScrollRepeat = new QLabel(tr("Scroll repeat:"));
     m_lblRepeatMode   = new QLabel(tr("Repeat click:"));
     m_btnSensTester = new QPushButton(tr("Sensitivity Tester…"));
@@ -688,6 +695,7 @@ void SettingsDialog::buildUi()
     fl->addRow(m_lblDwellTime,    m_dwellMs);
     fl->addRow(m_lblSensitivity,  m_sensitivPx);
     fl->addRow(m_btnSensTester);
+    fl->addRow(m_lblHoverSelect,  m_hoverSelectPct);
     fl->addRow(m_lblScrollRepeat, m_scrollRepeat);
     fl->addRow(m_lblRepeatMode,   m_chkRepeatMode);
 
@@ -1081,6 +1089,7 @@ void SettingsDialog::loadFrom(const AppSettings& s)
 {
     m_dwellMs->setValue(s.dwellMs);
     m_sensitivPx->setValue(s.sensitivityPx);
+    m_hoverSelectPct->setValue(s.hoverSelectPercent);
     m_scrollRepeat->setValue(s.scrollRepeat);
     m_chkRepeatMode->setChecked(s.repeatOnDwell);
 
@@ -1150,6 +1159,7 @@ AppSettings SettingsDialog::readUi() const
     AppSettings s;
     s.dwellMs       = m_dwellMs->value();
     s.sensitivityPx = m_sensitivPx->value();
+    s.hoverSelectPercent = m_hoverSelectPct->value();
     s.scrollRepeat  = m_scrollRepeat->value();
     s.repeatOnDwell = m_chkRepeatMode->isChecked();
 

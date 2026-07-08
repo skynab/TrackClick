@@ -64,6 +64,8 @@
     <message><source>Dwell Clicking</source><translation>النقر بالتحوم</translation></message>
     <message><source>Dwell time:</source><translation>مدة التحوم:</translation></message>
     <message><source>Sensitivity:</source><translation>الحساسية:</translation></message>
+    <message><source>Hover to switch:</source><translation>التحوم للتبديل:</translation></message>
+    <message><source>How long a toolbar button must be hovered before the selection switches to it, as a percentage of the dwell time.</source><translation>المدة التي يجب التحوم خلالها فوق زر شريط الأدوات قبل أن ينتقل التحديد إليه، كنسبة مئوية من مدة التحوم.</translation></message>
     <message><source>Sensitivity Tester…</source><translation>اختبار الحساسية…</translation></message>
     <message><source>Scroll repeat:</source><translation>تكرار التمرير:</translation></message>
     <message><source>Repeat click:</source><translation>تكرار النقر:</translation></message>

@@ -60,6 +60,9 @@ private:
     void rebuildButtons();
     void setClickType(ClickType t);
     void onHotkeySelected(int index);
+    // Milliseconds a toolbar button must be hovered before the hover-select
+    // timer switches the active selection — a percentage of the full dwell time.
+    int  hoverSelectMs() const { return m_settings.dwellMs * m_settings.hoverSelectPercent / 100; }
     void saveWindowSettings();
     void loadWindowSettings();
     void retranslateUi();

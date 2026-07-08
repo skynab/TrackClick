@@ -37,6 +37,10 @@ struct AppSettings {
     int  scrollRepeat   = 7;
     bool repeatOnDwell  = true;      // true = repeat every dwell period; false = fire once per arm
     bool autoSelectEnabled = false;  // start with AutoSelect on
+    // Percentage of the dwell time a toolbar button must be hovered before the
+    // hover-select timer switches the active selection to it. Independent of
+    // dwellMs so the switch delay can be tuned separately from the click delay.
+    int  hoverSelectPercent = 60;
 
     // Which buttons are visible on the toolbar
     bool showNoClick           = true;
@@ -148,6 +152,7 @@ private:
     QLabel* m_lblVisibleButtons = nullptr;
     QLabel* m_lblDwellTime    = nullptr;
     QLabel* m_lblSensitivity  = nullptr;
+    QLabel* m_lblHoverSelect  = nullptr;
     QLabel* m_lblScrollRepeat = nullptr;
     QLabel* m_lblOpacity     = nullptr;
     QLabel* m_lblBtnLayout   = nullptr;
@@ -160,6 +165,7 @@ private:
     // Dwell
     QSpinBox*    m_dwellMs;
     QSpinBox*    m_sensitivPx;
+    QSpinBox*    m_hoverSelectPct;
     QSpinBox*    m_scrollRepeat;
     QLabel*      m_lblRepeatMode = nullptr;
     QCheckBox*   m_chkRepeatMode;

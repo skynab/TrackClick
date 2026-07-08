@@ -1304,11 +1304,15 @@ void MainWindow::onClickButtonPressed(ClickType type)
         int reps = isScroll ? m_settings.scrollRepeat : 1;
         for (int i = 0; i < reps; ++i)
             ClickInjector::performClick(type, pos, m_modifiers);
-        if (m_settings.showClickIndicator)
-            m_clickIndicator->flash(pos);
+        // "No Click" injects no action (like a paused dwell), so it gets no
+        // visual or audio feedback — unlike every other click type.
+        if (type != ClickType::NoClick) {
+            if (m_settings.showClickIndicator)
+                m_clickIndicator->flash(pos);
 #ifdef HAVE_MULTIMEDIA
-        if (m_settings.audioFeedback) m_clickSound->play();
+            if (m_settings.audioFeedback) m_clickSound->play();
 #endif
+        }
 
         // Clear modifiers after use (one-shot)
         m_modifiers = ModNone;
@@ -1440,16 +1444,24 @@ void MainWindow::onDwellProgress(float frac)
     }
 }
 
-void MainWindow::onDwellFired(QPoint pos, ClickType /*type*/)
+void MainWindow::onDwellFired(QPoint pos, ClickType type)
 {
     // Hotkey selected: DwellManager fired NoClick (no mouse action); inject key now.
+    bool hotkeyAction = false;
     if (m_selectedHotkey >= 0 && m_selectedHotkey < 3) {
+        hotkeyAction = true;
         const auto& slot = m_settings.hotkeys[m_selectedHotkey];
         if (!slot.keySequence.isEmpty()) {
             QKeySequence seq(slot.keySequence, QKeySequence::PortableText);
             ClickInjector::injectKeySequence(seq);
         }
     }
+
+    // "No Click" performs no action (like a paused dwell), so it gets no visual
+    // or audio feedback. A hotkey arms NoClick internally but does inject a key,
+    // so it still counts as an action and keeps its feedback.
+    if (!hotkeyAction && type == ClickType::NoClick)
+        return;
 
     if (m_settings.showClickIndicator)
         m_clickIndicator->flash(pos);   // accurate injected position (evdev on Wayland)

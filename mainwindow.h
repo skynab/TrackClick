@@ -42,6 +42,10 @@ protected:
     void closeEvent(QCloseEvent*)      override;
     void changeEvent(QEvent*)          override;
     void showEvent(QShowEvent*)        override;
+    // Suppresses tooltips over the toolbar: its buttons are hover-activated, so
+    // a tooltip popping up on hover is a distraction. Scoped to this window's
+    // widgets, so the Settings dialog (a separate window) still shows tooltips.
+    bool eventFilter(QObject* obj, QEvent* ev) override;
 
 private slots:
     void onClickButtonPressed(ClickType type);

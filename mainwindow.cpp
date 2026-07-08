@@ -414,6 +414,9 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     buildTray();
     loadWindowSettings();
 
+    // Swallow tooltip pop-ups over the toolbar (see eventFilter).
+    qApp->installEventFilter(this);
+
     // If launch-on-startup is enabled, make sure the OS registration still
     // exists and points at the current executable (self-heals after updates).
     syncLaunchOnStartup();
@@ -1168,6 +1171,19 @@ void MainWindow::changeEvent(QEvent* ev)
         hide();
     }
     QWidget::changeEvent(ev);
+}
+
+bool MainWindow::eventFilter(QObject* obj, QEvent* ev)
+{
+    // Drop tooltip requests for any widget inside this window. isAncestorOf is
+    // false for widgets in other top-level windows (e.g. the Settings dialog),
+    // so those keep their tooltips.
+    if (ev->type() == QEvent::ToolTip) {
+        auto* w = qobject_cast<QWidget*>(obj);
+        if (w && (w == this || isAncestorOf(w)))
+            return true;   // handled — no tooltip is shown
+    }
+    return QWidget::eventFilter(obj, ev);
 }
 
 void MainWindow::showEvent(QShowEvent* ev)

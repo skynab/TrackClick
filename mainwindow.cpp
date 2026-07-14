@@ -665,6 +665,30 @@ void MainWindow::buildUi()
     m_dwellBar->setVisible(false);
     root->addWidget(m_dwellBar);
 
+    // ── Audio level meter ─────────────────────────────────────
+    // Same footprint as the dwell bar but a distinct (green) colour, shown in its
+    // place while audio-click mode is active so the two modes read differently.
+    m_audioMeter = new QProgressBar;
+    m_audioMeter->setRange(0, 100);
+    m_audioMeter->setValue(0);
+    m_audioMeter->setFixedHeight(8);
+    m_audioMeter->setTextVisible(false);
+    m_audioMeter->setMinimumWidth(0);
+    m_audioMeter->setStyleSheet(
+        "QProgressBar { border: 1px solid #2EA043; border-radius: 3px;"
+        " background: rgba(0,0,0,0.5); }"
+        "QProgressBar::chunk { background: #34C759; border-radius: 2px; }");
+    m_audioMeter->setVisible(false);
+    root->addWidget(m_audioMeter);
+#ifdef HAVE_MULTIMEDIA
+    if (m_audioClick) {
+        connect(m_audioClick, &AudioClickListener::level, this, [this](double v){
+            if (m_audioMeter->isVisible())
+                m_audioMeter->setValue(static_cast<int>(qBound(0.0, v, 1.0) * 100));
+        });
+    }
+#endif
+
     // ── Status label ──────────────────────────────────────────
     m_statusLabel = new QLabel("Ready — hover to dwell-click");
     m_statusLabel->setStyleSheet(
@@ -1363,7 +1387,8 @@ void MainWindow::setClickType(ClickType t)
         {ClickType::ScrollLeft,       tr("Scroll Left")},
         {ClickType::ScrollRight,      tr("Scroll Right")},
     };
-    m_statusLabel->setText(tr("Selected: ") + names.value(t, "?"));
+    m_selectionName = names.value(t, "?");
+    updateStatusLabel();
 }
 
 void MainWindow::onHotkeySelected(int i)
@@ -1385,7 +1410,8 @@ void MainWindow::onHotkeySelected(int i)
     const QKeySequence seq(slot.keySequence, QKeySequence::PortableText);
     const QString name = slot.label.isEmpty()
         ? seq.toString(QKeySequence::NativeText) : slot.label;
-    m_statusLabel->setText(tr("Selected: ") + name);
+    m_selectionName = name;
+    updateStatusLabel();
 
     if (m_autoEnabled) {
         // Armed with NoClick so DwellManager performs no mouse action;
@@ -1425,11 +1451,9 @@ void MainWindow::onAutoToggled(bool on)
                       "QPushButton:hover { background:#4A4A4A; border:1px solid #FFA028; color:#FFA028; }").arg(fs).arg(pad));
     }
 
-    // The dwell progress bar is meaningless in audio-click mode (there is no
-    // countdown), so hide it then; the status label still shows the selection.
-    const bool audioMode = m_settings.audioClickEnabled;
-    m_dwellBar->setVisible(on && !audioMode);
-    m_statusLabel->setVisible(on);
+    // Show the dwell bar or the audio level meter (whichever matches the mode)
+    // and the status label, all gated on dwell-active being on.
+    updateActivityFeedback();
 
     if (on) {
         if (m_selectedHotkey >= 0)
@@ -1506,6 +1530,36 @@ void MainWindow::updateAudioClick()
     // No audio support: make sure the dwell timer keeps working normally.
     m_dwell->setAudioTriggerMode(false);
 #endif
+}
+
+void MainWindow::updateActivityFeedback()
+{
+    // May be called before the status widgets exist (early init); no-op then.
+    if (!m_dwellBar || !m_audioMeter || !m_statusLabel) return;
+#ifdef HAVE_MULTIMEDIA
+    const bool audioMode = m_settings.audioClickEnabled;
+#else
+    const bool audioMode = false;   // feature compiled out → always dwell
+#endif
+    m_dwellBar->setVisible(m_autoEnabled && !audioMode);
+    m_audioMeter->setVisible(m_autoEnabled && audioMode);
+    if (!m_audioMeter->isVisible())
+        m_audioMeter->setValue(0);
+    m_statusLabel->setVisible(m_autoEnabled);
+    updateStatusLabel();
+}
+
+void MainWindow::updateStatusLabel()
+{
+    if (!m_statusLabel) return;
+#ifdef HAVE_MULTIMEDIA
+    const bool audioMode = m_settings.audioClickEnabled;
+#else
+    const bool audioMode = false;
+#endif
+    m_statusLabel->setText(audioMode
+        ? tr("Audio click active: %1").arg(m_selectionName)
+        : tr("Selected: %1").arg(m_selectionName));
 }
 
 void MainWindow::onSettingsClicked()
@@ -1719,6 +1773,8 @@ void MainWindow::applySettings(const AppSettings& s)
     }
     applyEdgeLock();
     updateAudioClick();
+    // Reflect any change to audio-click mode in the meter/dwell-bar + status text.
+    updateActivityFeedback();
 }
 
 void MainWindow::onExitClicked()

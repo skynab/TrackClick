@@ -80,6 +80,12 @@ private:
     // Reconcile audio-click state (dwell trigger mode + microphone listener)
     // with the current settings and whether dwell-active is on.
     void updateAudioClick();
+    // Show the dwell bar or the audio level meter (and the status label) to match
+    // the active mode, and refresh the status text.
+    void updateActivityFeedback();
+    // Set the status label text based on the mode (audio-click vs dwell) and the
+    // current selection name.
+    void updateStatusLabel();
 
     // ── Resize helpers ────────────────────────────────────────────
     enum class ResizeEdge {
@@ -100,6 +106,9 @@ private:
     QPushButton*  m_exitBtn    = nullptr;
     QWidget*      m_btnArea    = nullptr;
     QProgressBar* m_dwellBar   = nullptr;
+    // Live microphone level meter shown (in a distinct colour) in place of the
+    // dwell bar while audio-click mode is active.
+    QProgressBar* m_audioMeter = nullptr;
     QLabel*       m_statusLabel= nullptr;
 
     // Click buttons (rebuilt on settings change)
@@ -120,6 +129,7 @@ private:
 
     // ── State ─────────────────────────────────────────────────
     ClickType   m_selectedType = ClickType::LeftClick;
+    QString     m_selectionName;          // display name of the current selection
     int         m_modifiers    = ModNone;
     bool        m_autoEnabled  = false;
     bool        m_dragging     = false;  // window drag in progress

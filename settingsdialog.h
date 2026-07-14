@@ -96,6 +96,10 @@ struct AppSettings {
     // Language (ISO code: "en", "fr", "es", "zh_CN", "ja", "ko")
     QString language         = "en";
 
+    // Settings-window font zoom (percent, 80–200).  Scales only the settings
+    // dialog's own text for readability; the toolbar is unaffected.
+    int settingsFontScale    = 100;
+
     // Edge lock / hide
     EdgeLock edgeLock = EdgeLock::None;
     bool     edgeHide = false;
@@ -134,6 +138,9 @@ private:
     void stopAudioMeter();
     void applyLanguagePreview(const QString& lang);
     void cleanupPreviewTranslator();
+    // Re-apply the dialog stylesheet at the current m_fontScale so the whole
+    // settings window scales with the "+/-" zoom control.
+    void applyFontScale();
 #ifdef Q_OS_LINUX
     // When no on-screen keyboard is installed, offer to install one through the
     // system package manager (with a graphical pkexec password prompt) rather
@@ -157,6 +164,13 @@ private:
     QLabel* m_lblOpacity     = nullptr;
     QLabel* m_lblBtnLayout   = nullptr;
     QLabel* m_lblLanguage    = nullptr;
+
+    // ── Font zoom (next to the language selector) ─────────────
+    QLabel*      m_lblZoom      = nullptr;
+    QLabel*      m_lblZoomValue = nullptr;
+    QPushButton* m_btnZoomIn    = nullptr;
+    QPushButton* m_btnZoomOut   = nullptr;
+    int          m_fontScale    = 100;   // percent; persisted as settingsFontScale
 #ifdef Q_OS_MAC
     QLabel*      m_lblPermissions   = nullptr;
     QPushButton* m_btnAccessibility = nullptr;

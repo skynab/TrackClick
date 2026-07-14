@@ -348,6 +348,7 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     m_settings.largeButtons    = m_persist.value("show/largeButtons", false).toBool();
     m_settings.buttonLayout    = static_cast<ButtonLayout>(m_persist.value("show/buttonLayout", static_cast<int>(ButtonLayout::Vertical)).toInt());
     m_settings.language        = m_persist.value("language",          "en").toString();
+    m_settings.settingsFontScale = m_persist.value("settings/fontScale", 100).toInt();
     m_settings.scrollRepeat    = m_persist.value("scroll/repeat",      7).toInt();
     m_settings.repeatOnDwell   = m_persist.value("dwell/repeatOnDwell", false).toBool();
     m_settings.hoverSelectPercent = m_persist.value("dwell/hoverSelectPercent", 60).toInt();
@@ -610,7 +611,7 @@ void MainWindow::buildUi()
     m_autoBtn->setFixedSize(38, 22);
     m_autoBtn->setToolTip(tr("Toggle AutoMouse dwell-clicking"));
     m_autoBtn->setStyleSheet(
-        "QPushButton { background:#3A3A3A; color:#AAA; border:1px solid #555; border-radius:3px; font-size:10px; font-weight:bold; }"
+        "QPushButton { background:#3A3A3A; color:#DDDDDD; border:1px solid #555; border-radius:3px; font-size:10px; font-weight:bold; }"
         "QPushButton:checked { background:#FFA028; color:#1A1A1A; border:1px solid #FFB040; }"
         "QPushButton:hover { border:1px solid #FFA028; }"
     );
@@ -740,7 +741,7 @@ static QString modBtnStyle(bool selected, bool large)
         ? QString("QPushButton { background:#FFA600; color:#1A1A1A; border:2px solid #FFB833; "
                   "border-radius:4px; font-weight:bold; font-size:%1; padding:%2; }"
                   "QPushButton:hover { background:#FFB833; }").arg(fs).arg(pad)
-        : QString("QPushButton { background:#3A3A3A; color:#AAA; border:1px solid #555; "
+        : QString("QPushButton { background:#3A3A3A; color:#DDDDDD; border:1px solid #555; "
                   "border-radius:4px; font-size:%1; padding:%2; }"
                   "QPushButton:hover { background:#4A4A4A; border:1px solid #FFA600; color:#FFA600; }").arg(fs).arg(pad);
 }
@@ -961,7 +962,7 @@ void MainWindow::rebuildButtons()
                 ? QString("QPushButton { background:#FFA028; color:#1A1A1A; border:2px solid #FFB040; "
                           "border-radius:4px; font-weight:bold; font-size:%1; padding:%2; }"
                           "QPushButton:hover { background:#FFB040; }").arg(fs).arg(pad)
-                : QString("QPushButton { background:#3A3A3A; color:#AAA; border:1px solid #555; "
+                : QString("QPushButton { background:#3A3A3A; color:#DDDDDD; border:1px solid #555; "
                           "border-radius:4px; font-size:%1; padding:%2; }"
                           "QPushButton:hover { background:#4A4A4A; border:1px solid #FFA028; color:#FFA028; }").arg(fs).arg(pad);
         };
@@ -1473,7 +1474,7 @@ void MainWindow::onAutoToggled(bool on)
             ? QString("QPushButton { background:#FFA028; color:#1A1A1A; border:2px solid #FFB040; "
                       "border-radius:4px; font-weight:bold; font-size:%1; padding:%2; }"
                       "QPushButton:hover { background:#FFB040; }").arg(fs).arg(pad)
-            : QString("QPushButton { background:#3A3A3A; color:#AAA; border:1px solid #555; "
+            : QString("QPushButton { background:#3A3A3A; color:#DDDDDD; border:1px solid #555; "
                       "border-radius:4px; font-size:%1; padding:%2; }"
                       "QPushButton:hover { background:#4A4A4A; border:1px solid #FFA028; color:#FFA028; }").arg(fs).arg(pad));
     }
@@ -1758,6 +1759,7 @@ void MainWindow::applySettings(const AppSettings& s)
     m_persist.setValue("show/largeButtons",  s.largeButtons);
     m_persist.setValue("show/buttonLayout",  static_cast<int>(s.buttonLayout));
     m_persist.setValue("language",           s.language);
+    m_persist.setValue("settings/fontScale", s.settingsFontScale);
     m_persist.setValue("scroll/repeat",      s.scrollRepeat);
     m_persist.setValue("dwell/repeatOnDwell", s.repeatOnDwell);
     m_persist.setValue("dwell/hoverSelectPercent", s.hoverSelectPercent);

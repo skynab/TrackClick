@@ -33,12 +33,25 @@
 #endif
 
 // ── TrackIR palette ──────────────────────────────────────────
-static const char* STYLE = R"(
+// Settings-window font zoom: the base font size (at 100%) plus the bounds and
+// step of the "+/-" zoom control that sits next to the language selector.  The
+// stylesheet font-size is regenerated from this base whenever the user zooms.
+static constexpr int kBaseFontPx  = 12;
+static constexpr int kZoomMinPct  = 80;
+static constexpr int kZoomMaxPct  = 200;
+static constexpr int kZoomStepPct = 10;
+
+// Build the dialog stylesheet with every text element sized at fontPx, so the
+// zoom control can scale the whole settings window just by re-applying it.
+// The @FS@ token is substituted with the requested pixel size below.
+static QString buildStyle(int fontPx)
+{
+    return QString(R"(
 QDialog {
     background: #2D2D2D;
-    color: #979797;
+    color: #E6E6E6;
     font-family: "Segoe UI", Arial, sans-serif;
-    font-size: 12px;
+    font-size: @FS@px;
 }
 QGroupBox {
     color: #FFA600;
@@ -46,14 +59,15 @@ QGroupBox {
     border-radius: 4px;
     margin-top: 10px;
     padding-top: 6px;
+    font-size: @FS@px;
 }
 QGroupBox::title {
     subcontrol-origin: margin;
     left: 8px;
     padding: 0 4px;
 }
-QLabel  { color: #979797; }
-QCheckBox { color: #979797; spacing: 6px; }
+QLabel  { color: #E6E6E6; font-size: @FS@px; }
+QCheckBox { color: #E6E6E6; spacing: 6px; font-size: @FS@px; }
 QCheckBox::indicator {
     width: 25px; height: 11px;
     border: none;
@@ -66,10 +80,11 @@ QCheckBox::indicator:checked {
 }
 QSpinBox, QDoubleSpinBox, QComboBox, QLineEdit, QKeySequenceEdit {
     background: #1A1A1A;
-    color: #979797;
+    color: #E6E6E6;
     border: 1px solid #555;
     border-radius: 3px;
     padding: 2px 4px;
+    font-size: @FS@px;
 }
 QLineEdit:focus, QKeySequenceEdit:focus {
     border: 1px solid #FFA600;
@@ -77,10 +92,11 @@ QLineEdit:focus, QKeySequenceEdit:focus {
 QComboBox::drop-down { border: none; width: 18px; }
 QComboBox QAbstractItemView {
     background: #2D2D2D;
-    color: #979797;
+    color: #E6E6E6;
     border: 1px solid #555;
     selection-background-color: #FFA600;
     selection-color: #1A1A1A;
+    font-size: @FS@px;
 }
 QSlider::groove:horizontal {
     height: 4px;
@@ -101,6 +117,7 @@ QPushButton {
     border-radius: 4px;
     padding: 6px 18px;
     font-weight: bold;
+    font-size: @FS@px;
 }
 QPushButton:hover  { background: #FFB833; }
 QPushButton:pressed{ background: #CC8400; }
@@ -117,17 +134,19 @@ QTabWidget::pane {
 }
 QTabBar::tab {
     background: #1A1A1A;
-    color: #979797;
+    color: #E6E6E6;
     padding: 6px 14px;
     border: 1px solid #555;
     border-bottom: none;
     border-top-left-radius: 4px;
     border-top-right-radius: 4px;
     margin-right: 2px;
+    font-size: @FS@px;
 }
 QTabBar::tab:selected { background: #2D2D2D; color: #FFA600; }
 QTabBar::tab:hover    { color: #FFB833; }
-)";
+)").replace(QLatin1String("@FS@"), QString::number(fontPx));
+}
 
 // ── Sensitivity Tester ────────────────────────────────────────────────────────
 
@@ -216,7 +235,7 @@ SensitivityTesterDialog::SensitivityTesterDialog(QWidget* parent)
 {
     setWindowTitle(tr("Sensitivity Tester"));
     setModal(true);
-    setStyleSheet(STYLE);
+    setStyleSheet(buildStyle(kBaseFontPx));
     setFixedWidth(280);
 
     auto* root = new QVBoxLayout(this);
@@ -342,7 +361,7 @@ SettingsDialog::SettingsDialog(const AppSettings& current,
 {
     setWindowTitle(tr("TrackClick — Settings"));
     setModal(true);
-    setStyleSheet(STYLE);
+    setStyleSheet(buildStyle(kBaseFontPx));
     buildUi();
     loadFrom(current);
 
@@ -517,6 +536,7 @@ void SettingsDialog::retranslateUi()
     m_cmbLayout->setItemText(2, tr("Vertical (one column)"));
     m_cmbLayout->setItemText(3, tr("Vertical (two columns)"));
     m_lblLanguage->setText(tr("Language:"));
+    m_lblZoom->setText(tr("Zoom:"));
     m_okBtn->setText(tr("OK"));
     m_cancelBtn->setText(tr("Cancel"));
     m_resetBtn->setText(tr("Reset to Defaults"));
@@ -663,10 +683,50 @@ void SettingsDialog::buildUi()
     m_cmbLanguage->addItem("اردو",      "ur");
     m_lblLanguage = new QLabel(tr("Language:"));
 
+    // ── Font zoom ─────────────────────────────────────────────
+    // Sits next to the language selector so both top-level view options share
+    // one row.  The "-"/"+" buttons scale the settings window's own text (see
+    // applyFontScale); the value label shows the current percentage.
+    m_lblZoom      = new QLabel(tr("Zoom:"));
+    m_btnZoomOut   = new QPushButton(QString(QChar(0x2212)));  // U+2212 minus sign
+    m_btnZoomIn    = new QPushButton(QStringLiteral("+"));
+    m_lblZoomValue = new QLabel;
+    m_lblZoomValue->setAlignment(Qt::AlignCenter);
+    m_lblZoomValue->setMinimumWidth(44);
+    // Dedicated look so the glyphs read clearly: large, bold, accent-orange on a
+    // bordered button.  A per-button stylesheet also keeps them a fixed size
+    // (they don't grow when the zoom re-applies the dialog stylesheet).
+    for (QPushButton* b : { m_btnZoomOut, m_btnZoomIn }) {
+        b->setFixedSize(30, 26);
+        b->setFocusPolicy(Qt::NoFocus);
+        b->setStyleSheet(
+            "QPushButton {"
+            "  background: #3D3D3D; color: #FFFFFF;"
+            "  border: 1px solid #666; border-radius: 4px;"
+            "  padding: 0; font-size: 18px; font-weight: bold;"
+            "}"
+            "QPushButton:hover    { background: #4D4D4D; border-color: #888; }"
+            "QPushButton:pressed  { background: #2A2A2A; }"
+            "QPushButton:disabled { color: #6A6A6A; border-color: #444; }");
+    }
+    connect(m_btnZoomOut, &QPushButton::clicked, this, [this]{
+        m_fontScale -= kZoomStepPct;
+        applyFontScale();
+    });
+    connect(m_btnZoomIn, &QPushButton::clicked, this, [this]{
+        m_fontScale += kZoomStepPct;
+        applyFontScale();
+    });
+
     auto* langRow = new QHBoxLayout;
     langRow->addStretch(1);
     langRow->addWidget(m_lblLanguage);
     langRow->addWidget(m_cmbLanguage);
+    langRow->addSpacing(18);
+    langRow->addWidget(m_lblZoom);
+    langRow->addWidget(m_btnZoomOut);
+    langRow->addWidget(m_lblZoomValue);
+    langRow->addWidget(m_btnZoomIn);
     langRow->addStretch(1);
     root->addLayout(langRow);
 
@@ -943,7 +1003,7 @@ void SettingsDialog::buildUi()
 
     m_lblAudioClickInfo = new QLabel;
     m_lblAudioClickInfo->setWordWrap(true);
-    m_lblAudioClickInfo->setStyleSheet("color:#979797;");
+    m_lblAudioClickInfo->setStyleSheet("color:#E6E6E6;");
     m_lblAudioClickInfo->setText(audioClickInfoText());
     aufl->addWidget(m_lblAudioClickInfo);
 
@@ -1109,6 +1169,17 @@ void SettingsDialog::promptInstallOnScreenKeyboard()
 }
 #endif
 
+void SettingsDialog::applyFontScale()
+{
+    m_fontScale = qBound(kZoomMinPct, m_fontScale, kZoomMaxPct);
+    setStyleSheet(buildStyle(qRound(kBaseFontPx * m_fontScale / 100.0)));
+    if (m_lblZoomValue)
+        m_lblZoomValue->setText(QString::number(m_fontScale) + "%");
+    // Grey out a button once its limit is reached.
+    if (m_btnZoomOut) m_btnZoomOut->setEnabled(m_fontScale > kZoomMinPct);
+    if (m_btnZoomIn)  m_btnZoomIn->setEnabled(m_fontScale < kZoomMaxPct);
+}
+
 void SettingsDialog::loadFrom(const AppSettings& s)
 {
     m_dwellMs->setValue(s.dwellMs);
@@ -1158,6 +1229,9 @@ void SettingsDialog::loadFrom(const AppSettings& s)
             break;
         }
     }
+
+    m_fontScale = s.settingsFontScale;
+    applyFontScale();
 
     m_chkAudioClick->setChecked(s.audioClickEnabled);
     m_audioThreshSlider->setValue(s.audioClickThreshold);
@@ -1222,6 +1296,7 @@ AppSettings SettingsDialog::readUi() const
     s.largeButtons    = m_chkLargeButtons->isChecked();
     s.buttonLayout    = static_cast<ButtonLayout>(m_cmbLayout->currentIndex());
     s.language        = m_cmbLanguage->currentData().toString();
+    s.settingsFontScale = m_fontScale;
 
     s.audioClickEnabled   = m_chkAudioClick->isChecked();
     s.audioClickThreshold = m_audioThreshSlider->value();

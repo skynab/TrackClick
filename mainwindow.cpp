@@ -317,8 +317,8 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     m_settings.showRightDrag   = m_persist.value("show/rightDrag",   true).toBool();
     // Right Double / Right Drag are disabled actions (unusual). Force them off
     // regardless of any persisted or default "on" value, so the toolbar buttons
-    // never appear and the (read-only) Settings checkboxes stay unchecked. To
-    // re-enable, remove these two overrides — see settingsdialog.cpp buildUi.
+    // never appear. They're also omitted from the Settings reorder list. To
+    // re-enable, remove these two overrides and add them to that list.
     m_settings.showRightDouble = false;
     m_settings.showRightDrag   = false;
     m_settings.showMiddleClick = m_persist.value("show/middleClick", true).toBool();
@@ -329,7 +329,6 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     m_settings.showModCtrl     = m_persist.value("show/modCtrl",     true).toBool();
     m_settings.showModAlt      = m_persist.value("show/modAlt",      true).toBool();
     m_settings.showModShift    = m_persist.value("show/modShift",    true).toBool();
-    m_settings.showExitButton    = m_persist.value("show/exit",           true).toBool();
     m_settings.showQuitButton    = m_persist.value("show/quitButton",     true).toBool();
     m_settings.showDwellActiveBtn= m_persist.value("show/dwellActiveBtn", true).toBool();
     m_settings.startMinimized   = m_persist.value("window/startMin",         false).toBool();
@@ -349,6 +348,7 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     m_settings.buttonLayout    = static_cast<ButtonLayout>(m_persist.value("show/buttonLayout", static_cast<int>(ButtonLayout::Vertical)).toInt());
     m_settings.language        = m_persist.value("language",          "en").toString();
     m_settings.settingsFontScale = m_persist.value("settings/fontScale", 100).toInt();
+    m_settings.buttonOrder       = m_persist.value("show/buttonOrder").toStringList();
     m_settings.scrollRepeat    = m_persist.value("scroll/repeat",      7).toInt();
     m_settings.repeatOnDwell   = m_persist.value("dwell/repeatOnDwell", false).toBool();
     m_settings.hoverSelectPercent = m_persist.value("dwell/hoverSelectPercent", 60).toInt();
@@ -789,11 +789,10 @@ void MainWindow::rebuildButtons()
                    : (m_settings.buttonLayout == ButtonLayout::Horizontal)   ? 99
                    :                                                            3;
 
-    auto add = [&](ClickButton* btn){
+    // Factory: create a click button (signals + m_clickButtons), no placement.
+    auto makeClickButton = [&](const QString& lbl, const QString& tip, ClickType t, const QString& icon) -> QWidget* {
+        auto* btn = makeButton(lbl, tip, t, icon);
         m_clickButtons.append(btn);
-        grid->addWidget(btn, row, col);
-        col++;
-        if (col >= COLS) { col = 0; row++; }
         connect(btn, &ClickButton::clickTypePressed, this, &MainWindow::onClickButtonPressed);
         connect(btn, &ClickButton::clickTypeHovered, this, [this](ClickType type){
             m_hoveredType = type;
@@ -803,44 +802,135 @@ void MainWindow::rebuildButtons()
             m_hoverTimer->stop();
             m_hoveredType = ClickType::None;
         });
+        return btn;
     };
 
-    auto addIf = [&](bool show, const QString& lbl, const QString& tip, ClickType t, const QString& icon){
-        if (show) {
-            auto* b = makeButton(lbl, tip, t, icon);
-            add(b);
+    // Shared look/sizing for the modifier, Dwell Active and Quit buttons.
+    const bool  large   = m_settings.largeButtons;
+    auto modStyle = [large](bool on) -> QString { return modBtnStyle(on, large); };
+    const QSize modSize = isVerticalMode ? QSize(0, large ? 32 : 22)
+                                         : QSize(large ? 48 : 32, large ? 40 : 28);
+
+    // Factory: a checkable modifier button (Ctrl/Alt/Shift).  Assigns the member
+    // pointer and toggles the given modifier bit.
+    auto makeModifier = [&](QPushButton*& member, const QString& text,
+                            const QString& tip, int flag) -> QWidget* {
+        auto* btn = new QPushButton(text, m_btnArea);
+        member = btn;
+        btn->setCheckable(true);
+        btn->setMinimumSize(modSize);
+        btn->setToolTip(tip);
+        btn->setStyleSheet(modStyle(false));
+        connect(btn, &QPushButton::toggled, this, [this, btn, modStyle, flag](bool on){
+            if (on) m_modifiers |= flag; else m_modifiers &= ~flag;
+            btn->setStyleSheet(modStyle(on));
+            if (m_autoEnabled) m_dwell->setModifiers(m_modifiers);
+        });
+        new ModHoverFilter(btn, [this]{ return hoverSelectMs(); });
+        return btn;
+    };
+
+    // Factory: the Dwell Active toggle (mirrors the title-bar Auto button).
+    auto makeDwellActive = [&]() -> QWidget* {
+        auto dwellActiveStyle = [large](bool on) -> QString {
+            const char* fs  = large ? "14px" : "11px";
+            const char* pad = large ? "4px"  : "2px";
+            return on
+                ? QString("QPushButton { background:#FFA028; color:#1A1A1A; border:2px solid #FFB040; "
+                          "border-radius:4px; font-weight:bold; font-size:%1; padding:%2; }"
+                          "QPushButton:hover { background:#FFB040; }").arg(fs).arg(pad)
+                : QString("QPushButton { background:#3A3A3A; color:#DDDDDD; border:1px solid #555; "
+                          "border-radius:4px; font-size:%1; padding:%2; }"
+                          "QPushButton:hover { background:#4A4A4A; border:1px solid #FFA028; color:#FFA028; }").arg(fs).arg(pad);
+        };
+        auto* btn = new QPushButton(tr("Dwell Active"), m_btnArea);
+        m_dwellActiveBtn = btn;
+        btn->setCheckable(true);
+        btn->setMinimumSize(modSize);
+        btn->setToolTip(tr("Enable dwell-clicking (same as the Auto button)"));
+        btn->setChecked(m_autoEnabled);
+        btn->setStyleSheet(dwellActiveStyle(m_autoEnabled));
+        connect(btn, &QPushButton::toggled, this, [this, dwellActiveStyle](bool on){
+            m_dwellActiveBtn->setStyleSheet(dwellActiveStyle(on));
+            m_autoBtn->setChecked(on);   // drive the canonical Auto button
+        });
+        new ModHoverFilter(btn, [this]{ return hoverSelectMs(); });
+        return btn;
+    };
+
+    // Factory: the red Quit button.
+    auto makeQuit = [&]() -> QWidget* {
+        auto* quitBtn = new QPushButton(tr("Quit Program"), m_btnArea);
+        quitBtn->setStyleSheet(
+            QString("QPushButton { background:#3A1A1A; color:#FF6B6B; border:1px solid #7A3333; "
+                    "border-radius:4px; font-size:%1; padding:%2; }"
+                    "QPushButton:hover { background:#5C2222; border-color:#FF6B6B; }")
+                .arg(large ? "13px" : "11px")
+                .arg(large ? "4px"  : "2px"));
+        quitBtn->setMinimumSize(modSize);
+        connect(quitBtn, &QPushButton::clicked, qApp, &QApplication::quit);
+        return quitBtn;
+    };
+
+    // Placement: column-flow with wrap (Horizontal has COLS large, so one row).
+    auto place = [&](QWidget* w){
+        grid->addWidget(w, row, col++);
+        if (col >= COLS) { col = 0; row++; }
+    };
+
+    // Click-button metadata (label/tooltip/type/icon + visibility).
+    struct BtnMeta { bool show; QString lbl; QString tip; ClickType type; QString icon; };
+    const QHash<QString, BtnMeta> meta = {
+        { "no_click",      { m_settings.showNoClick,     tr("No Click"), tr("No action — dwell without clicking"), ClickType::NoClick,          "no_click" } },
+        { "left_click",    { m_settings.showLeftClick,   tr("L Click"),  tr("Left Click"),         ClickType::LeftClick,        "left_click" } },
+        { "left_double",   { m_settings.showLeftDouble,  tr("L Dbl"),    tr("Left Double-Click"),  ClickType::LeftDoubleClick,  "left_double" } },
+        { "left_drag",     { m_settings.showLeftDrag,    tr("L Drag"),   tr("Left Drag — dwell to grab, dwell again to release"),   ClickType::LeftDown,         "left_drag" } },
+        { "right_click",   { m_settings.showRightClick,  tr("R Click"),  tr("Right Click"),        ClickType::RightClick,       "right_click" } },
+        { "right_double",  { m_settings.showRightDouble, tr("R Dbl"),    tr("Right Double-Click"), ClickType::RightDoubleClick, "right_double" } },
+        { "right_drag",    { m_settings.showRightDrag,   tr("R Drag"),   tr("Right Drag — dwell to grab, dwell again to release"),  ClickType::RightDown,        "right_drag" } },
+        { "middle_click",  { m_settings.showMiddleClick, tr("M Click"),  tr("Middle Click"),       ClickType::MiddleClick,      "middle_click" } },
+        { "middle_double", { m_settings.showMiddleDouble,tr("M Dbl"),    tr("Middle Double-Click"),ClickType::MiddleDoubleClick,"middle_double" } },
+        { "scroll_up",     { m_settings.showScrollUp,    tr("Scroll ▲"), tr("Scroll Up"),          ClickType::ScrollUp,         "scroll_up" } },
+        { "scroll_down",   { m_settings.showScrollDown,  tr("Scroll ▼"), tr("Scroll Down"),        ClickType::ScrollDown,       "scroll_down" } },
+    };
+
+    // Single ordered pass — place every enabled reorderable button inline in the
+    // user's saved order.  Click buttons, modifiers, Dwell Active and Quit all
+    // flow together; "scroll_horiz" expands to the two horizontal-scroll buttons.
+    for (const QString& id : orderedClickButtonIds(m_settings)) {
+        if (id == QLatin1String("scroll_horiz")) {
+            if (m_settings.showScrollHoriz) {
+                place(makeClickButton(tr("Scroll ◄"), tr("Scroll Left"),  ClickType::ScrollLeft,  "scroll_left"));
+                place(makeClickButton(tr("Scroll ►"), tr("Scroll Right"), ClickType::ScrollRight, "scroll_right"));
+            }
+        } else if (id == QLatin1String("ctrl")) {
+            if (m_settings.showModCtrl)        place(makeModifier(m_ctrlBtn,  QStringLiteral("Ctrl"),  tr("Hold Ctrl modifier for next click"),  ModCtrl));
+        } else if (id == QLatin1String("alt")) {
+            if (m_settings.showModAlt)         place(makeModifier(m_altBtn,   QStringLiteral("Alt"),   tr("Hold Alt modifier for next click"),   ModAlt));
+        } else if (id == QLatin1String("shift")) {
+            if (m_settings.showModShift)       place(makeModifier(m_shiftBtn, QStringLiteral("Shift"), tr("Hold Shift modifier for next click"), ModShift));
+        } else if (id == QLatin1String("dwell_active")) {
+            if (m_settings.showDwellActiveBtn) place(makeDwellActive());
+        } else if (id == QLatin1String("quit")) {
+            if (m_settings.showQuitButton)     place(makeQuit());
+        } else {
+            auto it = meta.find(id);
+            if (it != meta.end() && it->show)
+                place(makeClickButton(it->lbl, it->tip, it->type, it->icon));
         }
-    };
-
-    addIf(m_settings.showNoClick,     tr("No Click"), tr("No action — dwell without clicking"), ClickType::NoClick, "no_click");
-    addIf(m_settings.showLeftClick,   tr("L Click"),  tr("Left Click"),         ClickType::LeftClick,        "left_click");
-    addIf(m_settings.showLeftDouble,  tr("L Dbl"),    tr("Left Double-Click"),  ClickType::LeftDoubleClick,  "left_double");
-    addIf(m_settings.showLeftDrag,    tr("L Drag"),   tr("Left Drag — dwell to grab, dwell again to release"),   ClickType::LeftDown,         "left_drag");
-    addIf(m_settings.showRightClick,  tr("R Click"),  tr("Right Click"),        ClickType::RightClick,       "right_click");
-    addIf(m_settings.showRightDouble, tr("R Dbl"),    tr("Right Double-Click"), ClickType::RightDoubleClick, "right_double");
-    addIf(m_settings.showRightDrag,   tr("R Drag"),   tr("Right Drag — dwell to grab, dwell again to release"),  ClickType::RightDown,        "right_drag");
-    addIf(m_settings.showMiddleClick, tr("M Click"),  tr("Middle Click"),       ClickType::MiddleClick,      "middle_click");
-    addIf(m_settings.showMiddleDouble,tr("M Dbl"),    tr("Middle Double-Click"),ClickType::MiddleDoubleClick,"middle_double");
-    addIf(m_settings.showScrollUp,    tr("Scroll ▲"), tr("Scroll Up"),          ClickType::ScrollUp,         "scroll_up");
-    addIf(m_settings.showScrollDown,  tr("Scroll ▼"), tr("Scroll Down"),        ClickType::ScrollDown,       "scroll_down");
-
-    if (m_settings.showScrollHoriz) {
-        addIf(true, tr("Scroll ◄"), tr("Scroll Left"),  ClickType::ScrollLeft,  "scroll_left");
-        addIf(true, tr("Scroll ►"), tr("Scroll Right"), ClickType::ScrollRight, "scroll_right");
     }
 
-    // Horizontal mode: give every column equal stretch so buttons fill the full
-    // window width both at initial size and when the user resizes.
-    // fullSpan is used by all subsequent full-width rows so they span exactly
-    // the click-button columns and don't create phantom empty columns.
-    const int fullSpan = (m_settings.buttonLayout == ButtonLayout::Horizontal) ? col : COLS;
+    // Horizontal mode: give every occupied column equal stretch so buttons fill
+    // the window width.  fullSpan lets the full-width hotkey rows below span the
+    // same columns without creating phantom empty ones.
+    const int fullSpan = (m_settings.buttonLayout == ButtonLayout::Horizontal) ? qMax(1, col) : COLS;
     if (m_settings.buttonLayout == ButtonLayout::Horizontal) {
         for (int c = 0; c < col; ++c)
             grid->setColumnStretch(c, 1);
     }
 
-    // Advance to next row for the modifier buttons.
-    // Rectangle: pad the incomplete last row with spacers first.
+    // Rectangle: pad an incomplete final row with spacers, then start the hotkey
+    // section on a fresh row so the full-width hotkey rows line up.
     if (m_settings.buttonLayout == ButtonLayout::Rectangle) {
         while (col > 0 && col < COLS) {
             auto* spacer = new QWidget;
@@ -850,20 +940,8 @@ void MainWindow::rebuildButtons()
     }
     if (col > 0) { row++; col = 0; }
 
-    // ── Modifier row ──────────────────────────────────────────
-    const bool large = m_settings.largeButtons;
-    auto modStyle = [large](bool on) -> QString { return modBtnStyle(on, large); };
-
-    // Place a modifier button using the same column-wrap logic as click buttons.
-    auto addMod = [&](QPushButton* btn) {
-        grid->addWidget(btn, row, col++);
-        if (col >= COLS) { col = 0; row++; }
-    };
-
-    const QSize modSize = isVerticalMode ? QSize(0, large ? 32 : 22)
-                                         : QSize(large ? 48 : 32, large ? 40 : 28);
-
     // ── Custom hotkey buttons ─────────────────────────────────
+    // Not part of the reorder list; placed after the reorderable buttons.
     // Build all enabled hotkey buttons first, then place them.
     // In horizontal mode they share one sub-row; in other modes each gets its
     // own full-width row (labels can be long so space matters there).
@@ -912,128 +990,8 @@ void MainWindow::rebuildButtons()
         grid->addWidget(hkRowWidget, row++, 0, 1, fullSpan);
     }
 
-    // ── Create modifier buttons (placement handled below) ────────
-    if (m_settings.showModCtrl) {
-        m_ctrlBtn = new QPushButton("Ctrl");
-        m_ctrlBtn->setCheckable(true);
-        m_ctrlBtn->setMinimumSize(modSize);
-        m_ctrlBtn->setToolTip(tr("Hold Ctrl modifier for next click"));
-        m_ctrlBtn->setStyleSheet(modStyle(false));
-        connect(m_ctrlBtn, &QPushButton::toggled, this, [this, modStyle](bool on){
-            if (on) m_modifiers |= ModCtrl; else m_modifiers &= ~ModCtrl;
-            m_ctrlBtn->setStyleSheet(modStyle(on));
-            if (m_autoEnabled) m_dwell->setModifiers(m_modifiers);
-        });
-        new ModHoverFilter(m_ctrlBtn, [this]{ return hoverSelectMs(); });
-    }
-    if (m_settings.showModAlt) {
-        m_altBtn = new QPushButton("Alt");
-        m_altBtn->setCheckable(true);
-        m_altBtn->setMinimumSize(modSize);
-        m_altBtn->setToolTip(tr("Hold Alt modifier for next click"));
-        m_altBtn->setStyleSheet(modStyle(false));
-        connect(m_altBtn, &QPushButton::toggled, this, [this, modStyle](bool on){
-            if (on) m_modifiers |= ModAlt; else m_modifiers &= ~ModAlt;
-            m_altBtn->setStyleSheet(modStyle(on));
-            if (m_autoEnabled) m_dwell->setModifiers(m_modifiers);
-        });
-        new ModHoverFilter(m_altBtn, [this]{ return hoverSelectMs(); });
-    }
-    if (m_settings.showModShift) {
-        m_shiftBtn = new QPushButton("Shift");
-        m_shiftBtn->setCheckable(true);
-        m_shiftBtn->setMinimumSize(modSize);
-        m_shiftBtn->setToolTip(tr("Hold Shift modifier for next click"));
-        m_shiftBtn->setStyleSheet(modStyle(false));
-        connect(m_shiftBtn, &QPushButton::toggled, this, [this, modStyle](bool on){
-            if (on) m_modifiers |= ModShift; else m_modifiers &= ~ModShift;
-            m_shiftBtn->setStyleSheet(modStyle(on));
-            if (m_autoEnabled) m_dwell->setModifiers(m_modifiers);
-        });
-        new ModHoverFilter(m_shiftBtn, [this]{ return hoverSelectMs(); });
-    }
-
-    // ── Dwell Active button ───────────────────────────────────
-    if (m_settings.showDwellActiveBtn) {
-        auto dwellActiveStyle = [large](bool on) -> QString {
-            const char* fs  = large ? "14px" : "11px";
-            const char* pad = large ? "4px"  : "2px";
-            return on
-                ? QString("QPushButton { background:#FFA028; color:#1A1A1A; border:2px solid #FFB040; "
-                          "border-radius:4px; font-weight:bold; font-size:%1; padding:%2; }"
-                          "QPushButton:hover { background:#FFB040; }").arg(fs).arg(pad)
-                : QString("QPushButton { background:#3A3A3A; color:#DDDDDD; border:1px solid #555; "
-                          "border-radius:4px; font-size:%1; padding:%2; }"
-                          "QPushButton:hover { background:#4A4A4A; border:1px solid #FFA028; color:#FFA028; }").arg(fs).arg(pad);
-        };
-
-        m_dwellActiveBtn = new QPushButton(tr("Dwell Active"), m_btnArea);
-        m_dwellActiveBtn->setCheckable(true);
-        m_dwellActiveBtn->setMinimumSize(modSize);
-        m_dwellActiveBtn->setToolTip(tr("Enable dwell-clicking (same as the Auto button)"));
-        m_dwellActiveBtn->setChecked(m_autoEnabled);
-        m_dwellActiveBtn->setStyleSheet(dwellActiveStyle(m_autoEnabled));
-
-        connect(m_dwellActiveBtn, &QPushButton::toggled, this, [this, dwellActiveStyle](bool on){
-            m_dwellActiveBtn->setStyleSheet(dwellActiveStyle(on));
-            // Drive the canonical Auto button; onAutoToggled() handles the rest.
-            m_autoBtn->setChecked(on);
-        });
-
-        new ModHoverFilter(m_dwellActiveBtn, [this]{ return hoverSelectMs(); });
-    }
-
-    // ── Place modifier + dwell-active buttons ─────────────────
-    if (m_settings.buttonLayout == ButtonLayout::Horizontal) {
-        // Group all modifiers into a sub-row widget that spans the full grid
-        // width so they fill available space evenly instead of occupying only
-        // the first few columns of the click-button grid.
-        auto* modRow = new QWidget(m_btnArea);
-        modRow->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-        auto* modHBox = new QHBoxLayout(modRow);
-        modHBox->setSpacing(4);
-        modHBox->setContentsMargins(0, 0, 0, 0);
-        if (m_ctrlBtn)        modHBox->addWidget(m_ctrlBtn);
-        if (m_altBtn)         modHBox->addWidget(m_altBtn);
-        if (m_shiftBtn)       modHBox->addWidget(m_shiftBtn);
-        if (m_dwellActiveBtn) modHBox->addWidget(m_dwellActiveBtn);
-        if (modHBox->count() > 0) {
-            if (col > 0) { col = 0; row++; }
-            grid->addWidget(modRow, row++, 0, 1, fullSpan);
-        }
-    } else {
-        // Vertical / Rectangle: column-flow placement.
-        if (m_ctrlBtn)  addMod(m_ctrlBtn);
-        if (m_altBtn)   addMod(m_altBtn);
-        if (m_shiftBtn) addMod(m_shiftBtn);
-        if (m_dwellActiveBtn) {
-            // In Rectangle mode, force Dwell Active to column 0 of its own row
-            // so it doesn't land mid-row next to click-type modifiers.
-            // In Vertical/VerticalTwo, let it fill the next available slot so
-            // it groups naturally with the modifier buttons (no orphaned gap).
-            if (m_settings.buttonLayout == ButtonLayout::Rectangle && col > 0) {
-                col = 0; row++;
-            }
-            addMod(m_dwellActiveBtn);
-        }
-    }
-
-    // ── Quit button ───────────────────────────────────────────
-    if (m_settings.showQuitButton) {
-        if (col > 0) { row++; col = 0; }
-        const bool large = m_settings.largeButtons;
-        auto* quitBtn = new QPushButton(tr("Quit Program"), m_btnArea);
-        quitBtn->setStyleSheet(
-            QString("QPushButton { background:#3A1A1A; color:#FF6B6B; border:1px solid #7A3333; "
-                    "border-radius:4px; font-size:%1; padding:%2; }"
-                    "QPushButton:hover { background:#5C2222; border-color:#FF6B6B; }")
-                .arg(large ? "13px" : "11px")
-                .arg(large ? "4px"  : "2px")
-        );
-        quitBtn->setMinimumHeight(large ? 32 : 22);
-        grid->addWidget(quitBtn, row, 0, 1, fullSpan);
-        connect(quitBtn, &QPushButton::clicked, qApp, &QApplication::quit);
-    }
+    // Ctrl / Alt / Shift / Dwell Active / Quit are created by the factories and
+    // placed inline in the ordered pass above, so nothing more to do here.
 
     // Update selection highlight — suppress ClickButton highlight when a hotkey is selected
     const ClickType selForBtns = (m_selectedHotkey >= 0) ? ClickType::None : m_selectedType;
@@ -1752,7 +1710,6 @@ void MainWindow::applySettings(const AppSettings& s)
     m_persist.setValue("show/modCtrl",       s.showModCtrl);
     m_persist.setValue("show/modAlt",        s.showModAlt);
     m_persist.setValue("show/modShift",      s.showModShift);
-    m_persist.setValue("show/exit",           s.showExitButton);
     m_persist.setValue("show/quitButton",     s.showQuitButton);
     m_persist.setValue("show/dwellActiveBtn", s.showDwellActiveBtn);
     m_persist.setValue("show/iconsOnly",     s.iconsOnly);
@@ -1760,6 +1717,7 @@ void MainWindow::applySettings(const AppSettings& s)
     m_persist.setValue("show/buttonLayout",  static_cast<int>(s.buttonLayout));
     m_persist.setValue("language",           s.language);
     m_persist.setValue("settings/fontScale", s.settingsFontScale);
+    m_persist.setValue("show/buttonOrder",   s.buttonOrder);
     m_persist.setValue("scroll/repeat",      s.scrollRepeat);
     m_persist.setValue("dwell/repeatOnDwell", s.repeatOnDwell);
     m_persist.setValue("dwell/hoverSelectPercent", s.hoverSelectPercent);

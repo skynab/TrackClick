@@ -14,6 +14,7 @@
 #include <QHBoxLayout>
 #include <QGridLayout>
 #include <QFormLayout>
+#include <QListWidget>
 #include <QGroupBox>
 #include <QLabel>
 #include <QPainter>
@@ -76,6 +77,24 @@ QCheckBox::indicator {
     image: url(:/icons/toggle_off.svg);
 }
 QCheckBox::indicator:checked {
+    image: url(:/icons/toggle_on.svg);
+}
+QListWidget {
+    background: #1A1A1A;
+    color: #E6E6E6;
+    border: 1px solid #555;
+    border-radius: 3px;
+    font-size: @FS@px;
+    outline: none;
+}
+QListWidget::item { padding: 3px 4px; }
+QListWidget::item:selected { background: #3D3D3D; color: #FFA600; }
+QListWidget::indicator {
+    width: 25px; height: 11px;
+    background: transparent;
+    image: url(:/icons/toggle_off.svg);
+}
+QListWidget::indicator:checked {
     image: url(:/icons/toggle_on.svg);
 }
 QSpinBox, QDoubleSpinBox, QComboBox, QLineEdit, QKeySequenceEdit {
@@ -146,6 +165,65 @@ QTabBar::tab {
 QTabBar::tab:selected { background: #2D2D2D; color: #FFA600; }
 QTabBar::tab:hover    { color: #FFB833; }
 )").replace(QLatin1String("@FS@"), QString::number(fontPx));
+}
+
+// ── Reorderable click buttons ────────────────────────────────────────────────
+// Canonical/default toolbar order.  Right Double / Right Drag are included so
+// the order model is complete and MainWindow can still lay them out if ever
+// re-enabled in code, but they are read-only placeholders (kept off) and are
+// not shown in the settings reorder list.
+const QVector<ClickButtonDesc>& clickButtonDescs()
+{
+    static const QVector<ClickButtonDesc> v = {
+        { "no_click",      &AppSettings::showNoClick     },
+        { "left_click",    &AppSettings::showLeftClick   },
+        { "left_double",   &AppSettings::showLeftDouble  },
+        { "left_drag",     &AppSettings::showLeftDrag    },
+        { "right_click",   &AppSettings::showRightClick  },
+        { "right_double",  &AppSettings::showRightDouble },
+        { "right_drag",    &AppSettings::showRightDrag   },
+        { "middle_click",  &AppSettings::showMiddleClick },
+        { "middle_double", &AppSettings::showMiddleDouble},
+        { "scroll_up",     &AppSettings::showScrollUp       },
+        { "scroll_down",   &AppSettings::showScrollDown     },
+        { "scroll_horiz",  &AppSettings::showScrollHoriz    },
+        { "ctrl",          &AppSettings::showModCtrl        },
+        { "alt",           &AppSettings::showModAlt         },
+        { "shift",         &AppSettings::showModShift       },
+        { "dwell_active",  &AppSettings::showDwellActiveBtn },
+        { "quit",          &AppSettings::showQuitButton     },
+    };
+    return v;
+}
+
+QStringList orderedClickButtonIds(const AppSettings& s)
+{
+    QStringList result;
+    auto isKnown = [](const QString& id) {
+        for (const auto& d : clickButtonDescs())
+            if (id == QLatin1String(d.id)) return true;
+        return false;
+    };
+    // Saved order first (recognised ids, no duplicates).
+    for (const QString& id : s.buttonOrder)
+        if (isKnown(id) && !result.contains(id))
+            result << id;
+    // Then any canonical ids the saved order didn't cover (new/unsaved buttons).
+    for (const auto& d : clickButtonDescs()) {
+        const QString id = QLatin1String(d.id);
+        if (!result.contains(id))
+            result << id;
+    }
+    return result;
+}
+
+// The AppSettings visibility flag controlled by a given id (nullptr if unknown).
+static bool AppSettings::* showMemberForId(const QString& id)
+{
+    for (const auto& d : clickButtonDescs())
+        if (id == QLatin1String(d.id))
+            return d.show;
+    return nullptr;
 }
 
 // ── Sensitivity Tester ────────────────────────────────────────────────────────
@@ -489,25 +567,13 @@ void SettingsDialog::retranslateUi()
 #endif
 
     m_tabs->setTabText(1, tr("Buttons"));
-    m_lblVisibleButtons->setText(tr("Visible Buttons"));
-    m_chkNoClick->setText(tr("No Click"));
-    m_chkLeftClick->setText(tr("Left Click"));
-    m_chkLeftDouble->setText(tr("Left Double"));
-    m_chkLeftDrag->setText(tr("Left Drag"));
-    m_chkRightClick->setText(tr("Right Click"));
-    m_chkRightDouble->setText(tr("Right Double"));
-    m_chkRightDrag->setText(tr("Right Drag"));
-    m_chkMiddleClick->setText(tr("Middle Click"));
-    m_chkMiddleDouble->setText(tr("Middle Double"));
-    m_chkScrollUp->setText(tr("Scroll Up"));
-    m_chkScrollDown->setText(tr("Scroll Down"));
-    m_chkScrollHoriz->setText(tr("Scroll Left/Right"));
-    m_chkModCtrl->setText(tr("Ctrl Modifier"));
-    m_chkModAlt->setText(tr("Alt Modifier"));
-    m_chkModShift->setText(tr("Shift Modifier"));
-    m_chkExitButton->setText(tr("Exit Button"));
-    m_chkQuitButton->setText(tr("Quit Button"));
-    m_chkDwellActiveBtn->setText(tr("Dwell Active Button"));
+    m_lblVisibleButtons->setText(tr("Visible Buttons (check to show, Move Up/Down to reorder)"));
+    m_btnMoveUp->setText(tr("Move Up"));
+    m_btnMoveDown->setText(tr("Move Down"));
+    for (int i = 0; i < m_btnOrderList->count(); ++i) {
+        QListWidgetItem* it = m_btnOrderList->item(i);
+        it->setText(clickButtonLabel(it->data(Qt::UserRole).toString()));
+    }
 
     m_lblCustomHotkeys->setText(tr("Custom Hotkeys"));
     for (int i = 0; i < 3; ++i) {
@@ -792,55 +858,40 @@ void SettingsDialog::buildUi()
     auto* grid     = new QGridLayout(pageBtns);
     grid->setSpacing(6);
 
-    // Section header — the tab is just labelled "Buttons", so spell out what
-    // these checkboxes control here.
-    m_lblVisibleButtons = new QLabel(tr("Visible Buttons"));
+    // Section header for the reorderable click-button list.
+    m_lblVisibleButtons = new QLabel(tr("Visible Buttons (check to show, Move Up/Down to reorder)"));
     m_lblVisibleButtons->setStyleSheet(
         "color: #FFA600; font-weight: bold; background: transparent;");
     grid->addWidget(m_lblVisibleButtons, 0, 0, 1, 3);
 
-    m_chkNoClick     = new QCheckBox(tr("No Click"));
-    m_chkLeftClick   = new QCheckBox(tr("Left Click"));
-    m_chkLeftDouble  = new QCheckBox(tr("Left Double"));
-    m_chkLeftDrag    = new QCheckBox(tr("Left Drag"));
-    m_chkRightClick  = new QCheckBox(tr("Right Click"));
-    m_chkRightDouble = new QCheckBox(tr("Right Double"));
-    m_chkRightDrag   = new QCheckBox(tr("Right Drag"));
-    m_chkMiddleClick = new QCheckBox(tr("Middle Click"));
-    m_chkMiddleDouble= new QCheckBox(tr("Middle Double"));
-    m_chkScrollUp    = new QCheckBox(tr("Scroll Up"));
-    m_chkScrollDown  = new QCheckBox(tr("Scroll Down"));
-    m_chkScrollHoriz = new QCheckBox(tr("Scroll Left/Right"));
-    m_chkModCtrl     = new QCheckBox(tr("Ctrl Modifier"));
-    m_chkModAlt      = new QCheckBox(tr("Alt Modifier"));
-    m_chkModShift    = new QCheckBox(tr("Shift Modifier"));
-    m_chkExitButton      = new QCheckBox(tr("Exit Button"));
-    m_chkQuitButton      = new QCheckBox(tr("Quit Button"));
-    m_chkDwellActiveBtn  = new QCheckBox(tr("Dwell Active Button"));
+    // Reorderable, checkable list of the click-action buttons.  Items (order and
+    // check state) are added in loadFrom(); the read-only Right Double / Right
+    // Drag placeholders are intentionally omitted from this list.
+    m_btnOrderList = new QListWidget;
+    m_btnOrderList->setSelectionMode(QAbstractItemView::SingleSelection);
+    m_btnOrderList->setMinimumHeight(200);
+    connect(m_btnOrderList, &QListWidget::currentRowChanged,
+            this, [this](int){ updateMoveButtons(); });
+    grid->addWidget(m_btnOrderList, 1, 0, 1, 2);
 
-    // Right Double and Right Drag are unusual actions we currently keep turned
-    // off. The options stay visible (so they can be re-enabled in code if a use
-    // case arises) but are read-only and dimmed so it's clear they can't be
-    // toggled. To re-enable, drop these calls and restore their loadFrom() lines.
-    makeCheckboxReadOnly(m_chkRightDouble);
-    makeCheckboxReadOnly(m_chkRightDrag);
+    m_btnMoveUp   = new QPushButton(tr("Move Up"));
+    m_btnMoveDown = new QPushButton(tr("Move Down"));
+    m_btnMoveUp->setProperty("flat", true);
+    m_btnMoveDown->setProperty("flat", true);
+    m_btnMoveUp->setFocusPolicy(Qt::NoFocus);
+    m_btnMoveDown->setFocusPolicy(Qt::NoFocus);
+    connect(m_btnMoveUp,   &QPushButton::clicked, this, [this]{ moveSelectedButton(-1); });
+    connect(m_btnMoveDown, &QPushButton::clicked, this, [this]{ moveSelectedButton(+1); });
+    auto* moveCol = new QVBoxLayout;
+    moveCol->setSpacing(6);
+    moveCol->addWidget(m_btnMoveUp);
+    moveCol->addWidget(m_btnMoveDown);
+    moveCol->addStretch(1);
+    auto* moveHolder = new QWidget;
+    moveHolder->setLayout(moveCol);
+    grid->addWidget(moveHolder, 1, 2, 1, 1, Qt::AlignTop);
 
-    int row = 1, col = 0;   // row 0 holds the "Visible Buttons" section header
-    auto addChk = [&](QCheckBox* c){
-        grid->addWidget(c, row, col);
-        col++;
-        if (col == 3) { col = 0; row++; }
-    };
-    addChk(m_chkNoClick);
-    addChk(m_chkLeftClick);   addChk(m_chkLeftDouble);  addChk(m_chkLeftDrag);
-    addChk(m_chkRightClick);  addChk(m_chkRightDouble); addChk(m_chkRightDrag);
-    addChk(m_chkMiddleClick); addChk(m_chkMiddleDouble);addChk(m_chkScrollUp);
-    addChk(m_chkScrollDown);  addChk(m_chkScrollHoriz); addChk(m_chkModCtrl);
-    addChk(m_chkModAlt);      addChk(m_chkModShift);    addChk(m_chkExitButton);
-    addChk(m_chkQuitButton);  addChk(m_chkDwellActiveBtn);
-
-    // Ensure we're at the start of a fresh row for the hotkeys section
-    if (col > 0) { col = 0; row++; }
+    int row = 2, col = 0;   // rows 0-1 hold the header and the reorder list
 
     // ── Custom Hotkeys section ────────────────────────────────
     auto* hotkeysSep = new QFrame;
@@ -1180,6 +1231,51 @@ void SettingsDialog::applyFontScale()
     if (m_btnZoomIn)  m_btnZoomIn->setEnabled(m_fontScale < kZoomMaxPct);
 }
 
+// Display label for a click-button id.  These strings intentionally match the
+// former checkbox labels so existing translations keep working.
+QString SettingsDialog::clickButtonLabel(const QString& id) const
+{
+    if (id == QLatin1String("no_click"))      return tr("No Click");
+    if (id == QLatin1String("left_click"))    return tr("Left Click");
+    if (id == QLatin1String("left_double"))   return tr("Left Double");
+    if (id == QLatin1String("left_drag"))     return tr("Left Drag");
+    if (id == QLatin1String("right_click"))   return tr("Right Click");
+    if (id == QLatin1String("right_double"))  return tr("Right Double");
+    if (id == QLatin1String("right_drag"))    return tr("Right Drag");
+    if (id == QLatin1String("middle_click"))  return tr("Middle Click");
+    if (id == QLatin1String("middle_double")) return tr("Middle Double");
+    if (id == QLatin1String("scroll_up"))     return tr("Scroll Up");
+    if (id == QLatin1String("scroll_down"))   return tr("Scroll Down");
+    if (id == QLatin1String("scroll_horiz"))  return tr("Scroll Left/Right");
+    if (id == QLatin1String("ctrl"))          return tr("Ctrl Modifier");
+    if (id == QLatin1String("alt"))           return tr("Alt Modifier");
+    if (id == QLatin1String("shift"))         return tr("Shift Modifier");
+    if (id == QLatin1String("dwell_active"))  return tr("Dwell Active Button");
+    if (id == QLatin1String("quit"))          return tr("Quit Button");
+    return id;
+}
+
+void SettingsDialog::moveSelectedButton(int delta)
+{
+    const int r = m_btnOrderList->currentRow();
+    if (r < 0) return;
+    const int nr = r + delta;
+    if (nr < 0 || nr >= m_btnOrderList->count()) return;
+    // takeItem/insertItem preserves the item's check state and stored id.
+    QListWidgetItem* item = m_btnOrderList->takeItem(r);
+    m_btnOrderList->insertItem(nr, item);
+    m_btnOrderList->setCurrentRow(nr);   // keep the moved row selected
+    updateMoveButtons();
+}
+
+void SettingsDialog::updateMoveButtons()
+{
+    const int r = m_btnOrderList->currentRow();
+    const int n = m_btnOrderList->count();
+    if (m_btnMoveUp)   m_btnMoveUp->setEnabled(r > 0);
+    if (m_btnMoveDown) m_btnMoveDown->setEnabled(r >= 0 && r < n - 1);
+}
+
 void SettingsDialog::loadFrom(const AppSettings& s)
 {
     m_dwellMs->setValue(s.dwellMs);
@@ -1188,25 +1284,24 @@ void SettingsDialog::loadFrom(const AppSettings& s)
     m_scrollRepeat->setValue(s.scrollRepeat);
     m_chkRepeatMode->setChecked(s.repeatOnDwell);
 
-    m_chkNoClick->setChecked(s.showNoClick);
-    m_chkLeftClick->setChecked(s.showLeftClick);
-    m_chkLeftDouble->setChecked(s.showLeftDouble);
-    m_chkLeftDrag->setChecked(s.showLeftDrag);
-    m_chkRightClick->setChecked(s.showRightClick);
-    // Right Double / Right Drag are intentionally left read-only and unchecked
-    // (see buildUi); don't drive them from settings. Restore these two lines to
-    // re-enable the options.
-    m_chkMiddleClick->setChecked(s.showMiddleClick);
-    m_chkMiddleDouble->setChecked(s.showMiddleDouble);
-    m_chkScrollUp->setChecked(s.showScrollUp);
-    m_chkScrollDown->setChecked(s.showScrollDown);
-    m_chkScrollHoriz->setChecked(s.showScrollHoriz);
-    m_chkModCtrl->setChecked(s.showModCtrl);
-    m_chkModAlt->setChecked(s.showModAlt);
-    m_chkModShift->setChecked(s.showModShift);
-    m_chkExitButton->setChecked(s.showExitButton);
-    m_chkQuitButton->setChecked(s.showQuitButton);
-    m_chkDwellActiveBtn->setChecked(s.showDwellActiveBtn);
+    // Populate the reorder list in the saved order, with saved visibility as the
+    // check state.  Right Double / Right Drag stay read-only and off, so they're
+    // not listed here.
+    m_btnOrderList->clear();
+    for (const QString& id : orderedClickButtonIds(s)) {
+        if (id == QLatin1String("right_double") || id == QLatin1String("right_drag"))
+            continue;
+        auto* item = new QListWidgetItem(clickButtonLabel(id), m_btnOrderList);
+        item->setData(Qt::UserRole, id);
+        item->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled | Qt::ItemIsSelectable);
+        bool on = false;
+        if (bool AppSettings::* memb = showMemberForId(id))
+            on = s.*memb;
+        item->setCheckState(on ? Qt::Checked : Qt::Unchecked);
+    }
+    if (m_btnOrderList->count() > 0)
+        m_btnOrderList->setCurrentRow(0);
+    updateMoveButtons();
 
     m_cmbEdgeLock->setCurrentIndex(static_cast<int>(s.edgeLock));
     m_chkEdgeHide->setChecked(s.edgeHide);
@@ -1263,24 +1358,16 @@ AppSettings SettingsDialog::readUi() const
     s.scrollRepeat  = m_scrollRepeat->value();
     s.repeatOnDwell = m_chkRepeatMode->isChecked();
 
-    s.showNoClick     = m_chkNoClick->isChecked();
-    s.showLeftClick   = m_chkLeftClick->isChecked();
-    s.showLeftDouble  = m_chkLeftDouble->isChecked();
-    s.showLeftDrag    = m_chkLeftDrag->isChecked();
-    s.showRightClick  = m_chkRightClick->isChecked();
-    s.showRightDouble = m_chkRightDouble->isChecked();
-    s.showRightDrag   = m_chkRightDrag->isChecked();
-    s.showMiddleClick = m_chkMiddleClick->isChecked();
-    s.showMiddleDouble= m_chkMiddleDouble->isChecked();
-    s.showScrollUp    = m_chkScrollUp->isChecked();
-    s.showScrollDown  = m_chkScrollDown->isChecked();
-    s.showScrollHoriz = m_chkScrollHoriz->isChecked();
-    s.showModCtrl     = m_chkModCtrl->isChecked();
-    s.showModAlt      = m_chkModAlt->isChecked();
-    s.showModShift    = m_chkModShift->isChecked();
-    s.showExitButton     = m_chkExitButton->isChecked();
-    s.showQuitButton     = m_chkQuitButton->isChecked();
-    s.showDwellActiveBtn = m_chkDwellActiveBtn->isChecked();
+    // Read click-button order and per-button visibility from the reorder list.
+    // Right Double / Right Drag aren't listed, so they keep their default (off).
+    s.buttonOrder.clear();
+    for (int i = 0; i < m_btnOrderList->count(); ++i) {
+        QListWidgetItem* item = m_btnOrderList->item(i);
+        const QString id = item->data(Qt::UserRole).toString();
+        s.buttonOrder << id;
+        if (bool AppSettings::* memb = showMemberForId(id))
+            s.*memb = (item->checkState() == Qt::Checked);
+    }
 
     s.edgeLock = static_cast<EdgeLock>(m_cmbEdgeLock->currentIndex());
     s.edgeHide = m_chkEdgeHide->isChecked() && (s.edgeLock != EdgeLock::None);

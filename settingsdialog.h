@@ -14,8 +14,11 @@
 #include <QTabWidget>
 #include <QTimer>
 #include <QTranslator>
+#include <QStringList>
+#include <QVector>
 
 class QKeySequenceEdit;
+class QListWidget;
 
 #ifdef HAVE_MULTIMEDIA
 class AudioClickListener;
@@ -58,7 +61,6 @@ struct AppSettings {
     bool showModCtrl          = true;
     bool showModAlt           = true;
     bool showModShift         = true;
-    bool showExitButton       = true;
     bool showQuitButton       = true;
     bool showDwellActiveBtn   = true;
 
@@ -96,6 +98,12 @@ struct AppSettings {
     // Language (ISO code: "en", "fr", "es", "zh_CN", "ja", "ko")
     QString language         = "en";
 
+    // Order the click-action buttons appear in on the toolbar, as a list of
+    // stable ids (see clickButtonDescs()).  Empty = canonical/default order.
+    // Only affects ordering; per-button visibility still lives in the show*
+    // flags above.
+    QStringList buttonOrder;
+
     // Settings-window font zoom (percent, 80–200).  Scales only the settings
     // dialog's own text for readability; the toolbar is unaffected.
     int settingsFontScale    = 100;
@@ -107,6 +115,21 @@ struct AppSettings {
     // Custom hotkey buttons (up to 3)
     HotkeySlot hotkeys[3];
 };
+
+// ── Reorderable click buttons ────────────────────────────────────────────────
+// Maps a stable button id to the AppSettings visibility flag it controls.  The
+// order of clickButtonDescs() is the canonical/default toolbar order; the user's
+// saved order (AppSettings::buttonOrder) is layered on top via
+// orderedClickButtonIds().  Shared by MainWindow (to lay out the toolbar) and
+// SettingsDialog (to populate the reorder list).
+struct ClickButtonDesc {
+    const char*        id;
+    bool AppSettings::* show;
+};
+const QVector<ClickButtonDesc>& clickButtonDescs();
+// Effective id order for the given settings: recognised saved ids first (no
+// duplicates), then any canonical ids the saved order didn't cover.
+QStringList orderedClickButtonIds(const AppSettings& s);
 
 class SettingsDialog : public QDialog
 {
@@ -141,6 +164,12 @@ private:
     // Re-apply the dialog stylesheet at the current m_fontScale so the whole
     // settings window scales with the "+/-" zoom control.
     void applyFontScale();
+    // Reorder list helpers: move the selected click button up (-1) / down (+1),
+    // keep the Move buttons enabled state in sync, and translate an id to its
+    // display label.
+    void moveSelectedButton(int delta);
+    void updateMoveButtons();
+    QString clickButtonLabel(const QString& id) const;
 #ifdef Q_OS_LINUX
     // When no on-screen keyboard is installed, offer to install one through the
     // system package manager (with a graphical pkexec password prompt) rather
@@ -184,25 +213,13 @@ private:
     QLabel*      m_lblRepeatMode = nullptr;
     QCheckBox*   m_chkRepeatMode;
 
-    // Buttons visibility
-    QCheckBox*   m_chkNoClick;
-    QCheckBox*   m_chkLeftClick;
-    QCheckBox*   m_chkLeftDouble;
-    QCheckBox*   m_chkLeftDrag;
-    QCheckBox*   m_chkRightClick;
-    QCheckBox*   m_chkRightDouble;
-    QCheckBox*   m_chkRightDrag;
-    QCheckBox*   m_chkMiddleClick;
-    QCheckBox*   m_chkMiddleDouble;
-    QCheckBox*   m_chkScrollUp;
-    QCheckBox*   m_chkScrollDown;
-    QCheckBox*   m_chkScrollHoriz;
-    QCheckBox*   m_chkModCtrl;
-    QCheckBox*   m_chkModAlt;
-    QCheckBox*   m_chkModShift;
-    QCheckBox*   m_chkExitButton;
-    QCheckBox*   m_chkQuitButton;
-    QCheckBox*   m_chkDwellActiveBtn;
+    // Buttons visibility + order — the click-action buttons live in a reorderable
+    // checkable list (check = visible, row order = toolbar order); Move Up/Down
+    // reorder the selected row.  Modifiers and the extra buttons below stay as
+    // plain checkboxes (they occupy fixed toolbar sections and aren't reordered).
+    QListWidget* m_btnOrderList = nullptr;
+    QPushButton* m_btnMoveUp    = nullptr;
+    QPushButton* m_btnMoveDown  = nullptr;
 
     // Window
     QSlider*     m_opacitySlider;

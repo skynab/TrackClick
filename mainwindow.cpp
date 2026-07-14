@@ -12,6 +12,7 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QGridLayout>
+#include <QStyle>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QScreen>
@@ -746,6 +747,21 @@ static QString modBtnStyle(bool selected, bool large)
                   "QPushButton:hover { background:#4A4A4A; border:1px solid #FFA600; color:#FFA600; }").arg(fs).arg(pad);
 }
 
+// Uniform minimum cell size for every toolbar button, so click buttons,
+// modifiers, Dwell Active, Quit and hotkeys share the same footprint and line
+// up in the grid regardless of which are shown.  Width is 0 in the vertical
+// modes (the single/double columns stretch); fixed otherwise.
+static QSize toolbarButtonMinSize(ButtonLayout layout, bool large)
+{
+    switch (layout) {
+        case ButtonLayout::Horizontal: return QSize(60, large ? 72 : 54);
+        case ButtonLayout::Rectangle:  return QSize(48, large ? 64 : 48);
+        case ButtonLayout::Vertical:
+        case ButtonLayout::VerticalTwo:
+        default:                       return QSize(0,  large ? 54 : 36);
+    }
+}
+
 void MainWindow::rebuildButtons()
 {
     // Clear existing
@@ -805,11 +821,11 @@ void MainWindow::rebuildButtons()
         return btn;
     };
 
-    // Shared look/sizing for the modifier, Dwell Active and Quit buttons.
+    // Shared look/sizing for the modifier, Dwell Active, Quit and hotkey buttons
+    // — the same footprint as the click buttons so everything aligns in the grid.
     const bool  large   = m_settings.largeButtons;
     auto modStyle = [large](bool on) -> QString { return modBtnStyle(on, large); };
-    const QSize modSize = isVerticalMode ? QSize(0, large ? 32 : 22)
-                                         : QSize(large ? 48 : 32, large ? 40 : 28);
+    const QSize modSize = toolbarButtonMinSize(m_settings.buttonLayout, large);
 
     // Factory: a checkable modifier button (Ctrl/Alt/Shift).  Assigns the member
     // pointer and toggles the given modifier bit.
@@ -882,7 +898,7 @@ void MainWindow::rebuildButtons()
             ? seq.toString(QKeySequence::NativeText) : slot.label;
         if (displayLabel.isEmpty()) return nullptr;
         auto* btn = new QPushButton(displayLabel, m_btnArea);
-        btn->setMinimumHeight(large ? 48 : 36);
+        btn->setMinimumSize(modSize);
         btn->setToolTip(seq.toString(QKeySequence::NativeText));
         btn->setStyleSheet(modBtnStyle(m_selectedHotkey == i, large));
         connect(btn, &QPushButton::clicked, this, [this, i]{ onHotkeySelected(i); });
@@ -966,6 +982,20 @@ void MainWindow::rebuildButtons()
             m_hotkeyBtns[i]->setStyleSheet(modBtnStyle(m_selectedHotkey == i, large));
     }
 
+    // macOS: a stylesheet-styled QPushButton reports a stale sizeHint until it is
+    // polished — which otherwise only happens on first interaction — so the
+    // modifier / hotkey / Quit buttons render misaligned and the window resizes
+    // on the first click.  Force a re-polish + geometry refresh now so the layout
+    // (and adjustSize below) uses their correct size from the start.  Click
+    // buttons are QToolButtons and unaffected, so this only touches QPushButtons.
+    for (QPushButton* b : m_btnArea->findChildren<QPushButton*>()) {
+        b->style()->unpolish(b);
+        b->style()->polish(b);
+        b->updateGeometry();
+    }
+    if (auto* lay = m_btnArea->layout())
+        lay->activate();
+
     adjustSize();
 }
 
@@ -979,18 +1009,12 @@ ClickButton* MainWindow::makeButton(const QString& label, const QString& tooltip
     btn->setLargeMode(m_settings.largeButtons);   // scales style, font, icon size
 
     const bool large = m_settings.largeButtons;
-    if (m_settings.buttonLayout == ButtonLayout::Vertical ||
-        m_settings.buttonLayout == ButtonLayout::VerticalTwo) {
-        btn->setMinimumSize(0, large ? 54 : 36);
-        btn->setIconSize(QSize(large ? 36 : 24, large ? 36 : 24));
-    } else if (m_settings.buttonLayout == ButtonLayout::Horizontal) {
-        btn->setMinimumSize(60, large ? 72 : 54);
+    btn->setMinimumSize(toolbarButtonMinSize(m_settings.buttonLayout, large));
+    // Icon size is click-button specific (labels sit under the icon).
+    if (m_settings.buttonLayout == ButtonLayout::Horizontal)
         btn->setIconSize(QSize(large ? 42 : 30, large ? 42 : 30));
-    } else {
-        // Rectangle
-        btn->setMinimumSize(48, large ? 64 : 48);
+    else
         btn->setIconSize(QSize(large ? 36 : 24, large ? 36 : 24));
-    }
     return btn;
 }
 

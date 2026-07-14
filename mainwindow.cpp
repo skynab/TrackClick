@@ -29,6 +29,8 @@
 #include "translations/tsparser.h"
 #ifdef Q_OS_MAC
 #  include "macos_utils.h"
+#  include <QDesktopServices>
+#  include <QUrl>
 #endif
 
 // ─────────────────────────────────────────────────────────────
@@ -530,6 +532,41 @@ void MainWindow::promptForInputAccessIfNeeded()
             tr("Permission was not granted. TrackClick will ask again next time "
                "it starts. (On an X11/Xorg session this permission is not needed.)"));
     }
+#elif defined(Q_OS_MAC)
+    if (ClickInjector::hasInputDeviceAccess())
+        return;   // already trusted for Accessibility
+
+    // Respect a previous "Don't ask again" choice.
+    if (m_persist.value("mac/skipAccessibilityPrompt", false).toBool())
+        return;
+
+    QMessageBox box(this);
+    box.setIcon(QMessageBox::Question);
+    box.setWindowTitle(tr("Enable clicking"));
+    box.setText(tr("TrackClick needs Accessibility permission to move and click the mouse."));
+    box.setInformativeText(tr(
+        "Until it's granted in System Settings ▸ Privacy & Security ▸ Accessibility, "
+        "the dwell countdown runs but no click is performed. You can also reach this "
+        "later from the Settings dialog."));
+    QPushButton* grant = box.addButton(tr("Open Accessibility Settings…"), QMessageBox::AcceptRole);
+    box.addButton(tr("Not Now"), QMessageBox::RejectRole);
+    QPushButton* never = box.addButton(tr("Don't Ask Again"), QMessageBox::ActionRole);
+    box.setDefaultButton(grant);
+    box.exec();
+
+    if (box.clickedButton() == never)
+        m_persist.setValue("mac/skipAccessibilityPrompt", true);
+    if (box.clickedButton() != grant)
+        return;
+
+    // Register TrackClick in the Accessibility list and trigger macOS's own
+    // prompt, then open the pane so the user can flip the switch. The grant
+    // only takes effect after a relaunch.
+    macAccessibilityTrusted(/*promptIfNeeded=*/true);
+    QDesktopServices::openUrl(QUrl(
+        "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"));
+    QMessageBox::information(this, tr("TrackClick"),
+        tr("Enable TrackClick in the Accessibility list, then restart the app."));
 #endif
 }
 

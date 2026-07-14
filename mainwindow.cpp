@@ -128,7 +128,7 @@ void ClickButton::setLargeMode(bool large)
     m_large = large;
     updateStyle();
     if (!m_iconName.isEmpty()) {
-        const int sz = large ? 36 : 24;
+        const int sz = large ? 54 : 36;
         setIconSize(QSize(sz, sz));
     }
 }
@@ -1060,14 +1060,14 @@ ClickButton* MainWindow::makeButton(const QString& label, const QString& tooltip
     if (m_settings.buttonLayout == ButtonLayout::Vertical ||
         m_settings.buttonLayout == ButtonLayout::VerticalTwo) {
         btn->setMinimumSize(0, large ? 54 : 36);
-        btn->setIconSize(QSize(large ? 24 : 16, large ? 24 : 16));
+        btn->setIconSize(QSize(large ? 36 : 24, large ? 36 : 24));
     } else if (m_settings.buttonLayout == ButtonLayout::Horizontal) {
         btn->setMinimumSize(60, large ? 72 : 54);
-        btn->setIconSize(QSize(large ? 28 : 20, large ? 28 : 20));
+        btn->setIconSize(QSize(large ? 42 : 30, large ? 42 : 30));
     } else {
         // Rectangle
         btn->setMinimumSize(48, large ? 64 : 48);
-        btn->setIconSize(QSize(large ? 24 : 16, large ? 24 : 16));
+        btn->setIconSize(QSize(large ? 36 : 24, large ? 36 : 24));
     }
     return btn;
 }

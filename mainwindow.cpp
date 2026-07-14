@@ -872,6 +872,27 @@ void MainWindow::rebuildButtons()
         return quitBtn;
     };
 
+    // Factory: a custom-hotkey button for slot i, or nullptr if that slot is off
+    // or has no key assigned.  Flows inline with the other reorderable buttons.
+    auto makeHotkey = [&](int i) -> QWidget* {
+        const auto& slot = m_settings.hotkeys[i];
+        if (!slot.enabled || slot.keySequence.isEmpty()) return nullptr;
+        QKeySequence seq(slot.keySequence, QKeySequence::PortableText);
+        const QString displayLabel = slot.label.isEmpty()
+            ? seq.toString(QKeySequence::NativeText) : slot.label;
+        if (displayLabel.isEmpty()) return nullptr;
+        auto* btn = new QPushButton(displayLabel, m_btnArea);
+        btn->setMinimumHeight(large ? 48 : 36);
+        btn->setToolTip(seq.toString(QKeySequence::NativeText));
+        btn->setStyleSheet(modBtnStyle(m_selectedHotkey == i, large));
+        connect(btn, &QPushButton::clicked, this, [this, i]{ onHotkeySelected(i); });
+        new HotkeyHoverFilter(btn,
+            [this, i]{ m_hoveredHotkey = i; m_hoverTimer->start(hoverSelectMs()); },
+            [this]   { m_hoveredHotkey = -1; m_hoverTimer->stop(); });
+        m_hotkeyBtns[i] = btn;
+        return btn;
+    };
+
     // Placement: column-flow with wrap (Horizontal has COLS large, so one row).
     auto place = [&](QWidget* w){
         grid->addWidget(w, row, col++);
@@ -913,6 +934,11 @@ void MainWindow::rebuildButtons()
             if (m_settings.showDwellActiveBtn) place(makeDwellActive());
         } else if (id == QLatin1String("quit")) {
             if (m_settings.showQuitButton)     place(makeQuit());
+        } else if (id.startsWith(QLatin1String("hotkey_"))) {
+            bool ok = false;
+            const int i = id.mid(7).toInt(&ok);
+            if (ok && i >= 0 && i < 3)
+                if (QWidget* w = makeHotkey(i)) place(w);
         } else {
             auto it = meta.find(id);
             if (it != meta.end() && it->show)
@@ -921,77 +947,15 @@ void MainWindow::rebuildButtons()
     }
 
     // Horizontal mode: give every occupied column equal stretch so buttons fill
-    // the window width.  fullSpan lets the full-width hotkey rows below span the
-    // same columns without creating phantom empty ones.
-    const int fullSpan = (m_settings.buttonLayout == ButtonLayout::Horizontal) ? qMax(1, col) : COLS;
+    // the window width.
     if (m_settings.buttonLayout == ButtonLayout::Horizontal) {
         for (int c = 0; c < col; ++c)
             grid->setColumnStretch(c, 1);
     }
 
-    // Rectangle: pad an incomplete final row with spacers, then start the hotkey
-    // section on a fresh row so the full-width hotkey rows line up.
-    if (m_settings.buttonLayout == ButtonLayout::Rectangle) {
-        while (col > 0 && col < COLS) {
-            auto* spacer = new QWidget;
-            spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-            grid->addWidget(spacer, row, col++);
-        }
-    }
-    if (col > 0) { row++; col = 0; }
-
-    // ── Custom hotkey buttons ─────────────────────────────────
-    // Not part of the reorder list; placed after the reorderable buttons.
-    // Build all enabled hotkey buttons first, then place them.
-    // In horizontal mode they share one sub-row; in other modes each gets its
-    // own full-width row (labels can be long so space matters there).
-    QWidget*    hkRowWidget = nullptr;
-    QHBoxLayout* hkRowHBox  = nullptr;
-    if (m_settings.buttonLayout == ButtonLayout::Horizontal) {
-        hkRowWidget = new QWidget(m_btnArea);
-        hkRowWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-        hkRowHBox = new QHBoxLayout(hkRowWidget);
-        hkRowHBox->setSpacing(4);
-        hkRowHBox->setContentsMargins(0, 0, 0, 0);
-    }
-
-    for (int i = 0; i < 3; ++i) {
-        const auto& slot = m_settings.hotkeys[i];
-        if (!slot.enabled || slot.keySequence.isEmpty()) continue;
-
-        QKeySequence seq(slot.keySequence, QKeySequence::PortableText);
-        const QString displayLabel = slot.label.isEmpty()
-            ? seq.toString(QKeySequence::NativeText)
-            : slot.label;
-        if (displayLabel.isEmpty()) continue;
-
-        auto* btn = new QPushButton(displayLabel, m_btnArea);
-        btn->setMinimumHeight(large ? 48 : 36);
-        btn->setToolTip(seq.toString(QKeySequence::NativeText));
-        btn->setStyleSheet(modBtnStyle(m_selectedHotkey == i, large));
-
-        connect(btn, &QPushButton::clicked, this, [this, i]{ onHotkeySelected(i); });
-        new HotkeyHoverFilter(btn,
-            [this, i]{ m_hoveredHotkey = i; m_hoverTimer->start(hoverSelectMs()); },
-            [this]   { m_hoveredHotkey = -1; m_hoverTimer->stop(); });
-
-        m_hotkeyBtns[i] = btn;
-
-        if (hkRowHBox) {
-            hkRowHBox->addWidget(btn);
-        } else {
-            if (col > 0) { col = 0; row++; }
-            grid->addWidget(btn, row++, 0, 1, fullSpan);
-        }
-    }
-
-    if (hkRowWidget && hkRowHBox->count() > 0) {
-        if (col > 0) { col = 0; row++; }
-        grid->addWidget(hkRowWidget, row++, 0, 1, fullSpan);
-    }
-
-    // Ctrl / Alt / Shift / Dwell Active / Quit are created by the factories and
-    // placed inline in the ordered pass above, so nothing more to do here.
+    // Click buttons, modifiers, Dwell Active, Quit and the custom hotkey buttons
+    // are all created by the factories and placed inline in the ordered pass
+    // above, so there's nothing more to lay out here.
 
     // Update selection highlight — suppress ClickButton highlight when a hotkey is selected
     const ClickType selForBtns = (m_selectedHotkey >= 0) ? ClickType::None : m_selectedType;

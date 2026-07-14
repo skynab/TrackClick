@@ -196,34 +196,75 @@ const QVector<ClickButtonDesc>& clickButtonDescs()
     return v;
 }
 
-QStringList orderedClickButtonIds(const AppSettings& s)
+// Number of custom hotkey slots; their reorder ids are "hotkey_0".."hotkey_2".
+static constexpr int kHotkeyCount = 3;
+
+int hotkeyIndexForId(const QString& id)
 {
-    QStringList result;
-    auto isKnown = [](const QString& id) {
-        for (const auto& d : clickButtonDescs())
-            if (id == QLatin1String(d.id)) return true;
-        return false;
-    };
-    // Saved order first (recognised ids, no duplicates).
-    for (const QString& id : s.buttonOrder)
-        if (isKnown(id) && !result.contains(id))
-            result << id;
-    // Then any canonical ids the saved order didn't cover (new/unsaved buttons).
+    if (!id.startsWith(QLatin1String("hotkey_"))) return -1;
+    bool ok = false;
+    const int idx = id.mid(7).toInt(&ok);
+    return (ok && idx >= 0 && idx < kHotkeyCount) ? idx : -1;
+}
+
+// Full canonical id set / default order: the bool-backed buttons, then the
+// hotkey slots — but Dwell Active and Quit are pushed to the very bottom so by
+// default they sit at the end of the list (below the hotkeys).
+static QStringList canonicalButtonIds()
+{
+    QStringList ids;
     for (const auto& d : clickButtonDescs()) {
         const QString id = QLatin1String(d.id);
+        if (id == QLatin1String("dwell_active") || id == QLatin1String("quit"))
+            continue;   // appended at the very end below
+        ids << id;
+    }
+    for (int i = 0; i < kHotkeyCount; ++i)
+        ids << QStringLiteral("hotkey_%1").arg(i);
+    ids << QStringLiteral("dwell_active") << QStringLiteral("quit");
+    return ids;
+}
+
+QStringList orderedClickButtonIds(const AppSettings& s)
+{
+    const QStringList canon = canonicalButtonIds();
+    QStringList result;
+    // Saved order first (recognised ids, no duplicates).
+    for (const QString& id : s.buttonOrder)
+        if (canon.contains(id) && !result.contains(id))
+            result << id;
+    // Then any canonical ids the saved order didn't cover (new/unsaved buttons).
+    for (const QString& id : canon)
         if (!result.contains(id))
             result << id;
-    }
     return result;
 }
 
-// The AppSettings visibility flag controlled by a given id (nullptr if unknown).
+// The AppSettings visibility flag controlled by a bool-backed id (nullptr for an
+// unknown or hotkey-backed id).
 static bool AppSettings::* showMemberForId(const QString& id)
 {
     for (const auto& d : clickButtonDescs())
         if (id == QLatin1String(d.id))
             return d.show;
     return nullptr;
+}
+
+// Whether a reorder-list id is currently enabled/visible.  Handles both the
+// bool-backed buttons and the hotkey slots (hotkeys[i].enabled).
+static bool buttonEnabled(const AppSettings& s, const QString& id)
+{
+    const int hk = hotkeyIndexForId(id);
+    if (hk >= 0) return s.hotkeys[hk].enabled;
+    if (bool AppSettings::* memb = showMemberForId(id)) return s.*memb;
+    return false;
+}
+
+static void setButtonEnabled(AppSettings& s, const QString& id, bool on)
+{
+    const int hk = hotkeyIndexForId(id);
+    if (hk >= 0) { s.hotkeys[hk].enabled = on; return; }
+    if (bool AppSettings::* memb = showMemberForId(id)) s.*memb = on;
 }
 
 // ── Sensitivity Tester ────────────────────────────────────────────────────────
@@ -577,7 +618,7 @@ void SettingsDialog::retranslateUi()
 
     m_lblCustomHotkeys->setText(tr("Custom Hotkeys"));
     for (int i = 0; i < 3; ++i) {
-        m_chkHotkey[i]->setText(tr("Hotkey %1").arg(i + 1));
+        m_lblHotkey[i]->setText(tr("Hotkey %1").arg(i + 1));
         m_edtHotkeyLabel[i]->setPlaceholderText(tr("Label (optional)"));
     }
 
@@ -904,8 +945,11 @@ void SettingsDialog::buildUi()
         "color: #FFA600; font-weight: bold; background: transparent;");
     grid->addWidget(m_lblCustomHotkeys, row++, 0, 1, 3);
 
+    // Each row lets the user edit a hotkey's label + key combination.  Turning a
+    // hotkey on/off (and ordering it) is done in the reorder list above, so there
+    // is no checkbox here — just a static "Hotkey N" label.
     for (int i = 0; i < 3; ++i) {
-        m_chkHotkey[i] = new QCheckBox(tr("Hotkey %1").arg(i + 1));
+        m_lblHotkey[i] = new QLabel(tr("Hotkey %1").arg(i + 1));
 
         m_edtHotkeyLabel[i] = new QLineEdit;
         m_edtHotkeyLabel[i]->setPlaceholderText(tr("Label (optional)"));
@@ -918,13 +962,7 @@ void SettingsDialog::buildUi()
 #if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
         m_kseHotkey[i]->setMaximumSequenceLength(1);
 #endif
-        auto updateRowEnabled = [this, i](bool on) {
-            m_edtHotkeyLabel[i]->setEnabled(on);
-            m_kseHotkey[i]->setEnabled(on);
-        };
-        connect(m_chkHotkey[i], &QCheckBox::toggled, this, updateRowEnabled);
-
-        grid->addWidget(m_chkHotkey[i],      row, 0);
+        grid->addWidget(m_lblHotkey[i],      row, 0);
         grid->addWidget(m_edtHotkeyLabel[i], row, 1);
         grid->addWidget(m_kseHotkey[i],      row, 2);
         row++;
@@ -1252,6 +1290,8 @@ QString SettingsDialog::clickButtonLabel(const QString& id) const
     if (id == QLatin1String("shift"))         return tr("Shift Modifier");
     if (id == QLatin1String("dwell_active"))  return tr("Dwell Active Button");
     if (id == QLatin1String("quit"))          return tr("Quit Button");
+    const int hk = hotkeyIndexForId(id);
+    if (hk >= 0)                              return tr("Hotkey %1").arg(hk + 1);
     return id;
 }
 
@@ -1294,10 +1334,7 @@ void SettingsDialog::loadFrom(const AppSettings& s)
         auto* item = new QListWidgetItem(clickButtonLabel(id), m_btnOrderList);
         item->setData(Qt::UserRole, id);
         item->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled | Qt::ItemIsSelectable);
-        bool on = false;
-        if (bool AppSettings::* memb = showMemberForId(id))
-            on = s.*memb;
-        item->setCheckState(on ? Qt::Checked : Qt::Unchecked);
+        item->setCheckState(buttonEnabled(s, id) ? Qt::Checked : Qt::Unchecked);
     }
     if (m_btnOrderList->count() > 0)
         m_btnOrderList->setCurrentRow(0);
@@ -1340,12 +1377,11 @@ void SettingsDialog::loadFrom(const AppSettings& s)
     int devIdx = m_cmbAudioDevice->findData(s.audioInputDevice);
     m_cmbAudioDevice->setCurrentIndex(devIdx >= 0 ? devIdx : 0);
 
+    // Hotkey on/off is edited in the reorder list; the label + key fields stay
+    // editable here regardless of enabled state.
     for (int i = 0; i < 3; ++i) {
-        m_chkHotkey[i]->setChecked(s.hotkeys[i].enabled);
         m_edtHotkeyLabel[i]->setText(s.hotkeys[i].label);
         m_kseHotkey[i]->setKeySequence(QKeySequence(s.hotkeys[i].keySequence));
-        m_edtHotkeyLabel[i]->setEnabled(s.hotkeys[i].enabled);
-        m_kseHotkey[i]->setEnabled(s.hotkeys[i].enabled);
     }
 }
 
@@ -1365,8 +1401,7 @@ AppSettings SettingsDialog::readUi() const
         QListWidgetItem* item = m_btnOrderList->item(i);
         const QString id = item->data(Qt::UserRole).toString();
         s.buttonOrder << id;
-        if (bool AppSettings::* memb = showMemberForId(id))
-            s.*memb = (item->checkState() == Qt::Checked);
+        setButtonEnabled(s, id, item->checkState() == Qt::Checked);
     }
 
     s.edgeLock = static_cast<EdgeLock>(m_cmbEdgeLock->currentIndex());
@@ -1389,8 +1424,9 @@ AppSettings SettingsDialog::readUi() const
     s.audioClickThreshold = m_audioThreshSlider->value();
     s.audioInputDevice    = m_cmbAudioDevice->currentData().toString();
 
+    // Hotkey on/off comes from the reorder list above; here we only read the
+    // editable label + key sequence for each slot.
     for (int i = 0; i < 3; ++i) {
-        s.hotkeys[i].enabled     = m_chkHotkey[i]->isChecked();
         s.hotkeys[i].label       = m_edtHotkeyLabel[i]->text().trimmed();
         s.hotkeys[i].keySequence = m_kseHotkey[i]->keySequence()
                                        .toString(QKeySequence::PortableText);

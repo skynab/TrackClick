@@ -258,7 +258,7 @@ private:
 
     // Custom Hotkeys section (Buttons tab)
     QLabel*           m_lblCustomHotkeys  = nullptr;
-    QCheckBox*        m_chkHotkey[3]      = {};
+    QLabel*           m_lblHotkey[3]      = {};
     QLineEdit*        m_edtHotkeyLabel[3] = {};
     QKeySequenceEdit* m_kseHotkey[3]      = {};
 

@@ -1240,7 +1240,20 @@ void MainWindow::applyEdgeLock()
     m_edgeHideCountMs = 0;
 
     const EdgeLock lock = m_settings.edgeLock;
-    if (lock == EdgeLock::None) return;
+    if (lock == EdgeLock::None) {
+        // Edge-lock (and its slide-off-when-idle) is off, so nothing will pull the
+        // window back on-screen. A previous slide-away can leave it parked with only
+        // a thin peek strip showing; with the lock now removed it would be stranded
+        // there, unreachable. If its centre has landed off every screen, recentre it
+        // on the primary screen so the window is always visible and draggable.
+        if (!QGuiApplication::screenAt(frameGeometry().center())) {
+            const QRect avail = QGuiApplication::primaryScreen()->availableGeometry();
+            move(avail.left() + (avail.width()  - width())  / 2,
+                 avail.top()  + (avail.height() - height()) / 2);
+            raise();
+        }
+        return;
+    }
 
     QRect avail = QGuiApplication::primaryScreen()->availableGeometry();
     int shownX  = (lock == EdgeLock::Left)

@@ -40,7 +40,7 @@ int main(int argc, char* argv[])
 
     QApplication app(argc, argv);
     app.setApplicationName("TrackClick");
-    app.setApplicationVersion("0.9.5");
+    app.setApplicationVersion("0.9.6");
     app.setOrganizationName("TrackClick");
     app.setOrganizationDomain("trackclick.app");
 

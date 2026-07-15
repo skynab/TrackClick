@@ -5,7 +5,7 @@
 > either don't want to advertise or that are too in-the-weeds for users. Keep
 > sensitive specifics here, not in user-facing docs.
 
-Current version: **0.9.4** (pre-1.0 — see "Release gaps" below).
+Current version: **0.9.6** (pre-1.0 — see "Release gaps" below).
 macOS bundle id: `com.trackclick.TrackClick`.
 
 ---

@@ -1132,9 +1132,11 @@ void SettingsDialog::buildUi()
     m_audioMeter->setValue(0);
     m_audioMeter->setTextVisible(false);
     m_audioMeter->setFixedHeight(10);
+    // Cyan level fill — matches the main-window audio meter so users correlate
+    // the audio-click feature across both screens (dwell stays orange).
     m_audioMeter->setStyleSheet(
         "QProgressBar{background:#1A1A1A;border:1px solid #555;border-radius:3px;}"
-        "QProgressBar::chunk{background:#FFA600;border-radius:2px;}");
+        "QProgressBar::chunk{background:#00EBFF;border-radius:2px;}");
     calGrid->addWidget(m_lblAudioMeter, 2, 0);
     calGrid->addWidget(m_audioMeter,    2, 1);
     calGrid->setColumnStretch(1, 1);

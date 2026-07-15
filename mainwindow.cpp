@@ -674,10 +674,12 @@ void MainWindow::buildUi()
     m_audioMeter->setFixedHeight(8);
     m_audioMeter->setTextVisible(false);
     m_audioMeter->setMinimumWidth(0);
+    // Cyan (vs the dwell bar's orange) so the active mode is obvious at a glance,
+    // and matched to the settings calibration meter for cross-screen correlation.
     m_audioMeter->setStyleSheet(
-        "QProgressBar { border: 1px solid #2EA043; border-radius: 3px;"
+        "QProgressBar { border: 1px solid #00A5B8; border-radius: 3px;"
         " background: rgba(0,0,0,0.5); }"
-        "QProgressBar::chunk { background: #34C759; border-radius: 2px; }");
+        "QProgressBar::chunk { background: #00EBFF; border-radius: 2px; }");
     m_audioMeter->setVisible(false);
     root->addWidget(m_audioMeter);
 #ifdef HAVE_MULTIMEDIA

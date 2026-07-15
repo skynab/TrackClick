@@ -468,7 +468,9 @@ void SensitivityTesterDialog::finishMeasurement()
     m_bar->setValue(100);
 
     double avg     = m_samples > 0 ? m_sumDelta / m_samples : 1.0;
-    int recommended = qBound(1, static_cast<int>(std::ceil(avg * 2.0)), 100);
+    // Recommend ~2x what the earlier factor produced: measured jitter alone was
+    // running too low to filter real-world cursor tremor, so scale it up.
+    int recommended = qBound(1, static_cast<int>(std::ceil(avg * 4.0)), 100);
 
     m_resultLbl->setText(tr("Sensitivity set to %1 px").arg(recommended));
     m_resultLbl->show();

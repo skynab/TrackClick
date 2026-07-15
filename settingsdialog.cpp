@@ -87,7 +87,14 @@ QListWidget {
     font-size: @FS@px;
     outline: none;
 }
-QListWidget::item { padding: 3px 4px; }
+/* A background on the base item rule is deliberate: it forces every row through
+   the stylesheet render path so the 25px QSS indicator width below is honoured
+   for text layout.  Without it, unselected rows fall back to the native style
+   (which reserves only its ~13px indicator metric) and the wide toggle overhangs
+   the label on Windows — while selected rows, matching the :selected background
+   rule, lay out correctly.  #1A1A1A matches the list background, so no visual
+   change; it only fixes the text/toggle overlap. */
+QListWidget::item { padding: 3px 4px; background: #1A1A1A; }
 QListWidget::item:selected { background: #3D3D3D; color: #FFA600; }
 QListWidget::indicator {
     width: 25px; height: 11px;

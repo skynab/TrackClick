@@ -15,6 +15,8 @@
 #include <QGridLayout>
 #include <QFormLayout>
 #include <QListWidget>
+#include <QStyle>
+#include <QStyleFactory>
 #include <QGroupBox>
 #include <QLabel>
 #include <QPainter>
@@ -911,6 +913,18 @@ void SettingsDialog::buildUi()
     m_btnOrderList = new QListWidget;
     m_btnOrderList->setSelectionMode(QAbstractItemView::SingleSelection);
     m_btnOrderList->setMinimumHeight(200);
+#ifdef Q_OS_WIN
+    // The visibility toggle is the item's check indicator, styled 25px wide in
+    // QSS.  The native Windows (windowsvista) style reserves only its own ~13px
+    // indicator metric for item-view checks, so the wider toggle image overhangs
+    // and paints over the start of the label.  macOS/Fusion honour the QSS width
+    // and reserve the full 25px.  Render just this list with Fusion on Windows so
+    // it lays out like the other platforms; the dialog's QSS still applies on top.
+    if (QStyle* fusion = QStyleFactory::create(QStringLiteral("Fusion"))) {
+        fusion->setParent(m_btnOrderList);   // widget owns it → freed with the list
+        m_btnOrderList->setStyle(fusion);
+    }
+#endif
     connect(m_btnOrderList, &QListWidget::currentRowChanged,
             this, [this](int){ updateMoveButtons(); });
     grid->addWidget(m_btnOrderList, 1, 0, 1, 2);

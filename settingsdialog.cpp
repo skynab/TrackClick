@@ -15,8 +15,6 @@
 #include <QGridLayout>
 #include <QFormLayout>
 #include <QListWidget>
-#include <QStyle>
-#include <QStyleFactory>
 #include <QGroupBox>
 #include <QLabel>
 #include <QPainter>
@@ -89,7 +87,14 @@ QListWidget {
     font-size: @FS@px;
     outline: none;
 }
-QListWidget::item { padding: 3px 4px; }
+/* A background on the base item rule is deliberate: it forces every row through
+   the stylesheet render path so the 25px QSS indicator width below is honoured
+   for text layout.  Without it, unselected rows fall back to the native style
+   (which reserves only its ~13px indicator metric) and the wide toggle overhangs
+   the label on Windows — while selected rows, matching the :selected background
+   rule, lay out correctly.  #1A1A1A matches the list background, so no visual
+   change; it only fixes the text/toggle overlap. */
+QListWidget::item { padding: 3px 4px; background: #1A1A1A; }
 QListWidget::item:selected { background: #3D3D3D; color: #FFA600; }
 QListWidget::indicator {
     width: 25px; height: 11px;
@@ -913,18 +918,6 @@ void SettingsDialog::buildUi()
     m_btnOrderList = new QListWidget;
     m_btnOrderList->setSelectionMode(QAbstractItemView::SingleSelection);
     m_btnOrderList->setMinimumHeight(200);
-#ifdef Q_OS_WIN
-    // The visibility toggle is the item's check indicator, styled 25px wide in
-    // QSS.  The native Windows (windowsvista) style reserves only its own ~13px
-    // indicator metric for item-view checks, so the wider toggle image overhangs
-    // and paints over the start of the label.  macOS/Fusion honour the QSS width
-    // and reserve the full 25px.  Render just this list with Fusion on Windows so
-    // it lays out like the other platforms; the dialog's QSS still applies on top.
-    if (QStyle* fusion = QStyleFactory::create(QStringLiteral("Fusion"))) {
-        fusion->setParent(m_btnOrderList);   // widget owns it → freed with the list
-        m_btnOrderList->setStyle(fusion);
-    }
-#endif
     connect(m_btnOrderList, &QListWidget::currentRowChanged,
             this, [this](int){ updateMoveButtons(); });
     grid->addWidget(m_btnOrderList, 1, 0, 1, 2);

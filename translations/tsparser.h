@@ -31,3 +31,12 @@ private:
 //   4. :/translations                                     ← embedded fallback
 // Returns nullptr only when lang == "en" or no file is found at all.
 QTranslator* loadBestTranslator(const QString& lang, QObject* parent = nullptr);
+
+// Install Qt's own bundled catalog (qtbase_<lang>.qm) so text rendered by Qt's
+// built-in widgets — e.g. QKeySequenceEdit's "Press shortcut" placeholder and the
+// standard line-edit context menu — follows the app language. Our own .ts files
+// only cover our strings; Qt-provided strings come from Qt's catalog. Replaces any
+// previously-installed Qt catalog (manages a single process-wide translator), so
+// it is safe to call on every language change. No-op for "en" or when the
+// platform's Qt translations aren't installed.
+void installQtBaseTranslator(const QString& lang);

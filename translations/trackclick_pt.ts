@@ -40,7 +40,8 @@
     <message><source>Hold Alt modifier for next click</source><translation>Manter Alt para o próximo clique</translation></message>
     <message><source>Hold Shift modifier for next click</source><translation>Manter Shift para o próximo clique</translation></message>
     <message><source>Ready — hover to dwell-click</source><translation>Pronto — passe o cursor para clicar por permanência</translation></message>
-    <message><source>Selected: </source><translation>Selecionado: </translation></message>
+    <message><source>Selected: %1</source><translation>Selecionado: %1</translation></message>
+    <message><source>Audio click active: %1</source><translation>Clique por áudio ativo: %1</translation></message>
     <message><source>Running in the system tray. Right-click the tray icon to quit.</source><translation>Executando na bandeja do sistema. Clique com botão direito no ícone para sair.</translation></message>
     <message><source>Quit Program</source><translation>Sair do programa</translation></message>
     <message><source>No Click</source><translation>Sem clique</translation></message>
@@ -71,7 +72,10 @@
     <message><source>Repeat click:</source><translation>Repetir clique:</translation></message>
     <message><source>Permissions:</source><translation>Permissões:</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>Abrir configurações de acessibilidade…</translation></message>
-    <message><source>Visible Buttons</source><translation>Botões visíveis</translation></message>
+    <message><source>Visible Buttons (check to show, Move Up/Down to reorder)</source><translation>Botões visíveis (marque para mostrar, Cima/Baixo para reordenar)</translation></message>
+    <message><source>Move Up</source><translation>Mover para cima</translation></message>
+    <message><source>Move Down</source><translation>Mover para baixo</translation></message>
+    <message><source>Zoom:</source><translation>Zoom:</translation></message>
     <message><source>Buttons</source><translation>Botões</translation></message>
     <message><source>No Click</source><translation>Sem clique</translation></message>
     <message><source>Left Click</source><translation>Clique esquerdo</translation></message>

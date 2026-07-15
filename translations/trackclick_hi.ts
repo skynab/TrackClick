@@ -40,7 +40,8 @@
     <message><source>Hold Alt modifier for next click</source><translation>अगले क्लिक के लिए Alt दबाकर रखें</translation></message>
     <message><source>Hold Shift modifier for next click</source><translation>अगले क्लिक के लिए Shift दबाकर रखें</translation></message>
     <message><source>Ready — hover to dwell-click</source><translation>तैयार — ड्वेल-क्लिक के लिए होवर करें</translation></message>
-    <message><source>Selected: </source><translation>चयनित: </translation></message>
+    <message><source>Selected: %1</source><translation>चयनित: %1</translation></message>
+    <message><source>Audio click active: %1</source><translation>ऑडियो क्लिक सक्रिय: %1</translation></message>
     <message><source>Running in the system tray. Right-click the tray icon to quit.</source><translation>सिस्टम ट्रे में चल रहा है। बंद करने के लिए ट्रे आइकन पर राइट-क्लिक करें।</translation></message>
     <message><source>Quit Program</source><translation>प्रोग्राम बंद करें</translation></message>
     <message><source>No Click</source><translation>कोई क्लिक नहीं</translation></message>
@@ -71,7 +72,10 @@
     <message><source>Repeat click:</source><translation>क्लिक दोहराएं:</translation></message>
     <message><source>Permissions:</source><translation>अनुमतियां:</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>एक्सेसिबिलिटी सेटिंग्स खोलें…</translation></message>
-    <message><source>Visible Buttons</source><translation>दृश्य बटन</translation></message>
+    <message><source>Visible Buttons (check to show, Move Up/Down to reorder)</source><translation>दृश्य बटन (दिखाने के लिए चेक करें, क्रम बदलने के लिए ऊपर/नीचे ले जाएँ)</translation></message>
+    <message><source>Move Up</source><translation>ऊपर ले जाएँ</translation></message>
+    <message><source>Move Down</source><translation>नीचे ले जाएँ</translation></message>
+    <message><source>Zoom:</source><translation>ज़ूम:</translation></message>
     <message><source>Buttons</source><translation>बटन</translation></message>
     <message><source>No Click</source><translation>कोई क्लिक नहीं</translation></message>
     <message><source>Left Click</source><translation>बाएं क्लिक</translation></message>

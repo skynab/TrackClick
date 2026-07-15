@@ -88,6 +88,9 @@ int main(int argc, char* argv[])
         startupTranslator = loadBestTranslator(lang, &app);
         if (startupTranslator)
             app.installTranslator(startupTranslator);
+        // Also translate Qt's own built-in widget strings (e.g. QKeySequenceEdit's
+        // "Press shortcut" placeholder) for the saved language.
+        installQtBaseTranslator(lang);
     }
 
     // Don't quit when last window is hidden (keep tray alive)

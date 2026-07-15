@@ -2,6 +2,7 @@
 #include <QCoreApplication>
 #include <QDebug>
 #include <QFile>
+#include <QLibraryInfo>
 #include <QStandardPaths>
 #include <QTranslator>
 #include <QXmlStreamReader>
@@ -121,4 +122,36 @@ QTranslator* loadBestTranslator(const QString& lang, QObject* parent)
         qWarning() << "TrackClick i18n:" << lang
                    << "NO translator found (embedded parse failed or resource missing)";
     return nullptr;
+}
+
+// ─── installQtBaseTranslator ──────────────────────────────────────────────────
+void installQtBaseTranslator(const QString& lang)
+{
+    // One process-wide Qt catalog translator; swap it out on each call so this is
+    // safe to invoke on every language change.
+    static QTranslator* qtCatalog = nullptr;
+    if (qtCatalog) {
+        QCoreApplication::removeTranslator(qtCatalog);
+        delete qtCatalog;
+        qtCatalog = nullptr;
+    }
+    if (lang == "en") return;
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    const QString dir = QLibraryInfo::path(QLibraryInfo::TranslationsPath);
+#else
+    const QString dir = QLibraryInfo::location(QLibraryInfo::TranslationsPath);
+#endif
+    auto* t = new QTranslator(QCoreApplication::instance());
+    if (t->load("qtbase_" + lang, dir)) {
+        QCoreApplication::installTranslator(t);
+        qtCatalog = t;
+        if (i18nDebug())
+            qWarning() << "TrackClick i18n: Qt catalog for" << lang << "loaded from" << dir;
+    } else {
+        if (i18nDebug())
+            qWarning() << "TrackClick i18n: no Qt catalog for" << lang << "in" << dir
+                       << "(Qt-provided strings stay English)";
+        delete t;
+    }
 }

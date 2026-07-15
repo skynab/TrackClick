@@ -40,7 +40,8 @@
     <message><source>Hold Alt modifier for next click</source><translation>اگلے کلک کے لیے Alt دبائے رکھیں</translation></message>
     <message><source>Hold Shift modifier for next click</source><translation>اگلے کلک کے لیے Shift دبائے رکھیں</translation></message>
     <message><source>Ready — hover to dwell-click</source><translation>تیار — ڈویل-کلک کے لیے ہوور کریں</translation></message>
-    <message><source>Selected: </source><translation>منتخب: </translation></message>
+    <message><source>Selected: %1</source><translation>منتخب: %1</translation></message>
+    <message><source>Audio click active: %1</source><translation>آڈیو کلک فعال: %1</translation></message>
     <message><source>Running in the system tray. Right-click the tray icon to quit.</source><translation>سسٹم ٹرے میں چل رہا ہے۔ بند کرنے کے لیے ٹرے آئیکن پر رائٹ-کلک کریں۔</translation></message>
     <message><source>Quit Program</source><translation>پروگرام بند کریں</translation></message>
     <message><source>No Click</source><translation>کوئی کلک نہیں</translation></message>
@@ -71,7 +72,10 @@
     <message><source>Repeat click:</source><translation>کلک دہرائیں:</translation></message>
     <message><source>Permissions:</source><translation>اجازتیں:</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>رسائی ترتیبات کھولیں…</translation></message>
-    <message><source>Visible Buttons</source><translation>نظر آنے والے بٹن</translation></message>
+    <message><source>Visible Buttons (check to show, Move Up/Down to reorder)</source><translation>نظر آنے والے بٹن (دکھانے کے لیے چیک کریں، ترتیب بدلنے کے لیے اوپر/نیچے کریں)</translation></message>
+    <message><source>Move Up</source><translation>اوپر لے جائیں</translation></message>
+    <message><source>Move Down</source><translation>نیچے لے جائیں</translation></message>
+    <message><source>Zoom:</source><translation>زوم:</translation></message>
     <message><source>Buttons</source><translation>بٹن</translation></message>
     <message><source>No Click</source><translation>کوئی کلک نہیں</translation></message>
     <message><source>Left Click</source><translation>بایاں کلک</translation></message>

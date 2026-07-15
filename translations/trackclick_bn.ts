@@ -40,7 +40,8 @@
     <message><source>Hold Alt modifier for next click</source><translation>পরবর্তী ক্লিকের জন্য Alt ধরে রাখুন</translation></message>
     <message><source>Hold Shift modifier for next click</source><translation>পরবর্তী ক্লিকের জন্য Shift ধরে রাখুন</translation></message>
     <message><source>Ready — hover to dwell-click</source><translation>প্রস্তুত — ড্ওয়েল-ক্লিকের জন্য হোভার করুন</translation></message>
-    <message><source>Selected: </source><translation>নির্বাচিত: </translation></message>
+    <message><source>Selected: %1</source><translation>নির্বাচিত: %1</translation></message>
+    <message><source>Audio click active: %1</source><translation>অডিও ক্লিক সক্রিয়: %1</translation></message>
     <message><source>Running in the system tray. Right-click the tray icon to quit.</source><translation>সিস্টেম ট্রেতে চলছে। প্রস্থান করতে ট্রে আইকনে ডান-ক্লিক করুন।</translation></message>
     <message><source>Quit Program</source><translation>প্রোগ্রাম ছেড়ে দিন</translation></message>
     <message><source>No Click</source><translation>কোনো ক্লিক নেই</translation></message>
@@ -71,7 +72,10 @@
     <message><source>Repeat click:</source><translation>ক্লিক পুনরাবৃত্তি:</translation></message>
     <message><source>Permissions:</source><translation>অনুমতি:</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>অ্যাক্সেসিবিলিটি সেটিংস খুলুন…</translation></message>
-    <message><source>Visible Buttons</source><translation>দৃশ্যমান বোতাম</translation></message>
+    <message><source>Visible Buttons (check to show, Move Up/Down to reorder)</source><translation>দৃশ্যমান বোতাম (দেখাতে চেক করুন, সাজাতে উপরে/নিচে সরান)</translation></message>
+    <message><source>Move Up</source><translation>উপরে সরান</translation></message>
+    <message><source>Move Down</source><translation>নিচে সরান</translation></message>
+    <message><source>Zoom:</source><translation>জুম:</translation></message>
     <message><source>Buttons</source><translation>বোতাম</translation></message>
     <message><source>No Click</source><translation>কোনো ক্লিক নেই</translation></message>
     <message><source>Left Click</source><translation>বাম ক্লিক</translation></message>

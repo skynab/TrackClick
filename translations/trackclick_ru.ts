@@ -40,7 +40,8 @@
     <message><source>Hold Alt modifier for next click</source><translation>Удержать Alt для следующего клика</translation></message>
     <message><source>Hold Shift modifier for next click</source><translation>Удержать Shift для следующего клика</translation></message>
     <message><source>Ready — hover to dwell-click</source><translation>Готово — наведите для нажатия с задержкой</translation></message>
-    <message><source>Selected: </source><translation>Выбрано: </translation></message>
+    <message><source>Selected: %1</source><translation>Выбрано: %1</translation></message>
+    <message><source>Audio click active: %1</source><translation>Аудиоклик активен: %1</translation></message>
     <message><source>Running in the system tray. Right-click the tray icon to quit.</source><translation>Работает в системном трее. Правая кнопка на иконке для выхода.</translation></message>
     <message><source>Quit Program</source><translation>Выйти из программы</translation></message>
     <message><source>No Click</source><translation>Без клика</translation></message>
@@ -71,7 +72,10 @@
     <message><source>Repeat click:</source><translation>Повтор клика:</translation></message>
     <message><source>Permissions:</source><translation>Разрешения:</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>Открыть параметры специальных возможностей…</translation></message>
-    <message><source>Visible Buttons</source><translation>Видимые кнопки</translation></message>
+    <message><source>Visible Buttons (check to show, Move Up/Down to reorder)</source><translation>Видимые кнопки (отметьте для показа, «Вверх»/«Вниз» для изменения порядка)</translation></message>
+    <message><source>Move Up</source><translation>Вверх</translation></message>
+    <message><source>Move Down</source><translation>Вниз</translation></message>
+    <message><source>Zoom:</source><translation>Масштаб:</translation></message>
     <message><source>Buttons</source><translation>Кнопки</translation></message>
     <message><source>No Click</source><translation>Без клика</translation></message>
     <message><source>Left Click</source><translation>Левый клик</translation></message>

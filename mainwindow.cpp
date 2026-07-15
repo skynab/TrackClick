@@ -1834,6 +1834,10 @@ void MainWindow::installLanguage(const QString& lang)
             qApp->installTranslator(m_translator);
     }
 
+    // Keep Qt's own built-in widget strings (e.g. QKeySequenceEdit's "Press
+    // shortcut" placeholder) in sync with the app language on every switch.
+    installQtBaseTranslator(lang);
+
     retranslateUi();
 }
 

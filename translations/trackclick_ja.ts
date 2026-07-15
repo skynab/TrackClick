@@ -36,7 +36,8 @@
     <message><source>Hold Alt modifier for next click</source><translation>次のクリックに Alt を保持</translation></message>
     <message><source>Hold Shift modifier for next click</source><translation>次のクリックに Shift を保持</translation></message>
     <message><source>Ready — hover to dwell-click</source><translation>準備完了 — ホバーでクリック</translation></message>
-    <message><source>Selected: </source><translation>選択済み：</translation></message>
+    <message><source>Selected: %1</source><translation>選択済み：%1</translation></message>
+    <message><source>Audio click active: %1</source><translation>オーディオクリック有効：%1</translation></message>
     <message><source>Running in the system tray. Right-click the tray icon to quit.</source><translation>システムトレイで実行中。トレイアイコンを右クリックして終了。</translation></message>
     <message><source>Quit Program</source><translation>プログラムを終了</translation></message>
     <message><source>No Click</source><translation>何もしない</translation></message>
@@ -63,7 +64,10 @@
     <message><source>How long a toolbar button must be hovered before the selection switches to it, as a percentage of the dwell time.</source><translation>選択がツールバーボタンに切り替わるまでにホバーする必要がある長さ（滞留時間に対する割合）。</translation></message>
     <message><source>Permissions:</source><translation>権限：</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>アクセシビリティ設定を開く…</translation></message>
-    <message><source>Visible Buttons</source><translation>表示ボタン</translation></message>
+    <message><source>Visible Buttons (check to show, Move Up/Down to reorder)</source><translation>表示ボタン（チェックで表示、「上へ」/「下へ」で並べ替え）</translation></message>
+    <message><source>Move Up</source><translation>上へ</translation></message>
+    <message><source>Move Down</source><translation>下へ</translation></message>
+    <message><source>Zoom:</source><translation>ズーム：</translation></message>
     <message><source>Buttons</source><translation>ボタン</translation></message>
     <message><source>No Click</source><translation>何もしない</translation></message>
     <message><source>Left Click</source><translation>左クリック</translation></message>

@@ -38,7 +38,8 @@
     <message><source>Hold Alt modifier for next click</source><translation>Podržet Alt pro příští kliknutí</translation></message>
     <message><source>Hold Shift modifier for next click</source><translation>Podržet Shift pro příští kliknutí</translation></message>
     <message><source>Ready — hover to dwell-click</source><translation>Připraveno — najeďte pro kliknutí</translation></message>
-    <message><source>Selected: </source><translation>Vybráno: </translation></message>
+    <message><source>Selected: %1</source><translation>Vybráno: %1</translation></message>
+    <message><source>Audio click active: %1</source><translation>Zvukové kliknutí aktivní: %1</translation></message>
     <message><source>Running in the system tray. Right-click the tray icon to quit.</source><translation>Běží v systémové liště. Pravým klikem na ikonu ukončíte.</translation></message>
     <message><source>Quit Program</source><translation>Ukončit program</translation></message>
     <message><source>No Click</source><translation>Žádná akce</translation></message>
@@ -65,7 +66,10 @@
     <message><source>How long a toolbar button must be hovered before the selection switches to it, as a percentage of the dwell time.</source><translation>Jak dlouho musí kurzor setrvat na tlačítku panelu nástrojů, než se na něj přepne výběr, jako procento času najetí.</translation></message>
     <message><source>Permissions:</source><translation>Oprávnění:</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>Otevřít nastavení zpřístupnění…</translation></message>
-    <message><source>Visible Buttons</source><translation>Viditelná tlačítka</translation></message>
+    <message><source>Visible Buttons (check to show, Move Up/Down to reorder)</source><translation>Viditelná tlačítka (zaškrtnutím zobrazíte, Nahoru/Dolů pro změnu pořadí)</translation></message>
+    <message><source>Move Up</source><translation>Nahoru</translation></message>
+    <message><source>Move Down</source><translation>Dolů</translation></message>
+    <message><source>Zoom:</source><translation>Přiblížení:</translation></message>
     <message><source>Buttons</source><translation>Tlačítka</translation></message>
     <message><source>No Click</source><translation>Žádná akce</translation></message>
     <message><source>Left Click</source><translation>Levé kliknutí</translation></message>

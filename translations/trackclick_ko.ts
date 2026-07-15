@@ -36,7 +36,8 @@
     <message><source>Hold Alt modifier for next click</source><translation>다음 클릭에 Alt 키 유지</translation></message>
     <message><source>Hold Shift modifier for next click</source><translation>다음 클릭에 Shift 키 유지</translation></message>
     <message><source>Ready — hover to dwell-click</source><translation>준비 완료 — 마우스를 올려 클릭</translation></message>
-    <message><source>Selected: </source><translation>선택됨: </translation></message>
+    <message><source>Selected: %1</source><translation>선택됨: %1</translation></message>
+    <message><source>Audio click active: %1</source><translation>오디오 클릭 활성화: %1</translation></message>
     <message><source>Running in the system tray. Right-click the tray icon to quit.</source><translation>시스템 트레이에서 실행 중. 트레이 아이콘을 오른쪽 클릭하여 종료.</translation></message>
     <message><source>Quit Program</source><translation>프로그램 종료</translation></message>
     <message><source>No Click</source><translation>동작 없음</translation></message>
@@ -63,7 +64,10 @@
     <message><source>How long a toolbar button must be hovered before the selection switches to it, as a percentage of the dwell time.</source><translation>선택이 도구 모음 버튼으로 전환되기까지 마우스를 올려 두어야 하는 시간(머물기 시간의 백분율).</translation></message>
     <message><source>Permissions:</source><translation>권한:</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>접근성 설정 열기…</translation></message>
-    <message><source>Visible Buttons</source><translation>표시 버튼</translation></message>
+    <message><source>Visible Buttons (check to show, Move Up/Down to reorder)</source><translation>표시 버튼 (체크하여 표시, 위로/아래로로 순서 변경)</translation></message>
+    <message><source>Move Up</source><translation>위로</translation></message>
+    <message><source>Move Down</source><translation>아래로</translation></message>
+    <message><source>Zoom:</source><translation>확대:</translation></message>
     <message><source>Buttons</source><translation>버튼</translation></message>
     <message><source>No Click</source><translation>동작 없음</translation></message>
     <message><source>Left Click</source><translation>왼쪽 클릭</translation></message>

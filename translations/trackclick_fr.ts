@@ -36,7 +36,8 @@
     <message><source>Hold Alt modifier for next click</source><translation>Maintenir Alt pour le prochain clic</translation></message>
     <message><source>Hold Shift modifier for next click</source><translation>Maintenir Maj pour le prochain clic</translation></message>
     <message><source>Ready — hover to dwell-click</source><translation>Prêt — survolez pour cliquer</translation></message>
-    <message><source>Selected: </source><translation>Sélectionné : </translation></message>
+    <message><source>Selected: %1</source><translation>Sélectionné : %1</translation></message>
+    <message><source>Audio click active: %1</source><translation>Clic audio actif : %1</translation></message>
     <message><source>Running in the system tray. Right-click the tray icon to quit.</source><translation>En cours d&apos;exécution dans la zone de notification. Clic droit pour quitter.</translation></message>
     <message><source>Quit Program</source><translation>Quitter le programme</translation></message>
     <message><source>No Click</source><translation>Aucune action</translation></message>
@@ -63,7 +64,10 @@
     <message><source>How long a toolbar button must be hovered before the selection switches to it, as a percentage of the dwell time.</source><translation>Durée pendant laquelle un bouton de la barre d'outils doit être survolé avant que la sélection y passe, en pourcentage de la durée de survol.</translation></message>
     <message><source>Permissions:</source><translation>Autorisations :</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>Ouvrir les réglages d'accessibilité…</translation></message>
-    <message><source>Visible Buttons</source><translation>Boutons visibles</translation></message>
+    <message><source>Visible Buttons (check to show, Move Up/Down to reorder)</source><translation>Boutons visibles (cocher pour afficher, Monter/Descendre pour réorganiser)</translation></message>
+    <message><source>Move Up</source><translation>Monter</translation></message>
+    <message><source>Move Down</source><translation>Descendre</translation></message>
+    <message><source>Zoom:</source><translation>Zoom :</translation></message>
     <message><source>Buttons</source><translation>Boutons</translation></message>
     <message><source>No Click</source><translation>Aucune action</translation></message>
     <message><source>Left Click</source><translation>Clic gauche</translation></message>

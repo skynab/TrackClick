@@ -36,7 +36,8 @@
     <message><source>Hold Alt modifier for next click</source><translation>按住Alt键进行下一次点击</translation></message>
     <message><source>Hold Shift modifier for next click</source><translation>按住Shift键进行下一次点击</translation></message>
     <message><source>Ready — hover to dwell-click</source><translation>就绪 — 悬停以点击</translation></message>
-    <message><source>Selected: </source><translation>已选择：</translation></message>
+    <message><source>Selected: %1</source><translation>已选择：%1</translation></message>
+    <message><source>Audio click active: %1</source><translation>音频点击已激活：%1</translation></message>
     <message><source>Running in the system tray. Right-click the tray icon to quit.</source><translation>正在系统托盘中运行。右键单击托盘图标退出。</translation></message>
     <message><source>Quit Program</source><translation>退出程序</translation></message>
     <message><source>No Click</source><translation>无操作</translation></message>
@@ -63,7 +64,10 @@
     <message><source>How long a toolbar button must be hovered before the selection switches to it, as a percentage of the dwell time.</source><translation>在选择切换到某个工具栏按钮之前，需要在其上悬停的时长，以悬停时间的百分比表示。</translation></message>
     <message><source>Permissions:</source><translation>辅助功能权限：</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>打开辅助功能设置…</translation></message>
-    <message><source>Visible Buttons</source><translation>可见按钮</translation></message>
+    <message><source>Visible Buttons (check to show, Move Up/Down to reorder)</source><translation>可见按钮（勾选以显示，上移/下移以重新排序）</translation></message>
+    <message><source>Move Up</source><translation>上移</translation></message>
+    <message><source>Move Down</source><translation>下移</translation></message>
+    <message><source>Zoom:</source><translation>缩放：</translation></message>
     <message><source>Buttons</source><translation>按钮</translation></message>
     <message><source>No Click</source><translation>无操作</translation></message>
     <message><source>Left Click</source><translation>单击左键</translation></message>

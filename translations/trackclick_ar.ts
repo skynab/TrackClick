@@ -40,7 +40,8 @@
     <message><source>Hold Alt modifier for next click</source><translation>اضغط مع الاستمرار Alt للنقر التالي</translation></message>
     <message><source>Hold Shift modifier for next click</source><translation>اضغط مع الاستمرار Shift للنقر التالي</translation></message>
     <message><source>Ready — hover to dwell-click</source><translation>جاهز — حوّم للنقر بالتحوم</translation></message>
-    <message><source>Selected: </source><translation>المحدد: </translation></message>
+    <message><source>Selected: %1</source><translation>المحدد: %1</translation></message>
+    <message><source>Audio click active: %1</source><translation>النقر الصوتي نشط: %1</translation></message>
     <message><source>Running in the system tray. Right-click the tray icon to quit.</source><translation>يعمل في حاوية النظام. انقر بزر الفأرة الأيمن على أيقونة الحاوية للإنهاء.</translation></message>
     <message><source>Quit Program</source><translation>إنهاء البرنامج</translation></message>
     <message><source>No Click</source><translation>بدون نقر</translation></message>
@@ -71,7 +72,10 @@
     <message><source>Repeat click:</source><translation>تكرار النقر:</translation></message>
     <message><source>Permissions:</source><translation>الأذونات:</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>فتح إعدادات إمكانية الوصول…</translation></message>
-    <message><source>Visible Buttons</source><translation>الأزرار المرئية</translation></message>
+    <message><source>Visible Buttons (check to show, Move Up/Down to reorder)</source><translation>الأزرار المرئية (حدد للإظهار، لأعلى/لأسفل لإعادة الترتيب)</translation></message>
+    <message><source>Move Up</source><translation>تحريك لأعلى</translation></message>
+    <message><source>Move Down</source><translation>تحريك لأسفل</translation></message>
+    <message><source>Zoom:</source><translation>تكبير:</translation></message>
     <message><source>Buttons</source><translation>الأزرار</translation></message>
     <message><source>No Click</source><translation>بدون نقر</translation></message>
     <message><source>Left Click</source><translation>نقر بالزر الأيسر</translation></message>

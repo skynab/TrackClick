@@ -109,14 +109,20 @@ jobs:
           sudo modprobe uinput || true
 
       # ── Qt: macOS ────────────────────────────────────────────────────────────
+      # Use the official Qt (aqtinstall) rather than Homebrew's `qt`. Homebrew now
+      # splits Qt into many sibling formulae (qtbase, qtsvg, qtmultimedia,
+      # qtvirtualkeyboard, qtpdf, …), and macdeployqt can't resolve the @rpath
+      # deps of the plugins it auto-bundles (virtualkeyboard, the webp image
+      # plugin's libwebp/brotli), so `-dmg` packaging fails. A self-contained aqt
+      # install has the flat layout macdeployqt expects. Same provider/modules the
+      # Windows job uses, and its base install already includes Svg + LinguistTools.
       - name: Install Qt (macOS)
         if: matrix.name == 'macOS'
-        env:
-          HOMEBREW_NO_AUTO_UPDATE: 1
-          HOMEBREW_NO_REQUIRE_TAP_TRUST: 1
-        run: |
-          brew install qt
-          echo "$(brew --prefix qt)/bin" >> "$GITHUB_PATH"
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.7.*'
+          modules: 'qtmultimedia'
+          cache: true
 
       # ── Qt: Windows ──────────────────────────────────────────────────────────
       - name: Install Qt (Windows)

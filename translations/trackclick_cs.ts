@@ -61,6 +61,8 @@
     <message><source>Dwell Clicking</source><translation>Klikání při najetí</translation></message>
     <message><source>Dwell time:</source><translation>Čas najetí:</translation></message>
     <message><source>Sensitivity:</source><translation>Citlivost:</translation></message>
+    <message><source>Hover to switch:</source><translation>Najetí pro přepnutí:</translation></message>
+    <message><source>How long a toolbar button must be hovered before the selection switches to it, as a percentage of the dwell time.</source><translation>Jak dlouho musí kurzor setrvat na tlačítku panelu nástrojů, než se na něj přepne výběr, jako procento času najetí.</translation></message>
     <message><source>Permissions:</source><translation>Oprávnění:</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>Otevřít nastavení zpřístupnění…</translation></message>
     <message><source>Visible Buttons</source><translation>Viditelná tlačítka</translation></message>

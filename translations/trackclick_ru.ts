@@ -64,6 +64,8 @@
     <message><source>Dwell Clicking</source><translation>Нажатие с задержкой</translation></message>
     <message><source>Dwell time:</source><translation>Время задержки:</translation></message>
     <message><source>Sensitivity:</source><translation>Чувствительность:</translation></message>
+    <message><source>Hover to switch:</source><translation>Наведение для смены:</translation></message>
+    <message><source>How long a toolbar button must be hovered before the selection switches to it, as a percentage of the dwell time.</source><translation>Сколько времени нужно удерживать курсор на кнопке панели инструментов, прежде чем выбор переключится на неё, в процентах от времени задержки.</translation></message>
     <message><source>Sensitivity Tester…</source><translation>Тест чувствительности…</translation></message>
     <message><source>Scroll repeat:</source><translation>Повтор прокрутки:</translation></message>
     <message><source>Repeat click:</source><translation>Повтор клика:</translation></message>

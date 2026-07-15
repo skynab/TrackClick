@@ -7,12 +7,14 @@
 #include <QCursor>
 #include <QEvent>
 #include <QFrame>
+#include <QGraphicsOpacityEffect>
 #include <QProgressBar>
 #include <QTimer>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QGridLayout>
 #include <QFormLayout>
+#include <QListWidget>
 #include <QGroupBox>
 #include <QLabel>
 #include <QPainter>
@@ -32,12 +34,25 @@
 #endif
 
 // ── TrackIR palette ──────────────────────────────────────────
-static const char* STYLE = R"(
+// Settings-window font zoom: the base font size (at 100%) plus the bounds and
+// step of the "+/-" zoom control that sits next to the language selector.  The
+// stylesheet font-size is regenerated from this base whenever the user zooms.
+static constexpr int kBaseFontPx  = 12;
+static constexpr int kZoomMinPct  = 80;
+static constexpr int kZoomMaxPct  = 200;
+static constexpr int kZoomStepPct = 10;
+
+// Build the dialog stylesheet with every text element sized at fontPx, so the
+// zoom control can scale the whole settings window just by re-applying it.
+// The @FS@ token is substituted with the requested pixel size below.
+static QString buildStyle(int fontPx)
+{
+    return QString(R"(
 QDialog {
     background: #2D2D2D;
-    color: #979797;
+    color: #E6E6E6;
     font-family: "Segoe UI", Arial, sans-serif;
-    font-size: 12px;
+    font-size: @FS@px;
 }
 QGroupBox {
     color: #FFA600;
@@ -45,14 +60,15 @@ QGroupBox {
     border-radius: 4px;
     margin-top: 10px;
     padding-top: 6px;
+    font-size: @FS@px;
 }
 QGroupBox::title {
     subcontrol-origin: margin;
     left: 8px;
     padding: 0 4px;
 }
-QLabel  { color: #979797; }
-QCheckBox { color: #979797; spacing: 6px; }
+QLabel  { color: #E6E6E6; font-size: @FS@px; }
+QCheckBox { color: #E6E6E6; spacing: 6px; font-size: @FS@px; }
 QCheckBox::indicator {
     width: 25px; height: 11px;
     border: none;
@@ -63,12 +79,31 @@ QCheckBox::indicator {
 QCheckBox::indicator:checked {
     image: url(:/icons/toggle_on.svg);
 }
+QListWidget {
+    background: #1A1A1A;
+    color: #E6E6E6;
+    border: 1px solid #555;
+    border-radius: 3px;
+    font-size: @FS@px;
+    outline: none;
+}
+QListWidget::item { padding: 3px 4px; }
+QListWidget::item:selected { background: #3D3D3D; color: #FFA600; }
+QListWidget::indicator {
+    width: 25px; height: 11px;
+    background: transparent;
+    image: url(:/icons/toggle_off.svg);
+}
+QListWidget::indicator:checked {
+    image: url(:/icons/toggle_on.svg);
+}
 QSpinBox, QDoubleSpinBox, QComboBox, QLineEdit, QKeySequenceEdit {
     background: #1A1A1A;
-    color: #979797;
+    color: #E6E6E6;
     border: 1px solid #555;
     border-radius: 3px;
     padding: 2px 4px;
+    font-size: @FS@px;
 }
 QLineEdit:focus, QKeySequenceEdit:focus {
     border: 1px solid #FFA600;
@@ -76,10 +111,11 @@ QLineEdit:focus, QKeySequenceEdit:focus {
 QComboBox::drop-down { border: none; width: 18px; }
 QComboBox QAbstractItemView {
     background: #2D2D2D;
-    color: #979797;
+    color: #E6E6E6;
     border: 1px solid #555;
     selection-background-color: #FFA600;
     selection-color: #1A1A1A;
+    font-size: @FS@px;
 }
 QSlider::groove:horizontal {
     height: 4px;
@@ -100,6 +136,7 @@ QPushButton {
     border-radius: 4px;
     padding: 6px 18px;
     font-weight: bold;
+    font-size: @FS@px;
 }
 QPushButton:hover  { background: #FFB833; }
 QPushButton:pressed{ background: #CC8400; }
@@ -116,17 +153,119 @@ QTabWidget::pane {
 }
 QTabBar::tab {
     background: #1A1A1A;
-    color: #979797;
+    color: #E6E6E6;
     padding: 6px 14px;
     border: 1px solid #555;
     border-bottom: none;
     border-top-left-radius: 4px;
     border-top-right-radius: 4px;
     margin-right: 2px;
+    font-size: @FS@px;
 }
 QTabBar::tab:selected { background: #2D2D2D; color: #FFA600; }
 QTabBar::tab:hover    { color: #FFB833; }
-)";
+)").replace(QLatin1String("@FS@"), QString::number(fontPx));
+}
+
+// ── Reorderable click buttons ────────────────────────────────────────────────
+// Canonical/default toolbar order.  Right Double / Right Drag are included so
+// the order model is complete and MainWindow can still lay them out if ever
+// re-enabled in code, but they are read-only placeholders (kept off) and are
+// not shown in the settings reorder list.
+const QVector<ClickButtonDesc>& clickButtonDescs()
+{
+    static const QVector<ClickButtonDesc> v = {
+        { "no_click",      &AppSettings::showNoClick     },
+        { "left_click",    &AppSettings::showLeftClick   },
+        { "left_double",   &AppSettings::showLeftDouble  },
+        { "left_drag",     &AppSettings::showLeftDrag    },
+        { "right_click",   &AppSettings::showRightClick  },
+        { "right_double",  &AppSettings::showRightDouble },
+        { "right_drag",    &AppSettings::showRightDrag   },
+        { "middle_click",  &AppSettings::showMiddleClick },
+        { "middle_double", &AppSettings::showMiddleDouble},
+        { "scroll_up",     &AppSettings::showScrollUp       },
+        { "scroll_down",   &AppSettings::showScrollDown     },
+        { "scroll_horiz",  &AppSettings::showScrollHoriz    },
+        { "ctrl",          &AppSettings::showModCtrl        },
+        { "alt",           &AppSettings::showModAlt         },
+        { "shift",         &AppSettings::showModShift       },
+        { "dwell_active",  &AppSettings::showDwellActiveBtn },
+        { "quit",          &AppSettings::showQuitButton     },
+    };
+    return v;
+}
+
+// Number of custom hotkey slots; their reorder ids are "hotkey_0".."hotkey_2".
+static constexpr int kHotkeyCount = 3;
+
+int hotkeyIndexForId(const QString& id)
+{
+    if (!id.startsWith(QLatin1String("hotkey_"))) return -1;
+    bool ok = false;
+    const int idx = id.mid(7).toInt(&ok);
+    return (ok && idx >= 0 && idx < kHotkeyCount) ? idx : -1;
+}
+
+// Full canonical id set / default order: the bool-backed buttons, then the
+// hotkey slots — but Dwell Active and Quit are pushed to the very bottom so by
+// default they sit at the end of the list (below the hotkeys).
+static QStringList canonicalButtonIds()
+{
+    QStringList ids;
+    for (const auto& d : clickButtonDescs()) {
+        const QString id = QLatin1String(d.id);
+        if (id == QLatin1String("dwell_active") || id == QLatin1String("quit"))
+            continue;   // appended at the very end below
+        ids << id;
+    }
+    for (int i = 0; i < kHotkeyCount; ++i)
+        ids << QStringLiteral("hotkey_%1").arg(i);
+    ids << QStringLiteral("dwell_active") << QStringLiteral("quit");
+    return ids;
+}
+
+QStringList orderedClickButtonIds(const AppSettings& s)
+{
+    const QStringList canon = canonicalButtonIds();
+    QStringList result;
+    // Saved order first (recognised ids, no duplicates).
+    for (const QString& id : s.buttonOrder)
+        if (canon.contains(id) && !result.contains(id))
+            result << id;
+    // Then any canonical ids the saved order didn't cover (new/unsaved buttons).
+    for (const QString& id : canon)
+        if (!result.contains(id))
+            result << id;
+    return result;
+}
+
+// The AppSettings visibility flag controlled by a bool-backed id (nullptr for an
+// unknown or hotkey-backed id).
+static bool AppSettings::* showMemberForId(const QString& id)
+{
+    for (const auto& d : clickButtonDescs())
+        if (id == QLatin1String(d.id))
+            return d.show;
+    return nullptr;
+}
+
+// Whether a reorder-list id is currently enabled/visible.  Handles both the
+// bool-backed buttons and the hotkey slots (hotkeys[i].enabled).
+static bool buttonEnabled(const AppSettings& s, const QString& id)
+{
+    const int hk = hotkeyIndexForId(id);
+    if (hk >= 0) return s.hotkeys[hk].enabled;
+    if (bool AppSettings::* memb = showMemberForId(id)) return s.*memb;
+    return false;
+}
+
+static void setButtonEnabled(AppSettings& s, const QString& id, bool on)
+{
+    const int hk = hotkeyIndexForId(id);
+    if (hk >= 0) { s.hotkeys[hk].enabled = on; return; }
+    if (bool AppSettings::* memb = showMemberForId(id)) s.*memb = on;
+}
 
 // ── Sensitivity Tester ────────────────────────────────────────────────────────
 
@@ -215,7 +354,7 @@ SensitivityTesterDialog::SensitivityTesterDialog(QWidget* parent)
 {
     setWindowTitle(tr("Sensitivity Tester"));
     setModal(true);
-    setStyleSheet(STYLE);
+    setStyleSheet(buildStyle(kBaseFontPx));
     setFixedWidth(280);
 
     auto* root = new QVBoxLayout(this);
@@ -341,7 +480,7 @@ SettingsDialog::SettingsDialog(const AppSettings& current,
 {
     setWindowTitle(tr("TrackClick — Settings"));
     setModal(true);
-    setStyleSheet(STYLE);
+    setStyleSheet(buildStyle(kBaseFontPx));
     buildUi();
     loadFrom(current);
 
@@ -458,6 +597,9 @@ void SettingsDialog::retranslateUi()
     m_lblDwellTime->setText(tr("Dwell time:"));
     m_lblSensitivity->setText(tr("Sensitivity:"));
     m_btnSensTester->setText(tr("Sensitivity Tester…"));
+    m_lblHoverSelect->setText(tr("Hover to switch:"));
+    m_hoverSelectPct->setToolTip(tr("How long a toolbar button must be hovered before the "
+                                    "selection switches to it, as a percentage of the dwell time."));
     m_lblScrollRepeat->setText(tr("Scroll repeat:"));
     m_lblRepeatMode->setText(tr("Repeat click:"));
 #ifdef Q_OS_MAC
@@ -466,29 +608,17 @@ void SettingsDialog::retranslateUi()
 #endif
 
     m_tabs->setTabText(1, tr("Buttons"));
-    m_lblVisibleButtons->setText(tr("Visible Buttons"));
-    m_chkNoClick->setText(tr("No Click"));
-    m_chkLeftClick->setText(tr("Left Click"));
-    m_chkLeftDouble->setText(tr("Left Double"));
-    m_chkLeftDrag->setText(tr("Left Drag"));
-    m_chkRightClick->setText(tr("Right Click"));
-    m_chkRightDouble->setText(tr("Right Double"));
-    m_chkRightDrag->setText(tr("Right Drag"));
-    m_chkMiddleClick->setText(tr("Middle Click"));
-    m_chkMiddleDouble->setText(tr("Middle Double"));
-    m_chkScrollUp->setText(tr("Scroll Up"));
-    m_chkScrollDown->setText(tr("Scroll Down"));
-    m_chkScrollHoriz->setText(tr("Scroll Left/Right"));
-    m_chkModCtrl->setText(tr("Ctrl Modifier"));
-    m_chkModAlt->setText(tr("Alt Modifier"));
-    m_chkModShift->setText(tr("Shift Modifier"));
-    m_chkExitButton->setText(tr("Exit Button"));
-    m_chkQuitButton->setText(tr("Quit Button"));
-    m_chkDwellActiveBtn->setText(tr("Dwell Active Button"));
+    m_lblVisibleButtons->setText(tr("Visible Buttons (check to show, Move Up/Down to reorder)"));
+    m_btnMoveUp->setText(tr("Move Up"));
+    m_btnMoveDown->setText(tr("Move Down"));
+    for (int i = 0; i < m_btnOrderList->count(); ++i) {
+        QListWidgetItem* it = m_btnOrderList->item(i);
+        it->setText(clickButtonLabel(it->data(Qt::UserRole).toString()));
+    }
 
     m_lblCustomHotkeys->setText(tr("Custom Hotkeys"));
     for (int i = 0; i < 3; ++i) {
-        m_chkHotkey[i]->setText(tr("Hotkey %1").arg(i + 1));
+        m_lblHotkey[i]->setText(tr("Hotkey %1").arg(i + 1));
         m_edtHotkeyLabel[i]->setPlaceholderText(tr("Label (optional)"));
     }
 
@@ -513,6 +643,7 @@ void SettingsDialog::retranslateUi()
     m_cmbLayout->setItemText(2, tr("Vertical (one column)"));
     m_cmbLayout->setItemText(3, tr("Vertical (two columns)"));
     m_lblLanguage->setText(tr("Language:"));
+    m_lblZoom->setText(tr("Zoom:"));
     m_okBtn->setText(tr("OK"));
     m_cancelBtn->setText(tr("Cancel"));
     m_resetBtn->setText(tr("Reset to Defaults"));
@@ -565,6 +696,19 @@ void SettingsDialog::stopAudioMeter()
 
 // ── UI construction ───────────────────────────────────────────────────────────
 
+// Renders a settings checkbox read-only: unchecked, disabled, and dimmed so it
+// clearly can't be toggled. Used for options we currently keep locked off but
+// leave visible (Right Double, Right Drag, Top X minimizes app) so they can be
+// re-enabled in code later — see the call sites and loadFrom().
+static void makeCheckboxReadOnly(QCheckBox* c)
+{
+    c->setChecked(false);
+    c->setEnabled(false);
+    auto* fade = new QGraphicsOpacityEffect(c);
+    fade->setOpacity(0.4);   // dim to signal the disabled/read-only state
+    c->setGraphicsEffect(fade);
+}
+
 void SettingsDialog::buildUi()
 {
     auto* root = new QVBoxLayout(this);
@@ -611,9 +755,9 @@ void SettingsDialog::buildUi()
 #ifdef BUILD_NUMBER
 #  define TC_STR_(x) #x
 #  define TC_STR(x) TC_STR_(x)
-    auto* versionLbl = new QLabel("Version 0.9.4 (build " TC_STR(BUILD_NUMBER) ")");
+    auto* versionLbl = new QLabel("Version 0.9.5 (build " TC_STR(BUILD_NUMBER) ")");
 #else
-    auto* versionLbl = new QLabel("Version 0.9.4");
+    auto* versionLbl = new QLabel("Version 0.9.5");
 #endif
     versionLbl->setStyleSheet(
         "color: #666666; font-size: 11px; background: transparent;");
@@ -646,10 +790,50 @@ void SettingsDialog::buildUi()
     m_cmbLanguage->addItem("اردو",      "ur");
     m_lblLanguage = new QLabel(tr("Language:"));
 
+    // ── Font zoom ─────────────────────────────────────────────
+    // Sits next to the language selector so both top-level view options share
+    // one row.  The "-"/"+" buttons scale the settings window's own text (see
+    // applyFontScale); the value label shows the current percentage.
+    m_lblZoom      = new QLabel(tr("Zoom:"));
+    m_btnZoomOut   = new QPushButton(QString(QChar(0x2212)));  // U+2212 minus sign
+    m_btnZoomIn    = new QPushButton(QStringLiteral("+"));
+    m_lblZoomValue = new QLabel;
+    m_lblZoomValue->setAlignment(Qt::AlignCenter);
+    m_lblZoomValue->setMinimumWidth(44);
+    // Dedicated look so the glyphs read clearly: large, bold, accent-orange on a
+    // bordered button.  A per-button stylesheet also keeps them a fixed size
+    // (they don't grow when the zoom re-applies the dialog stylesheet).
+    for (QPushButton* b : { m_btnZoomOut, m_btnZoomIn }) {
+        b->setFixedSize(30, 26);
+        b->setFocusPolicy(Qt::NoFocus);
+        b->setStyleSheet(
+            "QPushButton {"
+            "  background: #3D3D3D; color: #FFFFFF;"
+            "  border: 1px solid #666; border-radius: 4px;"
+            "  padding: 0; font-size: 18px; font-weight: bold;"
+            "}"
+            "QPushButton:hover    { background: #4D4D4D; border-color: #888; }"
+            "QPushButton:pressed  { background: #2A2A2A; }"
+            "QPushButton:disabled { color: #6A6A6A; border-color: #444; }");
+    }
+    connect(m_btnZoomOut, &QPushButton::clicked, this, [this]{
+        m_fontScale -= kZoomStepPct;
+        applyFontScale();
+    });
+    connect(m_btnZoomIn, &QPushButton::clicked, this, [this]{
+        m_fontScale += kZoomStepPct;
+        applyFontScale();
+    });
+
     auto* langRow = new QHBoxLayout;
     langRow->addStretch(1);
     langRow->addWidget(m_lblLanguage);
     langRow->addWidget(m_cmbLanguage);
+    langRow->addSpacing(18);
+    langRow->addWidget(m_lblZoom);
+    langRow->addWidget(m_btnZoomOut);
+    langRow->addWidget(m_lblZoomValue);
+    langRow->addWidget(m_btnZoomIn);
     langRow->addStretch(1);
     root->addLayout(langRow);
 
@@ -667,12 +851,16 @@ void SettingsDialog::buildUi()
 
     m_dwellMs      = new QSpinBox; m_dwellMs->setRange(100, 10000); m_dwellMs->setSuffix(" ms");
     m_sensitivPx   = new QSpinBox; m_sensitivPx->setRange(1, 100);  m_sensitivPx->setSuffix(" px");
+    m_hoverSelectPct = new QSpinBox; m_hoverSelectPct->setRange(10, 100); m_hoverSelectPct->setSuffix(" %");
+    m_hoverSelectPct->setToolTip(tr("How long a toolbar button must be hovered before the "
+                                    "selection switches to it, as a percentage of the dwell time."));
     m_scrollRepeat = new QSpinBox; m_scrollRepeat->setRange(1, 20);
 
     m_chkRepeatMode = new QCheckBox;
 
     m_lblDwellTime    = new QLabel(tr("Dwell time:"));
     m_lblSensitivity  = new QLabel(tr("Sensitivity:"));
+    m_lblHoverSelect  = new QLabel(tr("Hover to switch:"));
     m_lblScrollRepeat = new QLabel(tr("Scroll repeat:"));
     m_lblRepeatMode   = new QLabel(tr("Repeat click:"));
     m_btnSensTester = new QPushButton(tr("Sensitivity Tester…"));
@@ -688,6 +876,7 @@ void SettingsDialog::buildUi()
     fl->addRow(m_lblDwellTime,    m_dwellMs);
     fl->addRow(m_lblSensitivity,  m_sensitivPx);
     fl->addRow(m_btnSensTester);
+    fl->addRow(m_lblHoverSelect,  m_hoverSelectPct);
     fl->addRow(m_lblScrollRepeat, m_scrollRepeat);
     fl->addRow(m_lblRepeatMode,   m_chkRepeatMode);
 
@@ -710,48 +899,40 @@ void SettingsDialog::buildUi()
     auto* grid     = new QGridLayout(pageBtns);
     grid->setSpacing(6);
 
-    // Section header — the tab is just labelled "Buttons", so spell out what
-    // these checkboxes control here.
-    m_lblVisibleButtons = new QLabel(tr("Visible Buttons"));
+    // Section header for the reorderable click-button list.
+    m_lblVisibleButtons = new QLabel(tr("Visible Buttons (check to show, Move Up/Down to reorder)"));
     m_lblVisibleButtons->setStyleSheet(
         "color: #FFA600; font-weight: bold; background: transparent;");
     grid->addWidget(m_lblVisibleButtons, 0, 0, 1, 3);
 
-    m_chkNoClick     = new QCheckBox(tr("No Click"));
-    m_chkLeftClick   = new QCheckBox(tr("Left Click"));
-    m_chkLeftDouble  = new QCheckBox(tr("Left Double"));
-    m_chkLeftDrag    = new QCheckBox(tr("Left Drag"));
-    m_chkRightClick  = new QCheckBox(tr("Right Click"));
-    m_chkRightDouble = new QCheckBox(tr("Right Double"));
-    m_chkRightDrag   = new QCheckBox(tr("Right Drag"));
-    m_chkMiddleClick = new QCheckBox(tr("Middle Click"));
-    m_chkMiddleDouble= new QCheckBox(tr("Middle Double"));
-    m_chkScrollUp    = new QCheckBox(tr("Scroll Up"));
-    m_chkScrollDown  = new QCheckBox(tr("Scroll Down"));
-    m_chkScrollHoriz = new QCheckBox(tr("Scroll Left/Right"));
-    m_chkModCtrl     = new QCheckBox(tr("Ctrl Modifier"));
-    m_chkModAlt      = new QCheckBox(tr("Alt Modifier"));
-    m_chkModShift    = new QCheckBox(tr("Shift Modifier"));
-    m_chkExitButton      = new QCheckBox(tr("Exit Button"));
-    m_chkQuitButton      = new QCheckBox(tr("Quit Button"));
-    m_chkDwellActiveBtn  = new QCheckBox(tr("Dwell Active Button"));
+    // Reorderable, checkable list of the click-action buttons.  Items (order and
+    // check state) are added in loadFrom(); the read-only Right Double / Right
+    // Drag placeholders are intentionally omitted from this list.
+    m_btnOrderList = new QListWidget;
+    m_btnOrderList->setSelectionMode(QAbstractItemView::SingleSelection);
+    m_btnOrderList->setMinimumHeight(200);
+    connect(m_btnOrderList, &QListWidget::currentRowChanged,
+            this, [this](int){ updateMoveButtons(); });
+    grid->addWidget(m_btnOrderList, 1, 0, 1, 2);
 
-    int row = 1, col = 0;   // row 0 holds the "Visible Buttons" section header
-    auto addChk = [&](QCheckBox* c){
-        grid->addWidget(c, row, col);
-        col++;
-        if (col == 3) { col = 0; row++; }
-    };
-    addChk(m_chkNoClick);
-    addChk(m_chkLeftClick);   addChk(m_chkLeftDouble);  addChk(m_chkLeftDrag);
-    addChk(m_chkRightClick);  addChk(m_chkRightDouble); addChk(m_chkRightDrag);
-    addChk(m_chkMiddleClick); addChk(m_chkMiddleDouble);addChk(m_chkScrollUp);
-    addChk(m_chkScrollDown);  addChk(m_chkScrollHoriz); addChk(m_chkModCtrl);
-    addChk(m_chkModAlt);      addChk(m_chkModShift);    addChk(m_chkExitButton);
-    addChk(m_chkQuitButton);  addChk(m_chkDwellActiveBtn);
+    m_btnMoveUp   = new QPushButton(tr("Move Up"));
+    m_btnMoveDown = new QPushButton(tr("Move Down"));
+    m_btnMoveUp->setProperty("flat", true);
+    m_btnMoveDown->setProperty("flat", true);
+    m_btnMoveUp->setFocusPolicy(Qt::NoFocus);
+    m_btnMoveDown->setFocusPolicy(Qt::NoFocus);
+    connect(m_btnMoveUp,   &QPushButton::clicked, this, [this]{ moveSelectedButton(-1); });
+    connect(m_btnMoveDown, &QPushButton::clicked, this, [this]{ moveSelectedButton(+1); });
+    auto* moveCol = new QVBoxLayout;
+    moveCol->setSpacing(6);
+    moveCol->addWidget(m_btnMoveUp);
+    moveCol->addWidget(m_btnMoveDown);
+    moveCol->addStretch(1);
+    auto* moveHolder = new QWidget;
+    moveHolder->setLayout(moveCol);
+    grid->addWidget(moveHolder, 1, 2, 1, 1, Qt::AlignTop);
 
-    // Ensure we're at the start of a fresh row for the hotkeys section
-    if (col > 0) { col = 0; row++; }
+    int row = 2, col = 0;   // rows 0-1 hold the header and the reorder list
 
     // ── Custom Hotkeys section ────────────────────────────────
     auto* hotkeysSep = new QFrame;
@@ -764,8 +945,11 @@ void SettingsDialog::buildUi()
         "color: #FFA600; font-weight: bold; background: transparent;");
     grid->addWidget(m_lblCustomHotkeys, row++, 0, 1, 3);
 
+    // Each row lets the user edit a hotkey's label + key combination.  Turning a
+    // hotkey on/off (and ordering it) is done in the reorder list above, so there
+    // is no checkbox here — just a static "Hotkey N" label.
     for (int i = 0; i < 3; ++i) {
-        m_chkHotkey[i] = new QCheckBox(tr("Hotkey %1").arg(i + 1));
+        m_lblHotkey[i] = new QLabel(tr("Hotkey %1").arg(i + 1));
 
         m_edtHotkeyLabel[i] = new QLineEdit;
         m_edtHotkeyLabel[i]->setPlaceholderText(tr("Label (optional)"));
@@ -778,13 +962,7 @@ void SettingsDialog::buildUi()
 #if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
         m_kseHotkey[i]->setMaximumSequenceLength(1);
 #endif
-        auto updateRowEnabled = [this, i](bool on) {
-            m_edtHotkeyLabel[i]->setEnabled(on);
-            m_kseHotkey[i]->setEnabled(on);
-        };
-        connect(m_chkHotkey[i], &QCheckBox::toggled, this, updateRowEnabled);
-
-        grid->addWidget(m_chkHotkey[i],      row, 0);
+        grid->addWidget(m_lblHotkey[i],      row, 0);
         grid->addWidget(m_edtHotkeyLabel[i], row, 1);
         grid->addWidget(m_kseHotkey[i],      row, 2);
         row++;
@@ -828,6 +1006,9 @@ void SettingsDialog::buildUi()
     m_chkAlwaysOnTop    = new QCheckBox(tr("Always on top"));
     m_chkStartMinimized = new QCheckBox(tr("Start minimized to tray"));
     m_chkXMinimizesApp  = new QCheckBox(tr("Top X minimizes app"));
+    // Kept read-only for now: the top X always quits (see makeCheckboxReadOnly).
+    // To re-enable, drop this call and restore its loadFrom() line.
+    makeCheckboxReadOnly(m_chkXMinimizesApp);
     m_chkLaunchOnStartup= new QCheckBox(tr("Launch on system startup (Windows)"));
     m_chkAudio          = new QCheckBox(tr("Audio feedback on click"));
     m_chkClickIndicator = new QCheckBox(tr("Show click indicator ring (Windows)"));
@@ -911,7 +1092,7 @@ void SettingsDialog::buildUi()
 
     m_lblAudioClickInfo = new QLabel;
     m_lblAudioClickInfo->setWordWrap(true);
-    m_lblAudioClickInfo->setStyleSheet("color:#979797;");
+    m_lblAudioClickInfo->setStyleSheet("color:#E6E6E6;");
     m_lblAudioClickInfo->setText(audioClickInfoText());
     aufl->addWidget(m_lblAudioClickInfo);
 
@@ -951,9 +1132,11 @@ void SettingsDialog::buildUi()
     m_audioMeter->setValue(0);
     m_audioMeter->setTextVisible(false);
     m_audioMeter->setFixedHeight(10);
+    // Cyan level fill — matches the main-window audio meter so users correlate
+    // the audio-click feature across both screens (dwell stays orange).
     m_audioMeter->setStyleSheet(
         "QProgressBar{background:#1A1A1A;border:1px solid #555;border-radius:3px;}"
-        "QProgressBar::chunk{background:#FFA600;border-radius:2px;}");
+        "QProgressBar::chunk{background:#00EBFF;border-radius:2px;}");
     calGrid->addWidget(m_lblAudioMeter, 2, 0);
     calGrid->addWidget(m_audioMeter,    2, 1);
     calGrid->setColumnStretch(1, 1);
@@ -1077,31 +1260,87 @@ void SettingsDialog::promptInstallOnScreenKeyboard()
 }
 #endif
 
+void SettingsDialog::applyFontScale()
+{
+    m_fontScale = qBound(kZoomMinPct, m_fontScale, kZoomMaxPct);
+    setStyleSheet(buildStyle(qRound(kBaseFontPx * m_fontScale / 100.0)));
+    if (m_lblZoomValue)
+        m_lblZoomValue->setText(QString::number(m_fontScale) + "%");
+    // Grey out a button once its limit is reached.
+    if (m_btnZoomOut) m_btnZoomOut->setEnabled(m_fontScale > kZoomMinPct);
+    if (m_btnZoomIn)  m_btnZoomIn->setEnabled(m_fontScale < kZoomMaxPct);
+}
+
+// Display label for a click-button id.  These strings intentionally match the
+// former checkbox labels so existing translations keep working.
+QString SettingsDialog::clickButtonLabel(const QString& id) const
+{
+    if (id == QLatin1String("no_click"))      return tr("No Click");
+    if (id == QLatin1String("left_click"))    return tr("Left Click");
+    if (id == QLatin1String("left_double"))   return tr("Left Double");
+    if (id == QLatin1String("left_drag"))     return tr("Left Drag");
+    if (id == QLatin1String("right_click"))   return tr("Right Click");
+    if (id == QLatin1String("right_double"))  return tr("Right Double");
+    if (id == QLatin1String("right_drag"))    return tr("Right Drag");
+    if (id == QLatin1String("middle_click"))  return tr("Middle Click");
+    if (id == QLatin1String("middle_double")) return tr("Middle Double");
+    if (id == QLatin1String("scroll_up"))     return tr("Scroll Up");
+    if (id == QLatin1String("scroll_down"))   return tr("Scroll Down");
+    if (id == QLatin1String("scroll_horiz"))  return tr("Scroll Left/Right");
+    if (id == QLatin1String("ctrl"))          return tr("Ctrl Modifier");
+    if (id == QLatin1String("alt"))           return tr("Alt Modifier");
+    if (id == QLatin1String("shift"))         return tr("Shift Modifier");
+    if (id == QLatin1String("dwell_active"))  return tr("Dwell Active Button");
+    if (id == QLatin1String("quit"))          return tr("Quit Button");
+    const int hk = hotkeyIndexForId(id);
+    if (hk >= 0)                              return tr("Hotkey %1").arg(hk + 1);
+    return id;
+}
+
+void SettingsDialog::moveSelectedButton(int delta)
+{
+    const int r = m_btnOrderList->currentRow();
+    if (r < 0) return;
+    const int nr = r + delta;
+    if (nr < 0 || nr >= m_btnOrderList->count()) return;
+    // takeItem/insertItem preserves the item's check state and stored id.
+    QListWidgetItem* item = m_btnOrderList->takeItem(r);
+    m_btnOrderList->insertItem(nr, item);
+    m_btnOrderList->setCurrentRow(nr);   // keep the moved row selected
+    updateMoveButtons();
+}
+
+void SettingsDialog::updateMoveButtons()
+{
+    const int r = m_btnOrderList->currentRow();
+    const int n = m_btnOrderList->count();
+    if (m_btnMoveUp)   m_btnMoveUp->setEnabled(r > 0);
+    if (m_btnMoveDown) m_btnMoveDown->setEnabled(r >= 0 && r < n - 1);
+}
+
 void SettingsDialog::loadFrom(const AppSettings& s)
 {
     m_dwellMs->setValue(s.dwellMs);
     m_sensitivPx->setValue(s.sensitivityPx);
+    m_hoverSelectPct->setValue(s.hoverSelectPercent);
     m_scrollRepeat->setValue(s.scrollRepeat);
     m_chkRepeatMode->setChecked(s.repeatOnDwell);
 
-    m_chkNoClick->setChecked(s.showNoClick);
-    m_chkLeftClick->setChecked(s.showLeftClick);
-    m_chkLeftDouble->setChecked(s.showLeftDouble);
-    m_chkLeftDrag->setChecked(s.showLeftDrag);
-    m_chkRightClick->setChecked(s.showRightClick);
-    m_chkRightDouble->setChecked(s.showRightDouble);
-    m_chkRightDrag->setChecked(s.showRightDrag);
-    m_chkMiddleClick->setChecked(s.showMiddleClick);
-    m_chkMiddleDouble->setChecked(s.showMiddleDouble);
-    m_chkScrollUp->setChecked(s.showScrollUp);
-    m_chkScrollDown->setChecked(s.showScrollDown);
-    m_chkScrollHoriz->setChecked(s.showScrollHoriz);
-    m_chkModCtrl->setChecked(s.showModCtrl);
-    m_chkModAlt->setChecked(s.showModAlt);
-    m_chkModShift->setChecked(s.showModShift);
-    m_chkExitButton->setChecked(s.showExitButton);
-    m_chkQuitButton->setChecked(s.showQuitButton);
-    m_chkDwellActiveBtn->setChecked(s.showDwellActiveBtn);
+    // Populate the reorder list in the saved order, with saved visibility as the
+    // check state.  Right Double / Right Drag stay read-only and off, so they're
+    // not listed here.
+    m_btnOrderList->clear();
+    for (const QString& id : orderedClickButtonIds(s)) {
+        if (id == QLatin1String("right_double") || id == QLatin1String("right_drag"))
+            continue;
+        auto* item = new QListWidgetItem(clickButtonLabel(id), m_btnOrderList);
+        item->setData(Qt::UserRole, id);
+        item->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled | Qt::ItemIsSelectable);
+        item->setCheckState(buttonEnabled(s, id) ? Qt::Checked : Qt::Unchecked);
+    }
+    if (m_btnOrderList->count() > 0)
+        m_btnOrderList->setCurrentRow(0);
+    updateMoveButtons();
 
     m_cmbEdgeLock->setCurrentIndex(static_cast<int>(s.edgeLock));
     m_chkEdgeHide->setChecked(s.edgeHide);
@@ -1110,7 +1349,8 @@ void SettingsDialog::loadFrom(const AppSettings& s)
     m_opacitySlider->setValue(static_cast<int>(s.windowOpacity * 100));
     m_chkAlwaysOnTop->setChecked(s.alwaysOnTop);
     m_chkStartMinimized->setChecked(s.startMinimized);
-    m_chkXMinimizesApp->setChecked(s.xMinimizesApp);
+    // Top X minimizes app is intentionally left read-only and unchecked (see
+    // buildUi); don't drive it from settings. Restore this line to re-enable.
     m_chkLaunchOnStartup->setChecked(s.launchOnStartup);
     m_chkAudio->setChecked(s.audioFeedback);
     m_chkClickIndicator->setChecked(s.showClickIndicator);
@@ -1124,6 +1364,9 @@ void SettingsDialog::loadFrom(const AppSettings& s)
         }
     }
 
+    m_fontScale = s.settingsFontScale;
+    applyFontScale();
+
     m_chkAudioClick->setChecked(s.audioClickEnabled);
     m_audioThreshSlider->setValue(s.audioClickThreshold);
     m_audioThreshValue->setText(QString::number(s.audioClickThreshold) + "%");
@@ -1136,12 +1379,11 @@ void SettingsDialog::loadFrom(const AppSettings& s)
     int devIdx = m_cmbAudioDevice->findData(s.audioInputDevice);
     m_cmbAudioDevice->setCurrentIndex(devIdx >= 0 ? devIdx : 0);
 
+    // Hotkey on/off is edited in the reorder list; the label + key fields stay
+    // editable here regardless of enabled state.
     for (int i = 0; i < 3; ++i) {
-        m_chkHotkey[i]->setChecked(s.hotkeys[i].enabled);
         m_edtHotkeyLabel[i]->setText(s.hotkeys[i].label);
         m_kseHotkey[i]->setKeySequence(QKeySequence(s.hotkeys[i].keySequence));
-        m_edtHotkeyLabel[i]->setEnabled(s.hotkeys[i].enabled);
-        m_kseHotkey[i]->setEnabled(s.hotkeys[i].enabled);
     }
 }
 
@@ -1150,27 +1392,19 @@ AppSettings SettingsDialog::readUi() const
     AppSettings s;
     s.dwellMs       = m_dwellMs->value();
     s.sensitivityPx = m_sensitivPx->value();
+    s.hoverSelectPercent = m_hoverSelectPct->value();
     s.scrollRepeat  = m_scrollRepeat->value();
     s.repeatOnDwell = m_chkRepeatMode->isChecked();
 
-    s.showNoClick     = m_chkNoClick->isChecked();
-    s.showLeftClick   = m_chkLeftClick->isChecked();
-    s.showLeftDouble  = m_chkLeftDouble->isChecked();
-    s.showLeftDrag    = m_chkLeftDrag->isChecked();
-    s.showRightClick  = m_chkRightClick->isChecked();
-    s.showRightDouble = m_chkRightDouble->isChecked();
-    s.showRightDrag   = m_chkRightDrag->isChecked();
-    s.showMiddleClick = m_chkMiddleClick->isChecked();
-    s.showMiddleDouble= m_chkMiddleDouble->isChecked();
-    s.showScrollUp    = m_chkScrollUp->isChecked();
-    s.showScrollDown  = m_chkScrollDown->isChecked();
-    s.showScrollHoriz = m_chkScrollHoriz->isChecked();
-    s.showModCtrl     = m_chkModCtrl->isChecked();
-    s.showModAlt      = m_chkModAlt->isChecked();
-    s.showModShift    = m_chkModShift->isChecked();
-    s.showExitButton     = m_chkExitButton->isChecked();
-    s.showQuitButton     = m_chkQuitButton->isChecked();
-    s.showDwellActiveBtn = m_chkDwellActiveBtn->isChecked();
+    // Read click-button order and per-button visibility from the reorder list.
+    // Right Double / Right Drag aren't listed, so they keep their default (off).
+    s.buttonOrder.clear();
+    for (int i = 0; i < m_btnOrderList->count(); ++i) {
+        QListWidgetItem* item = m_btnOrderList->item(i);
+        const QString id = item->data(Qt::UserRole).toString();
+        s.buttonOrder << id;
+        setButtonEnabled(s, id, item->checkState() == Qt::Checked);
+    }
 
     s.edgeLock = static_cast<EdgeLock>(m_cmbEdgeLock->currentIndex());
     s.edgeHide = m_chkEdgeHide->isChecked() && (s.edgeLock != EdgeLock::None);
@@ -1186,13 +1420,15 @@ AppSettings SettingsDialog::readUi() const
     s.largeButtons    = m_chkLargeButtons->isChecked();
     s.buttonLayout    = static_cast<ButtonLayout>(m_cmbLayout->currentIndex());
     s.language        = m_cmbLanguage->currentData().toString();
+    s.settingsFontScale = m_fontScale;
 
     s.audioClickEnabled   = m_chkAudioClick->isChecked();
     s.audioClickThreshold = m_audioThreshSlider->value();
     s.audioInputDevice    = m_cmbAudioDevice->currentData().toString();
 
+    // Hotkey on/off comes from the reorder list above; here we only read the
+    // editable label + key sequence for each slot.
     for (int i = 0; i < 3; ++i) {
-        s.hotkeys[i].enabled     = m_chkHotkey[i]->isChecked();
         s.hotkeys[i].label       = m_edtHotkeyLabel[i]->text().trimmed();
         s.hotkeys[i].keySequence = m_kseHotkey[i]->keySequence()
                                        .toString(QKeySequence::PortableText);

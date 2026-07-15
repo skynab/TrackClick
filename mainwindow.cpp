@@ -12,6 +12,7 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QGridLayout>
+#include <QStyle>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QScreen>
@@ -29,6 +30,8 @@
 #include "translations/tsparser.h"
 #ifdef Q_OS_MAC
 #  include "macos_utils.h"
+#  include <QDesktopServices>
+#  include <QUrl>
 #endif
 
 // ─────────────────────────────────────────────────────────────
@@ -126,7 +129,7 @@ void ClickButton::setLargeMode(bool large)
     m_large = large;
     updateStyle();
     if (!m_iconName.isEmpty()) {
-        const int sz = large ? 36 : 24;
+        const int sz = large ? 54 : 36;
         setIconSize(QSize(sz, sz));
     }
 }
@@ -200,7 +203,7 @@ public:
         });
     }
 
-    void flash() {
+    void flash(QPoint gp) {
         // Draw the ring inside a click-through overlay that spans the ENTIRE
         // virtual desktop (all monitors), anchored at the desktop origin, and
         // paint the ring at the cursor's offset within it.
@@ -216,15 +219,18 @@ public:
         // decision left for the compositor to get wrong; the ring then appears
         // wherever the cursor is, on any monitor.
         //
-        // QCursor::pos() is Qt logical coordinates already mapped to the correct
-        // screen.  (Caveat: under XWayland it freezes while the cursor is over a
-        // native Wayland surface — the click still lands correctly, only the ring
-        // may lag.)
-        QScreen* scr = QGuiApplication::screenAt(QCursor::pos());
+        // `gp` is the global position the click was actually injected at, passed
+        // in by the caller.  It MUST NOT be re-read here from QCursor::pos():
+        // under XWayland that value freezes the instant the pointer leaves an
+        // XWayland surface (see docs/INTERNAL.md §2), so it lags behind to the
+        // last spot the cursor hovered a TrackClick window — the ring then landed
+        // between the real cursor and the UI on Ubuntu.  The click position comes
+        // from ClickInjector::cursorPos() (evdev/XI2), which stays accurate, so
+        // the ring now marks exactly where the click happened.
+        QScreen* scr = QGuiApplication::screenAt(gp);
         if (!scr) scr = QGuiApplication::primaryScreen();
         if (!scr) return;
         const QRect  vg = scr->virtualGeometry();   // union of all monitors (logical)
-        const QPoint gp = QCursor::pos();
         setGeometry(vg);
         m_center = gp - vg.topLeft();               // ring centre, overlay-local coords
 
@@ -245,6 +251,20 @@ protected:
         // Leave the window fully transparent (WA_TranslucentBackground clears it
         // each frame); only the ring + dot are painted, so nothing else is
         // visible and the whole surface stays click-through.
+        // One-off diagnostic (first frame only): where did the overlay window
+        // ACTUALLY land?  If mapToGlobal(0,0) is not the virtual-desktop origin,
+        // the compositor/WM has repositioned the window and the ring is offset by
+        // that amount regardless of how correct m_center is.  devicePixelRatio
+        // surfaces any fractional-scaling mismatch between the injected position
+        // (physical) and the overlay's logical paint coordinates.
+        if (m_step == 0 && qEnvironmentVariableIntValue("TRACKCLICK_CLICK_DEBUG"))
+            qWarning() << "TrackClick click-ring PAINT: window origin (global)"
+                       << mapToGlobal(QPoint(0, 0))
+                       << "| geometry" << geometry()
+                       << "| frameGeometry" << frameGeometry()
+                       << "| dpr" << devicePixelRatioF()
+                       << "| m_center" << m_center;
+
         QPainter p(this);
         p.setRenderHint(QPainter::Antialiasing);
 
@@ -296,6 +316,12 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     m_settings.showRightClick  = m_persist.value("show/rightClick",  true).toBool();
     m_settings.showRightDouble = m_persist.value("show/rightDouble", true).toBool();
     m_settings.showRightDrag   = m_persist.value("show/rightDrag",   true).toBool();
+    // Right Double / Right Drag are disabled actions (unusual). Force them off
+    // regardless of any persisted or default "on" value, so the toolbar buttons
+    // never appear. They're also omitted from the Settings reorder list. To
+    // re-enable, remove these two overrides and add them to that list.
+    m_settings.showRightDouble = false;
+    m_settings.showRightDrag   = false;
     m_settings.showMiddleClick = m_persist.value("show/middleClick", true).toBool();
     m_settings.showMiddleDouble= m_persist.value("show/middleDouble",false).toBool();
     m_settings.showScrollUp    = m_persist.value("show/scrollUp",    true).toBool();
@@ -304,11 +330,14 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     m_settings.showModCtrl     = m_persist.value("show/modCtrl",     true).toBool();
     m_settings.showModAlt      = m_persist.value("show/modAlt",      true).toBool();
     m_settings.showModShift    = m_persist.value("show/modShift",    true).toBool();
-    m_settings.showExitButton    = m_persist.value("show/exit",           true).toBool();
     m_settings.showQuitButton    = m_persist.value("show/quitButton",     true).toBool();
     m_settings.showDwellActiveBtn= m_persist.value("show/dwellActiveBtn", true).toBool();
     m_settings.startMinimized   = m_persist.value("window/startMin",         false).toBool();
     m_settings.xMinimizesApp    = m_persist.value("window/xMinimizesApp",    false).toBool();
+    // Top X minimizes app is a read-only option locked off: the top X always
+    // quits. Force it off regardless of any persisted value. To re-enable,
+    // remove this override — see settingsdialog.cpp buildUi.
+    m_settings.xMinimizesApp    = false;
     m_settings.launchOnStartup  = m_persist.value("window/launchOnStartup",  false).toBool();
     m_settings.audioFeedback       = m_persist.value("audio/enabled",          false).toBool();
     m_settings.showClickIndicator  = m_persist.value("visual/clickIndicator",  AppSettings{}.showClickIndicator).toBool();
@@ -319,8 +348,11 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     m_settings.largeButtons    = m_persist.value("show/largeButtons", false).toBool();
     m_settings.buttonLayout    = static_cast<ButtonLayout>(m_persist.value("show/buttonLayout", static_cast<int>(ButtonLayout::Vertical)).toInt());
     m_settings.language        = m_persist.value("language",          "en").toString();
+    m_settings.settingsFontScale = m_persist.value("settings/fontScale", 100).toInt();
+    m_settings.buttonOrder       = m_persist.value("show/buttonOrder").toStringList();
     m_settings.scrollRepeat    = m_persist.value("scroll/repeat",      7).toInt();
     m_settings.repeatOnDwell   = m_persist.value("dwell/repeatOnDwell", false).toBool();
+    m_settings.hoverSelectPercent = m_persist.value("dwell/hoverSelectPercent", 60).toInt();
     m_settings.edgeLock = static_cast<EdgeLock>(m_persist.value("window/edgeLock", 0).toInt());
     m_settings.edgeHide = m_persist.value("window/edgeHide", false).toBool();
     for (int i = 0; i < 3; ++i) {
@@ -395,6 +427,9 @@ MainWindow::MainWindow(QTranslator* startupTranslator, QWidget* parent)
     buildUi();
     buildTray();
     loadWindowSettings();
+
+    // Swallow tooltip pop-ups over the toolbar (see eventFilter).
+    qApp->installEventFilter(this);
 
     // If launch-on-startup is enabled, make sure the OS registration still
     // exists and points at the current executable (self-heals after updates).
@@ -499,6 +534,41 @@ void MainWindow::promptForInputAccessIfNeeded()
             tr("Permission was not granted. TrackClick will ask again next time "
                "it starts. (On an X11/Xorg session this permission is not needed.)"));
     }
+#elif defined(Q_OS_MAC)
+    if (ClickInjector::hasInputDeviceAccess())
+        return;   // already trusted for Accessibility
+
+    // Respect a previous "Don't ask again" choice.
+    if (m_persist.value("mac/skipAccessibilityPrompt", false).toBool())
+        return;
+
+    QMessageBox box(this);
+    box.setIcon(QMessageBox::Question);
+    box.setWindowTitle(tr("Enable clicking"));
+    box.setText(tr("TrackClick needs Accessibility permission to move and click the mouse."));
+    box.setInformativeText(tr(
+        "Until it's granted in System Settings ▸ Privacy & Security ▸ Accessibility, "
+        "the dwell countdown runs but no click is performed. You can also reach this "
+        "later from the Settings dialog."));
+    QPushButton* grant = box.addButton(tr("Open Accessibility Settings…"), QMessageBox::AcceptRole);
+    box.addButton(tr("Not Now"), QMessageBox::RejectRole);
+    QPushButton* never = box.addButton(tr("Don't Ask Again"), QMessageBox::ActionRole);
+    box.setDefaultButton(grant);
+    box.exec();
+
+    if (box.clickedButton() == never)
+        m_persist.setValue("mac/skipAccessibilityPrompt", true);
+    if (box.clickedButton() != grant)
+        return;
+
+    // Register TrackClick in the Accessibility list and trigger macOS's own
+    // prompt, then open the pane so the user can flip the switch. The grant
+    // only takes effect after a relaunch.
+    macAccessibilityTrusted(/*promptIfNeeded=*/true);
+    QDesktopServices::openUrl(QUrl(
+        "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"));
+    QMessageBox::information(this, tr("TrackClick"),
+        tr("Enable TrackClick in the Accessibility list, then restart the app."));
 #endif
 }
 
@@ -542,7 +612,7 @@ void MainWindow::buildUi()
     m_autoBtn->setFixedSize(38, 22);
     m_autoBtn->setToolTip(tr("Toggle AutoMouse dwell-clicking"));
     m_autoBtn->setStyleSheet(
-        "QPushButton { background:#3A3A3A; color:#AAA; border:1px solid #555; border-radius:3px; font-size:10px; font-weight:bold; }"
+        "QPushButton { background:#3A3A3A; color:#DDDDDD; border:1px solid #555; border-radius:3px; font-size:10px; font-weight:bold; }"
         "QPushButton:checked { background:#FFA028; color:#1A1A1A; border:1px solid #FFB040; }"
         "QPushButton:hover { border:1px solid #FFA028; }"
     );
@@ -595,6 +665,32 @@ void MainWindow::buildUi()
     m_dwellBar->setVisible(false);
     root->addWidget(m_dwellBar);
 
+    // ── Audio level meter ─────────────────────────────────────
+    // Same footprint as the dwell bar but a distinct (green) colour, shown in its
+    // place while audio-click mode is active so the two modes read differently.
+    m_audioMeter = new QProgressBar;
+    m_audioMeter->setRange(0, 100);
+    m_audioMeter->setValue(0);
+    m_audioMeter->setFixedHeight(8);
+    m_audioMeter->setTextVisible(false);
+    m_audioMeter->setMinimumWidth(0);
+    // Cyan (vs the dwell bar's orange) so the active mode is obvious at a glance,
+    // and matched to the settings calibration meter for cross-screen correlation.
+    m_audioMeter->setStyleSheet(
+        "QProgressBar { border: 1px solid #00A5B8; border-radius: 3px;"
+        " background: rgba(0,0,0,0.5); }"
+        "QProgressBar::chunk { background: #00EBFF; border-radius: 2px; }");
+    m_audioMeter->setVisible(false);
+    root->addWidget(m_audioMeter);
+#ifdef HAVE_MULTIMEDIA
+    if (m_audioClick) {
+        connect(m_audioClick, &AudioClickListener::level, this, [this](double v){
+            if (m_audioMeter->isVisible())
+                m_audioMeter->setValue(static_cast<int>(qBound(0.0, v, 1.0) * 100));
+        });
+    }
+#endif
+
     // ── Status label ──────────────────────────────────────────
     m_statusLabel = new QLabel("Ready — hover to dwell-click");
     m_statusLabel->setStyleSheet(
@@ -609,12 +705,15 @@ void MainWindow::buildUi()
     adjustSize();
 }
 
-// Attaches dwell-hover toggle behaviour to a modifier QPushButton.
+// Attaches hover-toggle behaviour to a modifier QPushButton: the button toggles
+// once the cursor has rested on it for the hover-select interval — the same
+// timing used to switch the active click type (see hoverSelectMs()).  The
+// interval is supplied as a callback so it is read fresh on each hover.
 // Parented to the button so it is deleted automatically with it.
 class ModHoverFilter : public QObject {
 public:
-    explicit ModHoverFilter(QPushButton* btn, const int* dwellMs)
-        : QObject(btn), m_dwellMs(dwellMs)
+    explicit ModHoverFilter(QPushButton* btn, std::function<int()> intervalFn)
+        : QObject(btn), m_intervalFn(std::move(intervalFn))
     {
         m_timer = new QTimer(this);
         m_timer->setSingleShot(true);
@@ -626,15 +725,15 @@ protected:
     bool eventFilter(QObject*, QEvent* ev) override
     {
         if (ev->type() == QEvent::Enter)
-            m_timer->start(*m_dwellMs);
+            m_timer->start(m_intervalFn());
         else if (ev->type() == QEvent::Leave)
             m_timer->stop();
         return false;
     }
 
 private:
-    QTimer*    m_timer;
-    const int* m_dwellMs;
+    QTimer*              m_timer;
+    std::function<int()> m_intervalFn;
 };
 
 // Forwards Enter/Leave events for a hotkey button to lambdas so the shared
@@ -669,9 +768,24 @@ static QString modBtnStyle(bool selected, bool large)
         ? QString("QPushButton { background:#FFA600; color:#1A1A1A; border:2px solid #FFB833; "
                   "border-radius:4px; font-weight:bold; font-size:%1; padding:%2; }"
                   "QPushButton:hover { background:#FFB833; }").arg(fs).arg(pad)
-        : QString("QPushButton { background:#3A3A3A; color:#AAA; border:1px solid #555; "
+        : QString("QPushButton { background:#3A3A3A; color:#DDDDDD; border:1px solid #555; "
                   "border-radius:4px; font-size:%1; padding:%2; }"
                   "QPushButton:hover { background:#4A4A4A; border:1px solid #FFA600; color:#FFA600; }").arg(fs).arg(pad);
+}
+
+// Uniform minimum cell size for every toolbar button, so click buttons,
+// modifiers, Dwell Active, Quit and hotkeys share the same footprint and line
+// up in the grid regardless of which are shown.  Width is 0 in the vertical
+// modes (the single/double columns stretch); fixed otherwise.
+static QSize toolbarButtonMinSize(ButtonLayout layout, bool large)
+{
+    switch (layout) {
+        case ButtonLayout::Horizontal: return QSize(60, large ? 72 : 54);
+        case ButtonLayout::Rectangle:  return QSize(48, large ? 64 : 48);
+        case ButtonLayout::Vertical:
+        case ButtonLayout::VerticalTwo:
+        default:                       return QSize(0,  large ? 54 : 36);
+    }
 }
 
 void MainWindow::rebuildButtons()
@@ -717,172 +831,49 @@ void MainWindow::rebuildButtons()
                    : (m_settings.buttonLayout == ButtonLayout::Horizontal)   ? 99
                    :                                                            3;
 
-    auto add = [&](ClickButton* btn){
+    // Factory: create a click button (signals + m_clickButtons), no placement.
+    auto makeClickButton = [&](const QString& lbl, const QString& tip, ClickType t, const QString& icon) -> QWidget* {
+        auto* btn = makeButton(lbl, tip, t, icon);
         m_clickButtons.append(btn);
-        grid->addWidget(btn, row, col);
-        col++;
-        if (col >= COLS) { col = 0; row++; }
         connect(btn, &ClickButton::clickTypePressed, this, &MainWindow::onClickButtonPressed);
         connect(btn, &ClickButton::clickTypeHovered, this, [this](ClickType type){
             m_hoveredType = type;
-            m_hoverTimer->start(m_settings.dwellMs * 6 / 10);
+            m_hoverTimer->start(hoverSelectMs());
         });
         connect(btn, &ClickButton::clickTypeLeft, this, [this](){
             m_hoverTimer->stop();
             m_hoveredType = ClickType::None;
         });
+        return btn;
     };
 
-    auto addIf = [&](bool show, const QString& lbl, const QString& tip, ClickType t, const QString& icon){
-        if (show) {
-            auto* b = makeButton(lbl, tip, t, icon);
-            add(b);
-        }
-    };
-
-    addIf(m_settings.showNoClick,     tr("No Click"), tr("No action — dwell without clicking"), ClickType::NoClick, "no_click");
-    addIf(m_settings.showLeftClick,   tr("L Click"),  tr("Left Click"),         ClickType::LeftClick,        "left_click");
-    addIf(m_settings.showLeftDouble,  tr("L Dbl"),    tr("Left Double-Click"),  ClickType::LeftDoubleClick,  "left_double");
-    addIf(m_settings.showLeftDrag,    tr("L Drag"),   tr("Left Drag — dwell to grab, dwell again to release"),   ClickType::LeftDown,         "left_drag");
-    addIf(m_settings.showRightClick,  tr("R Click"),  tr("Right Click"),        ClickType::RightClick,       "right_click");
-    addIf(m_settings.showRightDouble, tr("R Dbl"),    tr("Right Double-Click"), ClickType::RightDoubleClick, "right_double");
-    addIf(m_settings.showRightDrag,   tr("R Drag"),   tr("Right Drag — dwell to grab, dwell again to release"),  ClickType::RightDown,        "right_drag");
-    addIf(m_settings.showMiddleClick, tr("M Click"),  tr("Middle Click"),       ClickType::MiddleClick,      "middle_click");
-    addIf(m_settings.showMiddleDouble,tr("M Dbl"),    tr("Middle Double-Click"),ClickType::MiddleDoubleClick,"middle_double");
-    addIf(m_settings.showScrollUp,    tr("Scroll ▲"), tr("Scroll Up"),          ClickType::ScrollUp,         "scroll_up");
-    addIf(m_settings.showScrollDown,  tr("Scroll ▼"), tr("Scroll Down"),        ClickType::ScrollDown,       "scroll_down");
-
-    if (m_settings.showScrollHoriz) {
-        addIf(true, tr("Scroll ◄"), tr("Scroll Left"),  ClickType::ScrollLeft,  "scroll_left");
-        addIf(true, tr("Scroll ►"), tr("Scroll Right"), ClickType::ScrollRight, "scroll_right");
-    }
-
-    // Horizontal mode: give every column equal stretch so buttons fill the full
-    // window width both at initial size and when the user resizes.
-    // fullSpan is used by all subsequent full-width rows so they span exactly
-    // the click-button columns and don't create phantom empty columns.
-    const int fullSpan = (m_settings.buttonLayout == ButtonLayout::Horizontal) ? col : COLS;
-    if (m_settings.buttonLayout == ButtonLayout::Horizontal) {
-        for (int c = 0; c < col; ++c)
-            grid->setColumnStretch(c, 1);
-    }
-
-    // Advance to next row for the modifier buttons.
-    // Rectangle: pad the incomplete last row with spacers first.
-    if (m_settings.buttonLayout == ButtonLayout::Rectangle) {
-        while (col > 0 && col < COLS) {
-            auto* spacer = new QWidget;
-            spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-            grid->addWidget(spacer, row, col++);
-        }
-    }
-    if (col > 0) { row++; col = 0; }
-
-    // ── Modifier row ──────────────────────────────────────────
-    const bool large = m_settings.largeButtons;
+    // Shared look/sizing for the modifier, Dwell Active, Quit and hotkey buttons
+    // — the same footprint as the click buttons so everything aligns in the grid.
+    const bool  large   = m_settings.largeButtons;
     auto modStyle = [large](bool on) -> QString { return modBtnStyle(on, large); };
+    const QSize modSize = toolbarButtonMinSize(m_settings.buttonLayout, large);
 
-    // Place a modifier button using the same column-wrap logic as click buttons.
-    auto addMod = [&](QPushButton* btn) {
-        grid->addWidget(btn, row, col++);
-        if (col >= COLS) { col = 0; row++; }
+    // Factory: a checkable modifier button (Ctrl/Alt/Shift).  Assigns the member
+    // pointer and toggles the given modifier bit.
+    auto makeModifier = [&](QPushButton*& member, const QString& text,
+                            const QString& tip, int flag) -> QWidget* {
+        auto* btn = new QPushButton(text, m_btnArea);
+        member = btn;
+        btn->setCheckable(true);
+        btn->setMinimumSize(modSize);
+        btn->setToolTip(tip);
+        btn->setStyleSheet(modStyle(false));
+        connect(btn, &QPushButton::toggled, this, [this, btn, modStyle, flag](bool on){
+            if (on) m_modifiers |= flag; else m_modifiers &= ~flag;
+            btn->setStyleSheet(modStyle(on));
+            if (m_autoEnabled) m_dwell->setModifiers(m_modifiers);
+        });
+        new ModHoverFilter(btn, [this]{ return hoverSelectMs(); });
+        return btn;
     };
 
-    const QSize modSize = isVerticalMode ? QSize(0, large ? 32 : 22)
-                                         : QSize(large ? 48 : 32, large ? 40 : 28);
-
-    // ── Custom hotkey buttons ─────────────────────────────────
-    // Build all enabled hotkey buttons first, then place them.
-    // In horizontal mode they share one sub-row; in other modes each gets its
-    // own full-width row (labels can be long so space matters there).
-    QWidget*    hkRowWidget = nullptr;
-    QHBoxLayout* hkRowHBox  = nullptr;
-    if (m_settings.buttonLayout == ButtonLayout::Horizontal) {
-        hkRowWidget = new QWidget(m_btnArea);
-        hkRowWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-        hkRowHBox = new QHBoxLayout(hkRowWidget);
-        hkRowHBox->setSpacing(4);
-        hkRowHBox->setContentsMargins(0, 0, 0, 0);
-    }
-
-    for (int i = 0; i < 3; ++i) {
-        const auto& slot = m_settings.hotkeys[i];
-        if (!slot.enabled || slot.keySequence.isEmpty()) continue;
-
-        QKeySequence seq(slot.keySequence, QKeySequence::PortableText);
-        const QString displayLabel = slot.label.isEmpty()
-            ? seq.toString(QKeySequence::NativeText)
-            : slot.label;
-        if (displayLabel.isEmpty()) continue;
-
-        auto* btn = new QPushButton(displayLabel, m_btnArea);
-        btn->setMinimumHeight(large ? 48 : 36);
-        btn->setToolTip(seq.toString(QKeySequence::NativeText));
-        btn->setStyleSheet(modBtnStyle(m_selectedHotkey == i, large));
-
-        connect(btn, &QPushButton::clicked, this, [this, i]{ onHotkeySelected(i); });
-        new HotkeyHoverFilter(btn,
-            [this, i]{ m_hoveredHotkey = i; m_hoverTimer->start(m_settings.dwellMs * 6 / 10); },
-            [this]   { m_hoveredHotkey = -1; m_hoverTimer->stop(); });
-
-        m_hotkeyBtns[i] = btn;
-
-        if (hkRowHBox) {
-            hkRowHBox->addWidget(btn);
-        } else {
-            if (col > 0) { col = 0; row++; }
-            grid->addWidget(btn, row++, 0, 1, fullSpan);
-        }
-    }
-
-    if (hkRowWidget && hkRowHBox->count() > 0) {
-        if (col > 0) { col = 0; row++; }
-        grid->addWidget(hkRowWidget, row++, 0, 1, fullSpan);
-    }
-
-    // ── Create modifier buttons (placement handled below) ────────
-    if (m_settings.showModCtrl) {
-        m_ctrlBtn = new QPushButton("Ctrl");
-        m_ctrlBtn->setCheckable(true);
-        m_ctrlBtn->setMinimumSize(modSize);
-        m_ctrlBtn->setToolTip(tr("Hold Ctrl modifier for next click"));
-        m_ctrlBtn->setStyleSheet(modStyle(false));
-        connect(m_ctrlBtn, &QPushButton::toggled, this, [this, modStyle](bool on){
-            if (on) m_modifiers |= ModCtrl; else m_modifiers &= ~ModCtrl;
-            m_ctrlBtn->setStyleSheet(modStyle(on));
-            if (m_autoEnabled) m_dwell->setModifiers(m_modifiers);
-        });
-        new ModHoverFilter(m_ctrlBtn, &m_settings.dwellMs);
-    }
-    if (m_settings.showModAlt) {
-        m_altBtn = new QPushButton("Alt");
-        m_altBtn->setCheckable(true);
-        m_altBtn->setMinimumSize(modSize);
-        m_altBtn->setToolTip(tr("Hold Alt modifier for next click"));
-        m_altBtn->setStyleSheet(modStyle(false));
-        connect(m_altBtn, &QPushButton::toggled, this, [this, modStyle](bool on){
-            if (on) m_modifiers |= ModAlt; else m_modifiers &= ~ModAlt;
-            m_altBtn->setStyleSheet(modStyle(on));
-            if (m_autoEnabled) m_dwell->setModifiers(m_modifiers);
-        });
-        new ModHoverFilter(m_altBtn, &m_settings.dwellMs);
-    }
-    if (m_settings.showModShift) {
-        m_shiftBtn = new QPushButton("Shift");
-        m_shiftBtn->setCheckable(true);
-        m_shiftBtn->setMinimumSize(modSize);
-        m_shiftBtn->setToolTip(tr("Hold Shift modifier for next click"));
-        m_shiftBtn->setStyleSheet(modStyle(false));
-        connect(m_shiftBtn, &QPushButton::toggled, this, [this, modStyle](bool on){
-            if (on) m_modifiers |= ModShift; else m_modifiers &= ~ModShift;
-            m_shiftBtn->setStyleSheet(modStyle(on));
-            if (m_autoEnabled) m_dwell->setModifiers(m_modifiers);
-        });
-        new ModHoverFilter(m_shiftBtn, &m_settings.dwellMs);
-    }
-
-    // ── Dwell Active button ───────────────────────────────────
-    if (m_settings.showDwellActiveBtn) {
+    // Factory: the Dwell Active toggle (mirrors the title-bar Auto button).
+    auto makeDwellActive = [&]() -> QWidget* {
         auto dwellActiveStyle = [large](bool on) -> QString {
             const char* fs  = large ? "14px" : "11px";
             const char* pad = large ? "4px"  : "2px";
@@ -890,78 +881,123 @@ void MainWindow::rebuildButtons()
                 ? QString("QPushButton { background:#FFA028; color:#1A1A1A; border:2px solid #FFB040; "
                           "border-radius:4px; font-weight:bold; font-size:%1; padding:%2; }"
                           "QPushButton:hover { background:#FFB040; }").arg(fs).arg(pad)
-                : QString("QPushButton { background:#3A3A3A; color:#AAA; border:1px solid #555; "
+                : QString("QPushButton { background:#3A3A3A; color:#DDDDDD; border:1px solid #555; "
                           "border-radius:4px; font-size:%1; padding:%2; }"
                           "QPushButton:hover { background:#4A4A4A; border:1px solid #FFA028; color:#FFA028; }").arg(fs).arg(pad);
         };
-
-        m_dwellActiveBtn = new QPushButton(tr("Dwell Active"), m_btnArea);
-        m_dwellActiveBtn->setCheckable(true);
-        m_dwellActiveBtn->setMinimumSize(modSize);
-        m_dwellActiveBtn->setToolTip(tr("Enable dwell-clicking (same as the Auto button)"));
-        m_dwellActiveBtn->setChecked(m_autoEnabled);
-        m_dwellActiveBtn->setStyleSheet(dwellActiveStyle(m_autoEnabled));
-
-        connect(m_dwellActiveBtn, &QPushButton::toggled, this, [this, dwellActiveStyle](bool on){
+        auto* btn = new QPushButton(tr("Dwell Active"), m_btnArea);
+        m_dwellActiveBtn = btn;
+        btn->setCheckable(true);
+        btn->setMinimumSize(modSize);
+        btn->setToolTip(tr("Enable dwell-clicking (same as the Auto button)"));
+        btn->setChecked(m_autoEnabled);
+        btn->setStyleSheet(dwellActiveStyle(m_autoEnabled));
+        connect(btn, &QPushButton::toggled, this, [this, dwellActiveStyle](bool on){
             m_dwellActiveBtn->setStyleSheet(dwellActiveStyle(on));
-            // Drive the canonical Auto button; onAutoToggled() handles the rest.
-            m_autoBtn->setChecked(on);
+            m_autoBtn->setChecked(on);   // drive the canonical Auto button
         });
+        new ModHoverFilter(btn, [this]{ return hoverSelectMs(); });
+        return btn;
+    };
 
-        new ModHoverFilter(m_dwellActiveBtn, &m_settings.dwellMs);
-    }
-
-    // ── Place modifier + dwell-active buttons ─────────────────
-    if (m_settings.buttonLayout == ButtonLayout::Horizontal) {
-        // Group all modifiers into a sub-row widget that spans the full grid
-        // width so they fill available space evenly instead of occupying only
-        // the first few columns of the click-button grid.
-        auto* modRow = new QWidget(m_btnArea);
-        modRow->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-        auto* modHBox = new QHBoxLayout(modRow);
-        modHBox->setSpacing(4);
-        modHBox->setContentsMargins(0, 0, 0, 0);
-        if (m_ctrlBtn)        modHBox->addWidget(m_ctrlBtn);
-        if (m_altBtn)         modHBox->addWidget(m_altBtn);
-        if (m_shiftBtn)       modHBox->addWidget(m_shiftBtn);
-        if (m_dwellActiveBtn) modHBox->addWidget(m_dwellActiveBtn);
-        if (modHBox->count() > 0) {
-            if (col > 0) { col = 0; row++; }
-            grid->addWidget(modRow, row++, 0, 1, fullSpan);
-        }
-    } else {
-        // Vertical / Rectangle: column-flow placement.
-        if (m_ctrlBtn)  addMod(m_ctrlBtn);
-        if (m_altBtn)   addMod(m_altBtn);
-        if (m_shiftBtn) addMod(m_shiftBtn);
-        if (m_dwellActiveBtn) {
-            // In Rectangle mode, force Dwell Active to column 0 of its own row
-            // so it doesn't land mid-row next to click-type modifiers.
-            // In Vertical/VerticalTwo, let it fill the next available slot so
-            // it groups naturally with the modifier buttons (no orphaned gap).
-            if (m_settings.buttonLayout == ButtonLayout::Rectangle && col > 0) {
-                col = 0; row++;
-            }
-            addMod(m_dwellActiveBtn);
-        }
-    }
-
-    // ── Quit button ───────────────────────────────────────────
-    if (m_settings.showQuitButton) {
-        if (col > 0) { row++; col = 0; }
-        const bool large = m_settings.largeButtons;
+    // Factory: the red Quit button.
+    auto makeQuit = [&]() -> QWidget* {
         auto* quitBtn = new QPushButton(tr("Quit Program"), m_btnArea);
         quitBtn->setStyleSheet(
             QString("QPushButton { background:#3A1A1A; color:#FF6B6B; border:1px solid #7A3333; "
                     "border-radius:4px; font-size:%1; padding:%2; }"
                     "QPushButton:hover { background:#5C2222; border-color:#FF6B6B; }")
                 .arg(large ? "13px" : "11px")
-                .arg(large ? "4px"  : "2px")
-        );
-        quitBtn->setMinimumHeight(large ? 32 : 22);
-        grid->addWidget(quitBtn, row, 0, 1, fullSpan);
+                .arg(large ? "4px"  : "2px"));
+        quitBtn->setMinimumSize(modSize);
         connect(quitBtn, &QPushButton::clicked, qApp, &QApplication::quit);
+        return quitBtn;
+    };
+
+    // Factory: a custom-hotkey button for slot i, or nullptr if that slot is off
+    // or has no key assigned.  Flows inline with the other reorderable buttons.
+    auto makeHotkey = [&](int i) -> QWidget* {
+        const auto& slot = m_settings.hotkeys[i];
+        if (!slot.enabled || slot.keySequence.isEmpty()) return nullptr;
+        QKeySequence seq(slot.keySequence, QKeySequence::PortableText);
+        const QString displayLabel = slot.label.isEmpty()
+            ? seq.toString(QKeySequence::NativeText) : slot.label;
+        if (displayLabel.isEmpty()) return nullptr;
+        auto* btn = new QPushButton(displayLabel, m_btnArea);
+        btn->setMinimumSize(modSize);
+        btn->setToolTip(seq.toString(QKeySequence::NativeText));
+        btn->setStyleSheet(modBtnStyle(m_selectedHotkey == i, large));
+        connect(btn, &QPushButton::clicked, this, [this, i]{ onHotkeySelected(i); });
+        new HotkeyHoverFilter(btn,
+            [this, i]{ m_hoveredHotkey = i; m_hoverTimer->start(hoverSelectMs()); },
+            [this]   { m_hoveredHotkey = -1; m_hoverTimer->stop(); });
+        m_hotkeyBtns[i] = btn;
+        return btn;
+    };
+
+    // Placement: column-flow with wrap (Horizontal has COLS large, so one row).
+    auto place = [&](QWidget* w){
+        grid->addWidget(w, row, col++);
+        if (col >= COLS) { col = 0; row++; }
+    };
+
+    // Click-button metadata (label/tooltip/type/icon + visibility).
+    struct BtnMeta { bool show; QString lbl; QString tip; ClickType type; QString icon; };
+    const QHash<QString, BtnMeta> meta = {
+        { "no_click",      { m_settings.showNoClick,     tr("No Click"), tr("No action — dwell without clicking"), ClickType::NoClick,          "no_click" } },
+        { "left_click",    { m_settings.showLeftClick,   tr("L Click"),  tr("Left Click"),         ClickType::LeftClick,        "left_click" } },
+        { "left_double",   { m_settings.showLeftDouble,  tr("L Dbl"),    tr("Left Double-Click"),  ClickType::LeftDoubleClick,  "left_double" } },
+        { "left_drag",     { m_settings.showLeftDrag,    tr("L Drag"),   tr("Left Drag — dwell to grab, dwell again to release"),   ClickType::LeftDown,         "left_drag" } },
+        { "right_click",   { m_settings.showRightClick,  tr("R Click"),  tr("Right Click"),        ClickType::RightClick,       "right_click" } },
+        { "right_double",  { m_settings.showRightDouble, tr("R Dbl"),    tr("Right Double-Click"), ClickType::RightDoubleClick, "right_double" } },
+        { "right_drag",    { m_settings.showRightDrag,   tr("R Drag"),   tr("Right Drag — dwell to grab, dwell again to release"),  ClickType::RightDown,        "right_drag" } },
+        { "middle_click",  { m_settings.showMiddleClick, tr("M Click"),  tr("Middle Click"),       ClickType::MiddleClick,      "middle_click" } },
+        { "middle_double", { m_settings.showMiddleDouble,tr("M Dbl"),    tr("Middle Double-Click"),ClickType::MiddleDoubleClick,"middle_double" } },
+        { "scroll_up",     { m_settings.showScrollUp,    tr("Scroll ▲"), tr("Scroll Up"),          ClickType::ScrollUp,         "scroll_up" } },
+        { "scroll_down",   { m_settings.showScrollDown,  tr("Scroll ▼"), tr("Scroll Down"),        ClickType::ScrollDown,       "scroll_down" } },
+    };
+
+    // Single ordered pass — place every enabled reorderable button inline in the
+    // user's saved order.  Click buttons, modifiers, Dwell Active and Quit all
+    // flow together; "scroll_horiz" expands to the two horizontal-scroll buttons.
+    for (const QString& id : orderedClickButtonIds(m_settings)) {
+        if (id == QLatin1String("scroll_horiz")) {
+            if (m_settings.showScrollHoriz) {
+                place(makeClickButton(tr("Scroll ◄"), tr("Scroll Left"),  ClickType::ScrollLeft,  "scroll_left"));
+                place(makeClickButton(tr("Scroll ►"), tr("Scroll Right"), ClickType::ScrollRight, "scroll_right"));
+            }
+        } else if (id == QLatin1String("ctrl")) {
+            if (m_settings.showModCtrl)        place(makeModifier(m_ctrlBtn,  QStringLiteral("Ctrl"),  tr("Hold Ctrl modifier for next click"),  ModCtrl));
+        } else if (id == QLatin1String("alt")) {
+            if (m_settings.showModAlt)         place(makeModifier(m_altBtn,   QStringLiteral("Alt"),   tr("Hold Alt modifier for next click"),   ModAlt));
+        } else if (id == QLatin1String("shift")) {
+            if (m_settings.showModShift)       place(makeModifier(m_shiftBtn, QStringLiteral("Shift"), tr("Hold Shift modifier for next click"), ModShift));
+        } else if (id == QLatin1String("dwell_active")) {
+            if (m_settings.showDwellActiveBtn) place(makeDwellActive());
+        } else if (id == QLatin1String("quit")) {
+            if (m_settings.showQuitButton)     place(makeQuit());
+        } else if (id.startsWith(QLatin1String("hotkey_"))) {
+            bool ok = false;
+            const int i = id.mid(7).toInt(&ok);
+            if (ok && i >= 0 && i < 3)
+                if (QWidget* w = makeHotkey(i)) place(w);
+        } else {
+            auto it = meta.find(id);
+            if (it != meta.end() && it->show)
+                place(makeClickButton(it->lbl, it->tip, it->type, it->icon));
+        }
     }
+
+    // Horizontal mode: give every occupied column equal stretch so buttons fill
+    // the window width.
+    if (m_settings.buttonLayout == ButtonLayout::Horizontal) {
+        for (int c = 0; c < col; ++c)
+            grid->setColumnStretch(c, 1);
+    }
+
+    // Click buttons, modifiers, Dwell Active, Quit and the custom hotkey buttons
+    // are all created by the factories and placed inline in the ordered pass
+    // above, so there's nothing more to lay out here.
 
     // Update selection highlight — suppress ClickButton highlight when a hotkey is selected
     const ClickType selForBtns = (m_selectedHotkey >= 0) ? ClickType::None : m_selectedType;
@@ -971,6 +1007,20 @@ void MainWindow::rebuildButtons()
         if (m_hotkeyBtns[i])
             m_hotkeyBtns[i]->setStyleSheet(modBtnStyle(m_selectedHotkey == i, large));
     }
+
+    // macOS: a stylesheet-styled QPushButton reports a stale sizeHint until it is
+    // polished — which otherwise only happens on first interaction — so the
+    // modifier / hotkey / Quit buttons render misaligned and the window resizes
+    // on the first click.  Force a re-polish + geometry refresh now so the layout
+    // (and adjustSize below) uses their correct size from the start.  Click
+    // buttons are QToolButtons and unaffected, so this only touches QPushButtons.
+    for (QPushButton* b : m_btnArea->findChildren<QPushButton*>()) {
+        b->style()->unpolish(b);
+        b->style()->polish(b);
+        b->updateGeometry();
+    }
+    if (auto* lay = m_btnArea->layout())
+        lay->activate();
 
     adjustSize();
 }
@@ -985,18 +1035,12 @@ ClickButton* MainWindow::makeButton(const QString& label, const QString& tooltip
     btn->setLargeMode(m_settings.largeButtons);   // scales style, font, icon size
 
     const bool large = m_settings.largeButtons;
-    if (m_settings.buttonLayout == ButtonLayout::Vertical ||
-        m_settings.buttonLayout == ButtonLayout::VerticalTwo) {
-        btn->setMinimumSize(0, large ? 54 : 36);
-        btn->setIconSize(QSize(large ? 24 : 16, large ? 24 : 16));
-    } else if (m_settings.buttonLayout == ButtonLayout::Horizontal) {
-        btn->setMinimumSize(60, large ? 72 : 54);
-        btn->setIconSize(QSize(large ? 28 : 20, large ? 28 : 20));
-    } else {
-        // Rectangle
-        btn->setMinimumSize(48, large ? 64 : 48);
-        btn->setIconSize(QSize(large ? 24 : 16, large ? 24 : 16));
-    }
+    btn->setMinimumSize(toolbarButtonMinSize(m_settings.buttonLayout, large));
+    // Icon size is click-button specific (labels sit under the icon).
+    if (m_settings.buttonLayout == ButtonLayout::Horizontal)
+        btn->setIconSize(QSize(large ? 42 : 30, large ? 42 : 30));
+    else
+        btn->setIconSize(QSize(large ? 36 : 24, large ? 36 : 24));
     return btn;
 }
 
@@ -1149,6 +1193,19 @@ void MainWindow::changeEvent(QEvent* ev)
     QWidget::changeEvent(ev);
 }
 
+bool MainWindow::eventFilter(QObject* obj, QEvent* ev)
+{
+    // Drop tooltip requests for any widget inside this window. isAncestorOf is
+    // false for widgets in other top-level windows (e.g. the Settings dialog),
+    // so those keep their tooltips.
+    if (ev->type() == QEvent::ToolTip) {
+        auto* w = qobject_cast<QWidget*>(obj);
+        if (w && (w == this || isAncestorOf(w)))
+            return true;   // handled — no tooltip is shown
+    }
+    return QWidget::eventFilter(obj, ev);
+}
+
 void MainWindow::showEvent(QShowEvent* ev)
 {
     QWidget::showEvent(ev);
@@ -1283,11 +1340,15 @@ void MainWindow::onClickButtonPressed(ClickType type)
         int reps = isScroll ? m_settings.scrollRepeat : 1;
         for (int i = 0; i < reps; ++i)
             ClickInjector::performClick(type, pos, m_modifiers);
-        if (m_settings.showClickIndicator)
-            m_clickIndicator->flash();
+        // "No Click" injects no action (like a paused dwell), so it gets no
+        // visual or audio feedback — unlike every other click type.
+        if (type != ClickType::NoClick) {
+            if (m_settings.showClickIndicator)
+                m_clickIndicator->flash(pos);
 #ifdef HAVE_MULTIMEDIA
-        if (m_settings.audioFeedback) m_clickSound->play();
+            if (m_settings.audioFeedback) m_clickSound->play();
 #endif
+        }
 
         // Clear modifiers after use (one-shot)
         m_modifiers = ModNone;
@@ -1328,7 +1389,8 @@ void MainWindow::setClickType(ClickType t)
         {ClickType::ScrollLeft,       tr("Scroll Left")},
         {ClickType::ScrollRight,      tr("Scroll Right")},
     };
-    m_statusLabel->setText(tr("Selected: ") + names.value(t, "?"));
+    m_selectionName = names.value(t, "?");
+    updateStatusLabel();
 }
 
 void MainWindow::onHotkeySelected(int i)
@@ -1350,7 +1412,8 @@ void MainWindow::onHotkeySelected(int i)
     const QKeySequence seq(slot.keySequence, QKeySequence::PortableText);
     const QString name = slot.label.isEmpty()
         ? seq.toString(QKeySequence::NativeText) : slot.label;
-    m_statusLabel->setText(tr("Selected: ") + name);
+    m_selectionName = name;
+    updateStatusLabel();
 
     if (m_autoEnabled) {
         // Armed with NoClick so DwellManager performs no mouse action;
@@ -1360,7 +1423,7 @@ void MainWindow::onHotkeySelected(int i)
         // Manual mode: inject immediately, same as clicking a mouse-action button
         ClickInjector::injectKeySequence(seq);
         if (m_settings.showClickIndicator)
-            m_clickIndicator->flash();
+            m_clickIndicator->flash(ClickInjector::cursorPos());
 #ifdef HAVE_MULTIMEDIA
         if (m_settings.audioFeedback && m_clickSound) m_clickSound->play();
 #endif
@@ -1385,16 +1448,14 @@ void MainWindow::onAutoToggled(bool on)
             ? QString("QPushButton { background:#FFA028; color:#1A1A1A; border:2px solid #FFB040; "
                       "border-radius:4px; font-weight:bold; font-size:%1; padding:%2; }"
                       "QPushButton:hover { background:#FFB040; }").arg(fs).arg(pad)
-            : QString("QPushButton { background:#3A3A3A; color:#AAA; border:1px solid #555; "
+            : QString("QPushButton { background:#3A3A3A; color:#DDDDDD; border:1px solid #555; "
                       "border-radius:4px; font-size:%1; padding:%2; }"
                       "QPushButton:hover { background:#4A4A4A; border:1px solid #FFA028; color:#FFA028; }").arg(fs).arg(pad));
     }
 
-    // The dwell progress bar is meaningless in audio-click mode (there is no
-    // countdown), so hide it then; the status label still shows the selection.
-    const bool audioMode = m_settings.audioClickEnabled;
-    m_dwellBar->setVisible(on && !audioMode);
-    m_statusLabel->setVisible(on);
+    // Show the dwell bar or the audio level meter (whichever matches the mode)
+    // and the status label, all gated on dwell-active being on.
+    updateActivityFeedback();
 
     if (on) {
         if (m_selectedHotkey >= 0)
@@ -1419,10 +1480,12 @@ void MainWindow::onDwellProgress(float frac)
     }
 }
 
-void MainWindow::onDwellFired(QPoint /*pos*/, ClickType /*type*/)
+void MainWindow::onDwellFired(QPoint pos, ClickType type)
 {
     // Hotkey selected: DwellManager fired NoClick (no mouse action); inject key now.
+    bool hotkeyAction = false;
     if (m_selectedHotkey >= 0 && m_selectedHotkey < 3) {
+        hotkeyAction = true;
         const auto& slot = m_settings.hotkeys[m_selectedHotkey];
         if (!slot.keySequence.isEmpty()) {
             QKeySequence seq(slot.keySequence, QKeySequence::PortableText);
@@ -1430,8 +1493,14 @@ void MainWindow::onDwellFired(QPoint /*pos*/, ClickType /*type*/)
         }
     }
 
+    // "No Click" performs no action (like a paused dwell), so it gets no visual
+    // or audio feedback. A hotkey arms NoClick internally but does inject a key,
+    // so it still counts as an action and keeps its feedback.
+    if (!hotkeyAction && type == ClickType::NoClick)
+        return;
+
     if (m_settings.showClickIndicator)
-        m_clickIndicator->flash();
+        m_clickIndicator->flash(pos);   // accurate injected position (evdev on Wayland)
 #ifdef HAVE_MULTIMEDIA
     if (m_settings.audioFeedback) m_clickSound->play();
 #endif
@@ -1463,6 +1532,36 @@ void MainWindow::updateAudioClick()
     // No audio support: make sure the dwell timer keeps working normally.
     m_dwell->setAudioTriggerMode(false);
 #endif
+}
+
+void MainWindow::updateActivityFeedback()
+{
+    // May be called before the status widgets exist (early init); no-op then.
+    if (!m_dwellBar || !m_audioMeter || !m_statusLabel) return;
+#ifdef HAVE_MULTIMEDIA
+    const bool audioMode = m_settings.audioClickEnabled;
+#else
+    const bool audioMode = false;   // feature compiled out → always dwell
+#endif
+    m_dwellBar->setVisible(m_autoEnabled && !audioMode);
+    m_audioMeter->setVisible(m_autoEnabled && audioMode);
+    if (!m_audioMeter->isVisible())
+        m_audioMeter->setValue(0);
+    m_statusLabel->setVisible(m_autoEnabled);
+    updateStatusLabel();
+}
+
+void MainWindow::updateStatusLabel()
+{
+    if (!m_statusLabel) return;
+#ifdef HAVE_MULTIMEDIA
+    const bool audioMode = m_settings.audioClickEnabled;
+#else
+    const bool audioMode = false;
+#endif
+    m_statusLabel->setText(audioMode
+        ? tr("Audio click active: %1").arg(m_selectionName)
+        : tr("Selected: %1").arg(m_selectionName));
 }
 
 void MainWindow::onSettingsClicked()
@@ -1655,15 +1754,17 @@ void MainWindow::applySettings(const AppSettings& s)
     m_persist.setValue("show/modCtrl",       s.showModCtrl);
     m_persist.setValue("show/modAlt",        s.showModAlt);
     m_persist.setValue("show/modShift",      s.showModShift);
-    m_persist.setValue("show/exit",           s.showExitButton);
     m_persist.setValue("show/quitButton",     s.showQuitButton);
     m_persist.setValue("show/dwellActiveBtn", s.showDwellActiveBtn);
     m_persist.setValue("show/iconsOnly",     s.iconsOnly);
     m_persist.setValue("show/largeButtons",  s.largeButtons);
     m_persist.setValue("show/buttonLayout",  static_cast<int>(s.buttonLayout));
     m_persist.setValue("language",           s.language);
+    m_persist.setValue("settings/fontScale", s.settingsFontScale);
+    m_persist.setValue("show/buttonOrder",   s.buttonOrder);
     m_persist.setValue("scroll/repeat",      s.scrollRepeat);
     m_persist.setValue("dwell/repeatOnDwell", s.repeatOnDwell);
+    m_persist.setValue("dwell/hoverSelectPercent", s.hoverSelectPercent);
     m_persist.setValue("window/edgeLock",    static_cast<int>(s.edgeLock));
     m_persist.setValue("window/edgeHide",    s.edgeHide);
     for (int i = 0; i < 3; ++i) {
@@ -1674,6 +1775,8 @@ void MainWindow::applySettings(const AppSettings& s)
     }
     applyEdgeLock();
     updateAudioClick();
+    // Reflect any change to audio-click mode in the meter/dwell-bar + status text.
+    updateActivityFeedback();
 }
 
 void MainWindow::onExitClicked()

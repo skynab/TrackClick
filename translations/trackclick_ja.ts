@@ -59,6 +59,8 @@
     <message><source>Dwell Clicking</source><translation>滞留クリック</translation></message>
     <message><source>Dwell time:</source><translation>滞留時間：</translation></message>
     <message><source>Sensitivity:</source><translation>感度：</translation></message>
+    <message><source>Hover to switch:</source><translation>ホバーで切替：</translation></message>
+    <message><source>How long a toolbar button must be hovered before the selection switches to it, as a percentage of the dwell time.</source><translation>選択がツールバーボタンに切り替わるまでにホバーする必要がある長さ（滞留時間に対する割合）。</translation></message>
     <message><source>Permissions:</source><translation>権限：</translation></message>
     <message><source>Open Accessibility Settings…</source><translation>アクセシビリティ設定を開く…</translation></message>
     <message><source>Visible Buttons</source><translation>表示ボタン</translation></message>

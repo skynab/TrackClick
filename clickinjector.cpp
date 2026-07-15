@@ -228,7 +228,10 @@ QPoint ClickInjector::cursorPos()
     return QCursor::pos();
 }
 
-bool ClickInjector::hasInputDeviceAccess() { return true; }
+// Posting synthetic events with CGEventPost requires Accessibility permission;
+// without it the events are silently dropped. Report the real trust state so the
+// app can prompt the user instead of appearing to do nothing.
+bool ClickInjector::hasInputDeviceAccess() { return AXIsProcessTrusted(); }
 
 void ClickInjector::moveCursor(QPoint pos)
 {

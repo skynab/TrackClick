@@ -64,6 +64,8 @@
     <message><source>Dwell Clicking</source><translation>ড্ওয়েল ক্লিকিং</translation></message>
     <message><source>Dwell time:</source><translation>ড্ওয়েল সময়:</translation></message>
     <message><source>Sensitivity:</source><translation>সংবেদনশীলতা:</translation></message>
+    <message><source>Hover to switch:</source><translation>পরিবর্তনে হোভার:</translation></message>
+    <message><source>How long a toolbar button must be hovered before the selection switches to it, as a percentage of the dwell time.</source><translation>নির্বাচন কোনো টুলবার বোতামে পরিবর্তিত হওয়ার আগে সেটির উপর কতক্ষণ হোভার করতে হবে, ড্ওয়েল সময়ের শতাংশ হিসেবে।</translation></message>
     <message><source>Sensitivity Tester…</source><translation>সংবেদনশীলতা পরীক্ষক…</translation></message>
     <message><source>Scroll repeat:</source><translation>স্ক্রল পুনরাবৃত্তি:</translation></message>
     <message><source>Repeat click:</source><translation>ক্লিক পুনরাবৃত্তি:</translation></message>

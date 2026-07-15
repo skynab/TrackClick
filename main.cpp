@@ -1,11 +1,23 @@
 #include <QApplication>
 #include <QIcon>
+#include <QLocalServer>
+#include <QLocalSocket>
 #include <QMessageBox>
 #include <QSettings>
 #include <QSystemTrayIcon>
 #include <QTimer>
 #include "mainwindow.h"
 #include "translations/tsparser.h"
+
+// Name of the local socket used as the single-instance lock. Scoped to the
+// current user so separate logged-in users each get their own instance and
+// can't collide on (or connect to) each other's socket.
+static QString singleInstanceKey()
+{
+    QString user = qEnvironmentVariable("USER");
+    if (user.isEmpty()) user = qEnvironmentVariable("USERNAME");
+    return "TrackClick-singleinstance-" + user;
+}
 
 int main(int argc, char* argv[])
 {
@@ -28,9 +40,32 @@ int main(int argc, char* argv[])
 
     QApplication app(argc, argv);
     app.setApplicationName("TrackClick");
-    app.setApplicationVersion("0.9.4");
+    app.setApplicationVersion("0.9.5");
     app.setOrganizationName("TrackClick");
     app.setOrganizationDomain("trackclick.app");
+
+    // ── Single-instance guard ────────────────────────────────────────────────
+    // A named local socket acts as the lock. If we can connect to it, another
+    // TrackClick is already running: ask it to surface its window, then exit.
+    // Otherwise we become the primary instance and listen for future launches.
+    const QString instanceKey = singleInstanceKey();
+    {
+        QLocalSocket probe;
+        probe.connectToServer(instanceKey);
+        if (probe.waitForConnected(300)) {
+            probe.write("show");
+            probe.waitForBytesWritten(300);
+            probe.disconnectFromServer();
+            return 0;   // a primary instance is already running
+        }
+    }
+
+    // We are the primary instance. Remove any stale socket left by a previous
+    // crash (otherwise listen() fails on Unix), then start listening.
+    QLocalServer::removeServer(instanceKey);
+    QLocalServer instanceServer;
+    instanceServer.setSocketOptions(QLocalServer::UserAccessOption);
+    instanceServer.listen(instanceKey);
 
 #ifdef Q_OS_LINUX
     // Windows and macOS get their app icon from the embedded .ico / bundle .icns;
@@ -75,6 +110,19 @@ int main(int argc, char* argv[])
         if (!s.value("window/startMin", false).toBool())
             w.show();
     }
+
+    // When another launch connects to our single-instance socket, surface this
+    // window (it may be hidden in the tray or minimised) instead of starting a
+    // second copy. The payload is irrelevant — any connection means "show me".
+    QObject::connect(&instanceServer, &QLocalServer::newConnection, &w, [&]{
+        while (QLocalSocket* conn = instanceServer.nextPendingConnection()) {
+            conn->disconnectFromServer();
+            conn->deleteLater();
+        }
+        w.showNormal();        // de-minimise / un-hide from tray
+        w.raise();
+        w.activateWindow();
+    });
 
     // Once the event loop is running, offer to fix input-device permissions on
     // Linux/Wayland if needed so dwell-clicking works over every window.  No-op

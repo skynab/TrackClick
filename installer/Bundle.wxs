@@ -11,7 +11,7 @@
 
     <BootstrapperApplication>
       <bal:WixStandardBootstrapperApplication Theme="hyperlinkLicense"
-                                              LicenseUrl=""
+                                              LicenseUrl="https://www.trackir.com/eula"
                                               LogoFile="icons\TrackClick-logo.png" />
     </BootstrapperApplication>
 
